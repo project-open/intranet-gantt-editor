@@ -45,9 +45,6 @@ Ext.define('PO.view.gantt_editor.GanttTaskPanel', {
     dependencyContextMenu: null,
     preferenceStore: null,
 
-
-
-
     /**
      * Starts the main editor panel as the right-hand side
      * of a project grid and a cost center grid for the departments
@@ -317,8 +314,6 @@ Ext.define('PO.view.gantt_editor.GanttTaskPanel', {
         projectModel.set('start_date', startDate.toISOString().substring(0,10));
         projectModel.set('end_date', endDate.toISOString().substring(0,10));
 
-        // Reload the Cost Center Resource Load Store with the new selected/changed projects
-        me.costCenterResourceLoadStore.loadWithProjectData(me.objectStore, me.preferenceStore);
         me.redraw();
         console.log('PO.view.gantt_editor.GanttTaskPanel.onProjectMove: Finished');
     },
@@ -363,7 +358,6 @@ Ext.define('PO.view.gantt_editor.GanttTaskPanel', {
 		}
             });
 	}
-
         console.log('PO.class.GanttDrawComponent.redraw: Finished');
     },
 
@@ -440,8 +434,6 @@ Ext.define('PO.view.gantt_editor.GanttTaskPanel', {
         }
     },
 
-
-
     /**
      * Draw a single bar for a project or task
      */
@@ -514,10 +506,245 @@ Ext.define('PO.view.gantt_editor.GanttTaskPanel', {
 });
 
 
+
+/**
+ * Launch the actual editor
+ * This function is called from the Store Coordinator
+ * after all essential data have been loaded into the
+ * browser.
+ */
 function launchGanttEditor(){
 
     var taskTreeStore = Ext.StoreManager.get('taskTreeStore');
-    var statusStore = Ext.StoreManager.get('projectStatusStore');
+    var senchaPreferenceStore = Ext.StoreManager.get('senchaPreferenceStore');
+
+
+
+    /* ***********************************************************************
+     * Help Menu
+     *********************************************************************** */
+    var helpMenu = Ext.create('Ext.menu.Menu', {
+        id: 'helpMenu',
+        style: {overflow: 'visible'},     // For the Combo popup
+        items: [{
+            text: 'Portfolio Editor Home',
+            href: 'http://www.project-open.org/en/page_intranet_portfolio_planner_index',
+            hrefTarget: '_blank'
+        }, '-', {
+            text: 'Configuration',
+            href: 'http://www.project-open.org/en/page_intranet_portfolio_planner_index#configuration',
+            hrefTarget: '_blank'
+        }, {
+            text: 'Project Dependencies',
+            href: 'http://www.project-open.org/en/page_intranet_portfolio_planner_index#dependencies',
+            hrefTarget: '_blank'
+        }, {
+            text: 'Column Configuration',
+            href: 'http://www.project-open.org/en/page_intranet_portfolio_planner_index#column_configuration',
+            hrefTarget: '_blank'
+        }]
+    });
+  
+
+    /* ***********************************************************************
+     * Alpha Menu
+     *********************************************************************** */
+    var betaMenu = Ext.create('Ext.menu.Menu', {
+        id: 'betaMenu',
+        style: {overflow: 'visible'},     // For the Combo popup
+        items: [{
+            text: '<b>This is Experimental and "Alpha" Software</b> - Please see known issues below',
+            href: 'http://www.project-open.org/en/page_intranet_portfolio_planner_index',
+            hrefTarget: '_blank'
+        }, '-']
+    });
+    
+    var issues = [
+        "Bug: Show red dependency arrows if somebody disables a referenced project",
+        "Ext: Show Save only if something has changed (project store)",
+        "Bug: Firefox doesn't show cost centers when the ExtJS page is longer than the browser page",
+        "Bug: Don't show SLAs and similar projects",
+        "Ext: Exclude certain other (small) projects? How?",
+        "Ext: Allow some form of left/right scrolling. Arrow in date bar?",
+        "Ext: Should enable/disable change the project status? Or just notify PMs?",
+        "Ext: Add Columns: Show sums",
+        "Ext: Show departments hierarchy",
+        "Ext: Show unassigned users",
+        "Ext: Reset Configuration should also reset stored status",
+        "Bug: Reset Configuration doesn't work anymore"
+    ];
+    for (var i = 0; i < issues.length; i++) {
+        var item = Ext.create('Ext.menu.Item', {
+            text: issues[i]
+        });
+        betaMenu.add(item);
+    }
+
+    /* ***********************************************************************
+     * Config Menu
+     *********************************************************************** */
+
+    var configMenuOnItemCheck = function(item, checked){
+        console.log('configMenuOnItemCheck: item.id='+item.id);
+        senchaPreferenceStore.setPreference('@page_url@', item.id, checked);
+        portfolioPlannerProjectPanel.redraw();
+        portfolioPlannerCostCenterPanel.redraw();
+    }
+
+    var configMenu = Ext.create('Ext.menu.Menu', {
+        id: 'configMenu',
+        style: {overflow: 'visible'},     // For the Combo popup
+        items: [{
+                text: 'Reset Configuration',
+                handler: function() {
+                    console.log('configMenuOnResetConfiguration');
+                    senchaPreferenceStore.each(function(model) {
+                        var url = model.get('preference_url');
+                        if (url != '@page_url@') { return; }
+                        model.destroy();
+                    });
+		    // Reset column configuration
+		    projectGridColumnConfig.each(function(model) { 
+			model.destroy({
+			    success: function(model) {
+				console.log('configMenuOnResetConfiguration: Successfully destroyed a CC config');
+				var count = projectGridColumnConfig.count() + costCenterGridColumnConfig.count();
+				if (0 == count) {
+				    // Reload the page. 
+				    var params = Ext.urlDecode(location.search.substring(1));
+				    var url = window.location.pathname + '?' + Ext.Object.toQueryString(params);
+				    window.location = url;
+				}
+			    }
+			}); 
+		    });
+		    costCenterGridColumnConfig.each(function(model) { 
+			model.destroy({
+			    success: function(model) {
+				console.log('configMenuOnResetConfiguration: Successfully destroyed a CC config');
+				var count = projectGridColumnConfig.count() + costCenterGridColumnConfig.count();
+				if (0 == count) {
+				    // Reload the page. 
+				    var params = Ext.urlDecode(location.search.substring(1));
+				    var url = window.location.pathname + '?' + Ext.Object.toQueryString(params);
+				    window.location = url;
+				}
+			    }
+			}); 
+		    });
+                }
+        }, '-']
+    });
+
+    // Setup the configMenu items
+    var confSetupStore = Ext.create('Ext.data.Store', {
+        fields: ['key', 'text', 'def'],
+        data : [
+            {key: 'show_project_dependencies', text: 'Show Project Dependencies', def: true},
+            {key: 'show_project_resource_load', text: 'Show Project Assigned Resources', def: true},
+            {key: 'show_dept_assigned_resources', text: 'Show Department Assigned Resources', def: true},
+            {key: 'show_dept_available_resources', text: 'Show Department Available Resources', def: false},
+            {key: 'show_dept_percent_work_load', text: 'Show Department % Work Load', def: true},
+            {key: 'show_dept_accumulated_overload', text: 'Show Department Accumulated Overload', def: false}
+        ]
+    });
+    confSetupStore.each(function(model) {
+        console.log('confSetupStore: '+model);
+        var key = model.get('key');
+        var def = model.get('def');
+        var checked = senchaPreferenceStore.getPreferenceBoolean(key, def);
+        if (!senchaPreferenceStore.existsPreference(key)) {
+            senchaPreferenceStore.setPreference('@page_url@', key, checked ? 'true' : 'false');
+        }
+        var item = Ext.create('Ext.menu.CheckItem', {
+            id: key,
+            text: model.get('text'),
+            checked: checked,
+            checkHandler: configMenuOnItemCheck
+        });
+        configMenu.add(item);
+    });
+
+
+/**
+ * GanttButtonPanel
+ */
+Ext.define('PO.view.gantt_editor.GanttButtonPanel', {
+    extend: 'Ext.panel.Panel',
+    alias: 'ganttButtonPanel',
+    width: 900,
+    height: 500,
+    layout: 'border',
+    defaults: {
+	collapsible: true,
+	split: true,
+	bodyPadding: 0
+    },
+    tbar: [
+	{
+	    text: 'OK',
+	    icon: '/intranet/images/navbar_default/disk.png',
+	    tooltip: 'Save the project to the ]po[ back-end',
+	    id: 'buttonSave'
+	}, {
+	    icon: '/intranet/images/navbar_default/folder_go.png',
+	    tooltip: 'Load a project from he ]po[ back-end',
+	    id: 'buttonLoad'
+	}, {
+	    xtype: 'tbseparator' 
+	}, {
+	    icon: '/intranet/images/navbar_default/add.png',
+	    tooltip: 'Add a new task',
+	    id: 'buttonAdd'
+	}, {
+	    icon: '/intranet/images/navbar_default/delete.png',
+	    tooltip: 'Delete a task',
+	    id: 'buttonDelete'
+	}, {
+	    xtype: 'tbseparator' 
+	}, {
+	    icon: '/intranet/images/navbar_default/arrow_left.png',
+	    tooltip: 'Reduce Indent',
+	    id: 'buttonReduceIndent'
+	}, {
+	    icon: '/intranet/images/navbar_default/arrow_right.png',
+	    tooltip: 'Increase Indent',
+	    id: 'buttonIncreaseIndent'
+	}, {
+	    xtype: 'tbseparator'
+	}, {
+	    icon: '/intranet/images/navbar_default/link_add.png',
+	    tooltip: 'Add dependency',
+	    id: 'buttonAddDependency'
+	}, {
+	    icon: '/intranet/images/navbar_default/link_break.png',
+	    tooltip: 'Break dependency',
+	    id: 'buttonBreakDependency'
+	}, '->' , {
+	    icon: '/intranet/images/navbar_default/zoom_in.png',
+	    tooltip: 'Zoom in time axis',
+	    id: 'buttonZoomIn'
+	}, {
+	    icon: '/intranet/images/navbar_default/zoom_out.png',
+	    tooltip: 'Zoom out of time axis',
+	    id: 'buttonZoomOut'
+        }, {
+            text: 'Configuration',
+            icon: '/intranet/images/navbar_default/wrench.png',
+            menu: configMenu
+        }, {
+            text: 'Help',
+            icon: '/intranet/images/navbar_default/help.png',
+            menu: helpMenu
+        }, {
+            text: 'This is Alpha!',
+            icon: '/intranet/images/navbar_default/bug.png',
+            menu: betaMenu
+	}
+    ]
+});
+
+
     var ganttTreePanel = Ext.create('PO.view.gantt.GanttTreePanel', {
         width:		300,
         region:		'west',
@@ -531,8 +758,8 @@ function launchGanttEditor(){
             id: 'gradientId',
             angle: 66,
             stops: {
-                0: { color: '#ddf' },
-                100: { color: '#00A' }
+                0: { color: '#cdf' },
+                100: { color: '#ace' }
             }
         }, {
             id: 'gradientId2',
@@ -568,7 +795,7 @@ function launchGanttEditor(){
     var sideBarSize = Ext.get('sidebar').getSize();
     var width = screenSize.width - sideBarSize.width - 95;
     var height = screenSize.height - 280;
-    var ganttEditor = Ext.create('PO.view.gantt.GanttButtonPanel', {
+    var ganttEditor = Ext.create('PO.view.gantt_editor.GanttButtonPanel', {
         width: width,
         height: height,
         resizable: true,				// Add handles to the panel, so the user can change size
@@ -598,38 +825,44 @@ function launchGanttEditor(){
 };
 
 
-
+/**
+ * onReady() - Launch the application
+ * Uses StoreCoordinator to load essential data
+ * before clling launchGanttEditor() to start the
+ * actual applicaiton.
+ */
 Ext.onReady(function() {
-    Ext.QuickTips.init();
+    Ext.QuickTips.init();                                                       // No idea why this is necessary, but it is...
 
-    var statusStore = Ext.create('PO.store.project.ProjectStatusStore');
     var taskTreeStore = Ext.create('PO.store.timesheet.TaskTreeStore');
+    var senchaPreferenceStore = Ext.create('PO.store.user.SenchaPreferenceStore');
 
-    // Use a "store coodinator" in order to launchGanttEditor() only
-    // if all stores have been loaded:
+    // Store Coodinator starts app after all stores have been loaded:
     var coordinator = Ext.create('PO.controller.StoreLoadCoordinator', {
-        stores:			[
-            'projectStatusStore', 
-            'taskTreeStore'
+        stores: [
+            'taskTreeStore',
+	    'senchaPreferenceStore'
         ],
         listeners: {
             load: function() {
-                // Check if the application was launched before
-                if ("boolean" == typeof this.loadedP) { return; }
-                // Launch the actual application.
-                launchGanttEditor();
-                // Mark the application as launched
-                this.loadedP = true;
+                if ("boolean" == typeof this.loadedP) { return; }                // Check if the application was launched before
+                launchGanttEditor();                                             // Launch the actual application.
+                this.loadedP = true;                                             // Mark the application as launched
             }
         }
     });
-
 
     // Load stores that need parameters
     taskTreeStore.getProxy().extraParams = { project_id: @project_id@ };
     taskTreeStore.load({
         callback: function() {
             console.log('PO.store.timesheet.TaskTreeStore: loaded');
+        }
+    });
+
+    senchaPreferenceStore.load({                                                 // Preferences for the GanttEditor
+        callback: function() {
+            console.log('PO.store.user.SenchaPreferenceStore: loaded');
         }
     });
 
