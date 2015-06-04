@@ -13,6 +13,9 @@
 # defined by the calling /tcl/*.tcl libary:
 #	project_id
 
+
+set page_url [im_url_with_query]
+
 # project_id may be overwritten by SQLs below
 set main_project_id $project_id
 
