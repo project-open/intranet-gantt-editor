@@ -24,3 +24,9 @@ set gantt_editor_rand [expr round(rand() * 100000000.0)]
 set gantt_editor_id "gantt_editor_$gantt_editor_rand"
 
 
+db_1row project_info "
+	select	start_date::date as report_start_date,
+		end_date::date as report_end_date
+	from	im_projects
+	where	project_id = :project_id
+"

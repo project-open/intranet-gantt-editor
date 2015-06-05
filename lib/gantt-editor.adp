@@ -15,35 +15,35 @@ Ext.require([
     'Ext.tree.*',
     'Ext.ux.CheckColumn',
     'PO.class.CategoryStore',
-    'PO.model.timesheet.TimesheetTask',
     'PO.controller.StoreLoadCoordinator',
-    'PO.store.project.ProjectStatusStore',
+    'PO.model.timesheet.TimesheetTask',
     'PO.store.timesheet.TaskTreeStore',
-    'PO.view.gantt.AbstractGanttPanel'
+    'PO.store.user.SenchaPreferenceStore',
+    'PO.view.gantt.AbstractGanttPanel',
+    'PO.view.menu.HelpMenu'
 ]);
 
 
 /**
- * Like a chart Series, displays a list of projects
+ * Like a chart Series, displays a list of tasks
  * using Gantt bars.
  */
 Ext.define('PO.view.gantt_editor.GanttTaskPanel', {
     extend: 'PO.view.gantt.AbstractGanttPanel',
 
     requires: [
-	'PO.view.gantt.AbstractGanttPanel',
+        'PO.view.gantt.AbstractGanttPanel',
         'Ext.draw.Component',
         'Ext.draw.Surface',
         'Ext.layout.component.Draw'
     ],
 
     // Really Necessary???
-    projectResourceLoadStore: null,
-    costCenterResourceLoadStore: null,				// Reference to cost center store, set during init
-    taskDependencyStore: null,				// Reference to cost center store, set during init
-    skipGridSelectionChange: false,				// Temporaritly disable updates
-    dependencyContextMenu: null,
+    taskDependencyStore: null,					// Reference to cost center store, set during init
     preferenceStore: null,
+
+    barHash: {},                                     // Hash array from object_ids -> Start/end point
+    taskModelHash: {},						// Start and end date of tasks
 
     /**
      * Starts the main editor panel as the right-hand side
@@ -54,6 +54,23 @@ Ext.define('PO.view.gantt_editor.GanttTaskPanel', {
         var me = this;
         console.log('PO.view.gantt_editor.GanttTaskPanel.initComponent: Starting');
         this.callParent(arguments);
+
+        me.barHeight = 15;
+	me.arrowheadSize = 5;
+	/*
+        me.axisStartX = 10;
+        me.axisEndX = 490;
+        me.ganttWidth = 500;
+        me.ganttHeight = 300;
+        me.axisHeight = 20;                             // Height of each(!) axis, there should be two.
+        me.dndBase = null;                              // Drag-and-drop starting point
+        me.dndBaseObject = null;
+        me.dndTranslate = [0,0];                        // Default translate of the surface
+        me.dndStartRawCoordinates = null;
+        me.taskModelHash = {};
+	*/
+
+
 
         // Attract events from the TreePanel showing the task names etc.
         me.objectPanel.on({
@@ -73,7 +90,6 @@ Ext.define('PO.view.gantt_editor.GanttTaskPanel', {
         // The view seems to take a while...
         me.objectPanel.on({
             'viewready': me.onProjectGridViewReady,
-            'selectionchange': me.onProjectGridSelectionChange,
             'sortchange': me.onProjectGridSortChange,
             'scope': this
         });
@@ -91,6 +107,19 @@ Ext.define('PO.view.gantt_editor.GanttTaskPanel', {
             'load': me.onTaskDependencyStoreChange,
             'scope': this
         });
+
+        // Iterate through all children of the root node and check if they are visible
+        var rootNode = me.objectStore.getRootNode();
+        rootNode.cascadeBy(function(model) {
+            var id = model.get('id');
+            me.taskModelHash[id] = model;		// Quick storage of models
+        });
+
+        me.axisStartDate = me.currentMonth(me.reportStartDate);
+        me.axisEndDate = me.nextMonth(me.reportEndDate);
+
+        this.addEvents('move');
+
         console.log('PO.view.gantt_editor.GanttTaskPanel.initComponent: Finished');
     },
 
@@ -129,7 +158,7 @@ Ext.define('PO.view.gantt_editor.GanttTaskPanel', {
     },
 
     /**
-     * The list of projects is (finally...) ready to be displayed.
+     * The list of tasks is (finally...) ready to be displayed.
      * We need to wait until this one-time event in in order to
      * set the width of the surface and to perform the first redraw().
      * Write the selection preferences into the SelModel.
@@ -137,24 +166,6 @@ Ext.define('PO.view.gantt_editor.GanttTaskPanel', {
     onProjectGridViewReady: function() {
         var me = this;
         console.log('PO.view.gantt_editor.GanttTaskPanel.onProjectGridViewReady: Starting');
-        var selModel = me.objectPanel.getSelectionModel();
-
-        var atLeastOneProjectSelected = false
-        me.objectStore.each(function(model) {
-            var projectId = model.get('project_id');
-            var sel = me.preferenceStore.getPreferenceBoolean('project_selected.' + projectId, true);
-            if (sel) {
-                me.skipGridSelectionChange = true;
-                selModel.select(model, true);
-                me.skipGridSelectionChange = false;
-                atLeastOneProjectSelected = true;
-            }
-        });
-
-        if (!atLeastOneProjectSelected) {
-            // This will also update the preferences(??)
-            selModel.selectAll(true);
-        }
 
         console.log('PO.view.gantt_editor.GanttTaskPanel.onProjectGridViewReady: Finished');
     },
@@ -166,42 +177,13 @@ Ext.define('PO.view.gantt_editor.GanttTaskPanel', {
         console.log('PO.view.gantt_editor.GanttTaskPanel.onProjectGridSortChange: Finished');
     },
 
-    onProjectGridSelectionChange: function(selModel, models, eOpts) {
-        var me = this;
-        if (me.skipGridSelectionChange) { return; }
-        console.log('PO.view.gantt_editor.GanttTaskPanel.onProjectGridSelectionChange: Starting');
-
-        me.objectStore.each(function(model) {
-            var projectId = model.get('project_id');
-            var prefSelected = me.preferenceStore.getPreferenceBoolean('project_selected.' + projectId, true);
-            if (selModel.isSelected(model)) {
-                model.set('projectGridSelected', 1);
-                if (!prefSelected) {
-                    me.preferenceStore.setPreference('@page_url@', 'project_selected.' + projectId, 'true');
-                }
-            } else {
-                model.set('projectGridSelected', 0);
-                if (prefSelected) {
-                    me.preferenceStore.setPreference('@page_url@', 'project_selected.' + projectId, 'false');
-                }
-            }
-        });
-
-        // Reload the Cost Center Resource Load Store with the new selected/changed projects
-        me.costCenterResourceLoadStore.loadWithProjectData(me.objectStore, me.preferenceStore);
-
-        me.redraw();
-        console.log('PO.view.gantt_editor.GanttTaskPanel.onProjectGridSelectionChange: Finished');
-    },
-
-
     /**
      * The user has right-clicked on a sprite.
      */
     onSpriteRightClick: function(event, sprite) {
         var me = this;
         console.log('PO.view.gantt_editor.GanttTaskPanel.onSpriteRightClick: Starting: '+ sprite);
-        if (null == sprite) { return; }                             // Something went completely wrong...
+        if (null == sprite) { return; }                     	// Something went completely wrong...
 
         var className = sprite.model.$className;
         switch(className) {
@@ -223,20 +205,20 @@ Ext.define('PO.view.gantt_editor.GanttTaskPanel', {
     onDependencyRightClick: function(event, sprite) {
         var me = this;
         console.log('PO.view.gantt_editor.GanttTaskPanel.onDependencyRightClick: Starting: '+ sprite);
-        if (null == sprite) { return; }                             // Something went completely wrong...
+        if (null == sprite) { return; }                     	// Something went completely wrong...
         var dependencyModel = sprite.model;
 
         // Menu for right-clicking a dependency arrow.
         if (!me.dependencyContextMenu) {
             me.dependencyContextMenu = Ext.create('Ext.menu.Menu', {
                 id: 'dependencyContextMenu',
-                style: {overflow: 'visible'},     // For the Combo popup
+                style: {overflow: 'visible'}, 	// For the Combo popup
                 items: [{
                     text: 'Delete Dependency',
                     handler: function() {
                         console.log('dependencyContextMenu.deleteDependency: ');
 
-                        me.taskDependencyStore.remove(dependencyModel);           // Remove from store
+                        me.taskDependencyStore.remove(dependencyModel);   	// Remove from store
                         dependencyModel.destroy({
                             success: function() {
                         	console.log('Dependency destroyed');
@@ -260,7 +242,7 @@ Ext.define('PO.view.gantt_editor.GanttTaskPanel', {
     onProjectRightClick: function(event, sprite) {
         var me = this;
         console.log('PO.view.gantt_editor.GanttTaskPanel.onProjectRightClick: '+ sprite);
-        if (null == sprite) { return; }                             // Something went completely wrong...
+        if (null == sprite) { return; }                     	// Something went completely wrong...
     },
 
 
@@ -275,9 +257,9 @@ Ext.define('PO.view.gantt_editor.GanttTaskPanel', {
 
         if (null == fromSprite) { return; } // Something went completely wrong...
         if (null != toSprite && fromSprite != toSprite) {
-            me.onCreateDependency(fromSprite, toSprite);            // dropped on another sprite - create dependency
+            me.onCreateDependency(fromSprite, toSprite);    	// dropped on another sprite - create dependency
         } else {
-            me.onProjectMove(fromSprite, diffPoint[0]);            // Dropped on empty space or on the same bar
+            me.onProjectMove(fromSprite, diffPoint[0]);    	// Dropped on empty space or on the same bar
         }
         console.log('PO.view.gantt_editor.GanttTaskPanel.onSpriteDnD: Finished');
     },
@@ -319,6 +301,51 @@ Ext.define('PO.view.gantt_editor.GanttTaskPanel', {
     },
 
     /**
+     * Create a dependency between two two tasks.
+     * This function is called by onMouseUp as a successful 
+     * "drop" action if the drop target is another project.
+     */
+    onCreateDependency: function(fromSprite, toSprite) {
+        var me = this;
+        var fromTaskModel = fromSprite.model;
+        var toTaskModel = toSprite.model;
+        if (null == fromTaskModel) return;
+        if (null == toTaskModel) return;
+        console.log('PO.view.portfolio_planner.PortfolioPlannerTaskPanel.onCreateDependency: Starting: '+fromTaskModel.get('id')+' -> '+toTaskModel.get('id'));
+
+        // Try connecting the two tasks via a task dependency
+        var fromTaskId = fromTaskModel.get('task_id');			// String value!
+        if (null == fromTaskId) { return; }					// Something went wrong...
+        var toTaskId = toTaskModel.get('task_id');			// String value!
+        if (null == toTaskId) { return; }					// Something went wrong...
+
+        // Create a new dependency object
+        console.log('PO.view.gantt.AbstractGanttPanel.createDependency: '+fromTaskId+' -> '+toTaskId);
+        var dependency = new Ext.create('PO.model.timesheet.TimesheetTaskDependency', {
+            task_id_one: fromTaskId,
+            task_id_two: toTaskId
+        });
+        dependency.save({
+            success: function(depModel, operation) {
+                console.log('PO.view.gantt.AbstractGanttPanel.createDependency: successfully created dependency');
+                
+                // Reload the store, because the store gets extra information from the data-source
+                me.taskDependencyStore.reload({
+                    callback: function(records, operation, result) {
+                        console.log('taskDependencyStore.reload');
+                        me.redraw();
+                    }
+                });
+            },
+            failure: function(depModel, operation) {
+                var message = operation.request.scope.reader.jsonData.message;
+                Ext.Msg.alert('Error creating dependency', message);
+            }
+        });
+        console.log('PO.view.portfolio_planner.PortfolioPlannerProjectPanel.onCreateDependency: Finished');
+    },
+
+    /**
      * Draw all Gantt bars
      */
     redraw: function(a,b,c,d,e) {
@@ -326,45 +353,42 @@ Ext.define('PO.view.gantt_editor.GanttTaskPanel', {
         var me = this;
         if (undefined === me.surface) { return; }
 
-        var ganttTreeStore = me.ganttTreePanel.store;
-        var ganttTreeView = me.ganttTreePanel.getView();
-        var rootNode = ganttTreeStore.getRootNode();
+        var ganttTreeView = me.objectPanel.getView();
+        var rootNode = me.objectStore.getRootNode();
 
-        me.surface.removeAll();
         // me.surface.setSize(me.ganttSurfaceWidth, me.surface.height);	// Set the size of the drawing area
-        me.drawAxis();        // Draw the top axis
+        me.surface.removeAll();
+        me.drawAxis();                         	// Draw the top axis
 
         // Iterate through all children of the root node and check if they are visible
         rootNode.cascadeBy(function(model) {
             var viewNode = ganttTreeView.getNode(model);
-
-            // hidden nodes/models don't have a viewNode, so we don't need to draw a bar.
-            if (viewNode == null) { return; }
-            if (!model.isVisible()) { return; }
+            if (viewNode == null) { return; }    	// hidden nodes/models don't have a viewNode, so we don't need to draw a bar.
+            // if (!model.isVisible()) { return; }
             me.drawProjectBar(model, viewNode);
         });
 
         // Iterate through all children and draw dependencies
         if (me.preferenceStore.getPreferenceBoolean('show_project_dependencies', true)) {
             rootNode.cascadeBy(function(model) {
-		var viewNode = ganttTreeView.getNode(model);
-		var dependentTasks = model.get('successors');
-		if (dependentTasks instanceof Array) {
+        	var viewNode = ganttTreeView.getNode(model);
+        	var dependentTasks = model.get('successors');
+        	if (dependentTasks instanceof Array) {
                     for (var i = 0, len = dependentTasks.length; i < len; i++) {
-			var depTask = dependentTasks[i];
-			var depNode = me.taskModelHash[depTask];
-			me.drawDependency(model, depNode);
+        		var depTask = dependentTasks[i];
+        		var depNode = me.taskModelHash[depTask];
+        		me.drawDependency(model, depNode, model);
                     }
-		}
+        	}
             });
-	}
+        }
         console.log('PO.class.GanttDrawComponent.redraw: Finished');
     },
 
     /**
      * Draws a dependency line from one bar to the next one
      */
-    drawDependency: function(predecessor, successor) {
+    drawDependency: function(predecessor, successor, dependencyModel) {
         var me = this;
 
         if (!predecessor) { 
@@ -380,20 +404,73 @@ Ext.define('PO.view.gantt_editor.GanttTaskPanel', {
         var to = successor.get('id');
         var s = me.arrowheadSize;
 
-        var startPoint = me.barEndHash[from];             // We start drawing with the end of the first bar...
-        var endPoint = me.barStartHash[to];               // .. and draw towards the start of the 2nd bar.
-        if (!startPoint || !endPoint) { return; }
-        // console.log('Dependency: '+from+' -> '+to+': '+startPoint+' -> '+endPoint);
+        var fromBBox = me.barHash[from];			// We start drawing with the end of the first bar...
+        var toBBox = me.barHash[to];			        // .. and draw towards the start of the 2nd bar.
+        if (!fromBBox || !toBBox) { return; }
 
-        // Point arithmetics
-        var startX = startPoint[0];
-        var startY = startPoint[1];
-        var endX = endPoint[0];
-        var endY = endPoint[1];
-        startY = startY - (me.barHeight/2);   // Start off in the middle of the first bar
-        if (endY < startY) {                  // Drawing from a lower bar to a bar further up
-            endY = endY + me.barHeight;       // Draw to the bottom of the bar
+        // Assuming end-to-start dependencies from a earlier task to a later task
+        var startX = fromBBox[2];
+        var startY = fromBBox[3];
+        var endX = toBBox[0];
+        var endY = toBBox[1];
+
+        // Color: Arrows are black if dependencies are OK, or red otherwise
+        var color = '#222';
+        if (endX < startX) { color = 'red'; }
+
+        // Set the vertical start point to Correct the start/end Y position
+        // and the direction of the arrow head
+        var sDirected = null;
+        if (endY > startY) {
+            // startY = startY + me.barHeight;
+            sDirected = -s;            // Draw "normal" arrowhead pointing downwards
+	    startY = startY - 2;
+            endY = endY + 0;
+        } else {
+	    startY = startY - me.barHeight + 4;
+            endY = endY + me.barHeight - 2;
+            sDirected = +s;            // Draw arrowhead pointing upward
         }
+
+        // Draw the arrow head (filled)
+        var arrowHead = me.surface.add({
+            type: 'path',
+            stroke: color,
+            fill: color,
+            'stroke-width': 0.5,
+            path: 'M '+ (endX)   + ',' + (endY)            // point of arrow head
+                + 'L '+ (endX-s) + ',' + (endY + sDirected)
+                + 'L '+ (endX+s) + ',' + (endY + sDirected)
+                + 'L '+ (endX)   + ',' + (endY)
+        }).show(true);
+        arrowHead.model = dependencyModel;
+
+        // Draw the main connection line between start and end.
+        var arrowLine = me.surface.add({
+            type: 'path',
+            stroke: color,
+            'shape-rendering': 'crispy-edges',
+            'stroke-width': 0.5,
+            path: 'M '+ (startX) + ',' + (startY)
+                + 'L '+ (startX) + ',' + (startY - sDirected)
+                + 'L '+ (endX)   + ',' + (endY + sDirected * 2)
+                + 'L '+ (endX)   + ',' + (endY + sDirected)
+        }).show(true);
+        arrowLine.model = dependencyModel;
+
+	// Add a tool tip to the dependency
+	var html = "<b>Project Dependency</b>:<br>" +
+	    "From task <a href='/intranet/projects/view?project_id=" + dependencyModel.get('task_id_one') + "' target='_blank'>" + dependencyModel.get('task_one_name') + "</a> of " +
+	    "project <a href='/intranet/projects/view?project_id=" + dependencyModel.get('main_project_id_one') + "' target='_blank'>" + dependencyModel.get('main_project_name_one') + "</a> to " +
+	    "task <a href='/intranet/projects/view?project_id=" + dependencyModel.get('task_id_two') + "' target='_blank'>" + dependencyModel.get('task_two_name') + "</a> of " +
+	    "project <a href='/intranet/projects/view?project_id=" + dependencyModel.get('main_project_id_two') + "' target='_blank'>" + dependencyModel.get('main_project_name_two') + "</a>";
+        var tip1 = Ext.create("Ext.tip.ToolTip", { target: arrowHead.el, width: 250, html: html, hideDelay: 1000 }); // give 1 second to click on project link
+        var tip2 = Ext.create("Ext.tip.ToolTip", { target: arrowLine.el, width: 250, html: html, hideDelay: 1000 });
+        console.log('PO.view.portfolio_planner.PortfolioPlannerProjectPanel.drawTaskDependency: Finished');
+
+
+	return;
+
 
         // Draw the main connection line between start and end.
         var line = me.surface.add({
@@ -427,8 +504,8 @@ Ext.define('PO.view.gantt_editor.GanttTaskPanel', {
                 fill: '#444',
                 'stroke-width': 0.5,
                 path: 'M '+ (endX+s)   + ',' + (endY)
-                    + 'L '+ (endX-s+s) + ',' + (endY+s)     // +s here on the Y coordinate, so that the arrow...
-                    + 'L '+ (endX+2*s) + ',' + (endY+s)     // .. points from bottom up.
+                    + 'L '+ (endX-s+s) + ',' + (endY+s)				// +s here on the Y coordinate, so that the arrow...
+                    + 'L '+ (endX+2*s) + ',' + (endY+s)				// .. points from bottom up.
                     + 'L '+ (endX+s)   + ',' + (endY)
             }).show(true);
         }
@@ -462,7 +539,7 @@ Ext.define('PO.view.gantt_editor.GanttTaskPanel', {
                 fill: 'url(#gradientId)',
                 stroke: 'blue',
                 'stroke-width': 0.3,
-                listeners: {						// Highlight the sprite on mouse-over
+                listeners: {							// Highlight the sprite on mouse-over
                     mouseover: function() { this.animate({duration: 500, to: {'stroke-width': 2.0}}); },
                     mouseout: function()  { this.animate({duration: 500, to: {'stroke-width': 0.3}}); }
                 }
@@ -486,23 +563,16 @@ Ext.define('PO.view.gantt_editor.GanttTaskPanel', {
                 }
             }).show(true);
         }
-        spriteBar.model = project;                                      // Store the task information for the sprite
+        spriteBar.model = project;					// Store the task information for the sprite
 
         // Store the start and end points of the bar
         var id = project.get('id');
-        me.barStartHash[id] = [x,y];                                  // Move the start of the bar 5px to the right
-        me.barEndHash[id] = [x+w, y+h];                             // End of the bar is in the middle of the bar
+        me.barHash[id] = [x,y,x+w,y+h];                                  // Move the start of the bar 5px to the right
+    },
 
-        // Draw availability percentage
-        if (me.preferenceStore.getPreferenceBoolean('show_project_resource_load', true)) {
-            var assignedDays = project.get('assigned_days');
-            var colorConf = 'blue';
-            var template = new Ext.Template("<div><b>Project Assignment</b>:<br>There are {value} resources assigned to project '{project_name}' and it's subprojects between {startDate} and {endDate}.<br></div>");
-            me.graphOnGanttBar(spriteBar, project, assignedDays, null, new Date(startTime), colorConf, template);
-        }
-        if (me.debug) { console.log('PO.view.gantt_editor.GanttTaskPanel.drawProjectBar: Finished'); }
+    onTaskDependencyStoreChange: function() {
+        console.log('PO.view.portfolio_planner.PortfolioPlannerProjectPanel.onTaskDependencyStoreChange: Starting/Finished');
     }
-
 });
 
 
@@ -517,68 +587,46 @@ function launchGanttEditor(){
 
     var taskTreeStore = Ext.StoreManager.get('taskTreeStore');
     var senchaPreferenceStore = Ext.StoreManager.get('senchaPreferenceStore');
-
-
+    var taskDependencyStore = Ext.StoreManager.get('timesheetTaskDependencyStore');
 
     /* ***********************************************************************
      * Help Menu
      *********************************************************************** */
-    var helpMenu = Ext.create('Ext.menu.Menu', {
+    var helpMenu = Ext.create('PO.view.menu.HelpMenu', {
         id: 'helpMenu',
-        style: {overflow: 'visible'},     // For the Combo popup
-        items: [{
-            text: 'Portfolio Editor Home',
-            href: 'http://www.project-open.org/en/page_intranet_portfolio_planner_index',
-            hrefTarget: '_blank'
-        }, '-', {
-            text: 'Configuration',
-            href: 'http://www.project-open.org/en/page_intranet_portfolio_planner_index#configuration',
-            hrefTarget: '_blank'
-        }, {
-            text: 'Project Dependencies',
-            href: 'http://www.project-open.org/en/page_intranet_portfolio_planner_index#dependencies',
-            hrefTarget: '_blank'
-        }, {
-            text: 'Column Configuration',
-            href: 'http://www.project-open.org/en/page_intranet_portfolio_planner_index#column_configuration',
-            hrefTarget: '_blank'
-        }]
+        style: {overflow: 'visible'},					// For the Combo popup
+        store: Ext.create('Ext.data.Store', { fields: ['text', 'url'], data: [
+            {text: 'Gantt Editor Home', url: 'http://www.project-open.com/en/page_intranet_gantt_editor_index'},
+            {text: '-'},
+            {text: 'Only Text'},
+            {text: 'Google', url: 'http://www.google.com'}
+        ]})
     });
-  
 
     /* ***********************************************************************
      * Alpha Menu
      *********************************************************************** */
-    var betaMenu = Ext.create('Ext.menu.Menu', {
-        id: 'betaMenu',
-        style: {overflow: 'visible'},     // For the Combo popup
-        items: [{
-            text: '<b>This is Experimental and "Alpha" Software</b> - Please see known issues below',
-            href: 'http://www.project-open.org/en/page_intranet_portfolio_planner_index',
-            hrefTarget: '_blank'
-        }, '-']
+
+    var alphaMenu = Ext.create('PO.view.menu.HelpMenu', {
+        id: 'alphaMenu',
+        style: {overflow: 'visible'},					// For the Combo popup
+        store: Ext.create('Ext.data.Store', { fields: ['text', 'url'], data: [
+            {text: '<b>This is Experimental and "Alpha" Software</b> - Please see known issues below', url: 'http://www.project-open.com/en/package_intranet_gantt_editor'},
+            {text: '-'},
+            {text: 'Bug: Ssssshow red dependency arrows if somebody disables a referenced project'},
+            {text: 'Ext: Show Save only if something has changed (project store)'},
+            {text: "Bug: Firefox doesn't show cost centers when the ExtJS page is longer than the browser page"},
+            {text: "Bug: Don't show SLAs and similar projects"},
+            {text: 'Ext: Exclude certain other (small) projects? How?'},
+            {text: 'Ext: Allow some form of left/right scrolling. Arrow in date bar?'},
+            {text: 'Ext: Should enable/disable change the project status? Or just notify PMs?'},
+            {text: 'Ext: Add Columns: Show sums'},
+            {text: 'Ext: Show departments hierarchy'},
+            {text: 'Ext: Show unassigned users'},
+            {text: 'Ext: Reset Configuration should also reset stored status'},
+            {text: "Bug: Reset Configuration doesn't work anymore"}
+        ]})
     });
-    
-    var issues = [
-        "Bug: Show red dependency arrows if somebody disables a referenced project",
-        "Ext: Show Save only if something has changed (project store)",
-        "Bug: Firefox doesn't show cost centers when the ExtJS page is longer than the browser page",
-        "Bug: Don't show SLAs and similar projects",
-        "Ext: Exclude certain other (small) projects? How?",
-        "Ext: Allow some form of left/right scrolling. Arrow in date bar?",
-        "Ext: Should enable/disable change the project status? Or just notify PMs?",
-        "Ext: Add Columns: Show sums",
-        "Ext: Show departments hierarchy",
-        "Ext: Show unassigned users",
-        "Ext: Reset Configuration should also reset stored status",
-        "Bug: Reset Configuration doesn't work anymore"
-    ];
-    for (var i = 0; i < issues.length; i++) {
-        var item = Ext.create('Ext.menu.Item', {
-            text: issues[i]
-        });
-        betaMenu.add(item);
-    }
 
     /* ***********************************************************************
      * Config Menu
@@ -603,35 +651,35 @@ function launchGanttEditor(){
                         if (url != '@page_url@') { return; }
                         model.destroy();
                     });
-		    // Reset column configuration
-		    projectGridColumnConfig.each(function(model) { 
-			model.destroy({
-			    success: function(model) {
-				console.log('configMenuOnResetConfiguration: Successfully destroyed a CC config');
-				var count = projectGridColumnConfig.count() + costCenterGridColumnConfig.count();
-				if (0 == count) {
-				    // Reload the page. 
-				    var params = Ext.urlDecode(location.search.substring(1));
-				    var url = window.location.pathname + '?' + Ext.Object.toQueryString(params);
-				    window.location = url;
-				}
-			    }
-			}); 
-		    });
-		    costCenterGridColumnConfig.each(function(model) { 
-			model.destroy({
-			    success: function(model) {
-				console.log('configMenuOnResetConfiguration: Successfully destroyed a CC config');
-				var count = projectGridColumnConfig.count() + costCenterGridColumnConfig.count();
-				if (0 == count) {
-				    // Reload the page. 
-				    var params = Ext.urlDecode(location.search.substring(1));
-				    var url = window.location.pathname + '?' + Ext.Object.toQueryString(params);
-				    window.location = url;
-				}
-			    }
-			}); 
-		    });
+        	    // Reset column configuration
+        	    projectGridColumnConfig.each(function(model) { 
+        		model.destroy({
+        		    success: function(model) {
+        			console.log('configMenuOnResetConfiguration: Successfully destroyed a CC config');
+        			var count = projectGridColumnConfig.count() + costCenterGridColumnConfig.count();
+        			if (0 == count) {
+        			    // Reload the page. 
+        			    var params = Ext.urlDecode(location.search.substring(1));
+        			    var url = window.location.pathname + '?' + Ext.Object.toQueryString(params);
+        			    window.location = url;
+        			}
+        		    }
+        		}); 
+        	    });
+        	    costCenterGridColumnConfig.each(function(model) { 
+        		model.destroy({
+        		    success: function(model) {
+        			console.log('configMenuOnResetConfiguration: Successfully destroyed a CC config');
+        			var count = projectGridColumnConfig.count() + costCenterGridColumnConfig.count();
+        			if (0 == count) {
+        			    // Reload the page. 
+        			    var params = Ext.urlDecode(location.search.substring(1));
+        			    var url = window.location.pathname + '?' + Ext.Object.toQueryString(params);
+        			    window.location = url;
+        			}
+        		    }
+        		}); 
+        	    });
                 }
         }, '-']
     });
@@ -649,7 +697,6 @@ function launchGanttEditor(){
         ]
     });
     confSetupStore.each(function(model) {
-        console.log('confSetupStore: '+model);
         var key = model.get('key');
         var def = model.get('def');
         var checked = senchaPreferenceStore.getPreferenceBoolean(key, def);
@@ -666,129 +713,330 @@ function launchGanttEditor(){
     });
 
 
-/**
- * GanttButtonPanel
- */
-Ext.define('PO.view.gantt_editor.GanttButtonPanel', {
-    extend: 'Ext.panel.Panel',
-    alias: 'ganttButtonPanel',
-    width: 900,
-    height: 500,
-    layout: 'border',
-    defaults: {
-	collapsible: true,
-	split: true,
-	bodyPadding: 0
-    },
-    tbar: [
-	{
-	    text: 'OK',
-	    icon: '/intranet/images/navbar_default/disk.png',
-	    tooltip: 'Save the project to the ]po[ back-end',
-	    id: 'buttonSave'
-	}, {
-	    icon: '/intranet/images/navbar_default/folder_go.png',
-	    tooltip: 'Load a project from he ]po[ back-end',
-	    id: 'buttonLoad'
-	}, {
-	    xtype: 'tbseparator' 
-	}, {
-	    icon: '/intranet/images/navbar_default/add.png',
-	    tooltip: 'Add a new task',
-	    id: 'buttonAdd'
-	}, {
-	    icon: '/intranet/images/navbar_default/delete.png',
-	    tooltip: 'Delete a task',
-	    id: 'buttonDelete'
-	}, {
-	    xtype: 'tbseparator' 
-	}, {
-	    icon: '/intranet/images/navbar_default/arrow_left.png',
-	    tooltip: 'Reduce Indent',
-	    id: 'buttonReduceIndent'
-	}, {
-	    icon: '/intranet/images/navbar_default/arrow_right.png',
-	    tooltip: 'Increase Indent',
-	    id: 'buttonIncreaseIndent'
-	}, {
-	    xtype: 'tbseparator'
-	}, {
-	    icon: '/intranet/images/navbar_default/link_add.png',
-	    tooltip: 'Add dependency',
-	    id: 'buttonAddDependency'
-	}, {
-	    icon: '/intranet/images/navbar_default/link_break.png',
-	    tooltip: 'Break dependency',
-	    id: 'buttonBreakDependency'
-	}, '->' , {
-	    icon: '/intranet/images/navbar_default/zoom_in.png',
-	    tooltip: 'Zoom in time axis',
-	    id: 'buttonZoomIn'
-	}, {
-	    icon: '/intranet/images/navbar_default/zoom_out.png',
-	    tooltip: 'Zoom out of time axis',
-	    id: 'buttonZoomOut'
-        }, {
-            text: 'Configuration',
-            icon: '/intranet/images/navbar_default/wrench.png',
-            menu: configMenu
-        }, {
-            text: 'Help',
-            icon: '/intranet/images/navbar_default/help.png',
-            menu: helpMenu
-        }, {
-            text: 'This is Alpha!',
-            icon: '/intranet/images/navbar_default/bug.png',
-            menu: betaMenu
+    /**
+     * GanttButtonPanel
+     */
+    Ext.define('PO.view.gantt_editor.GanttButtonPanel', {
+        extend: 'Ext.panel.Panel',
+        alias: 'ganttButtonPanel',
+        width: 900,
+        height: 500,
+        layout: 'border',
+        defaults: {
+            collapsible: true,
+            split: true,
+            bodyPadding: 0
+        },
+        tbar: [
+            {
+        	text: 'OK',
+        	icon: '/intranet/images/navbar_default/disk.png',
+        	tooltip: 'Save the project to the ]po[ back-end',
+        	id: 'buttonSave'
+            }, {
+        	icon: '/intranet/images/navbar_default/folder_go.png',
+        	tooltip: 'Load a project from he ]po[ back-end',
+        	id: 'buttonLoad'
+            }, {
+        	xtype: 'tbseparator' 
+            }, {
+        	icon: '/intranet/images/navbar_default/add.png',
+        	tooltip: 'Add a new task',
+        	id: 'buttonAdd'
+            }, {
+        	icon: '/intranet/images/navbar_default/delete.png',
+        	tooltip: 'Delete a task',
+        	id: 'buttonDelete'
+            }, {
+        	xtype: 'tbseparator' 
+            }, {
+        	icon: '/intranet/images/navbar_default/arrow_left.png',
+        	tooltip: 'Reduce Indent',
+        	id: 'buttonReduceIndent'
+            }, {
+        	icon: '/intranet/images/navbar_default/arrow_right.png',
+        	tooltip: 'Increase Indent',
+        	id: 'buttonIncreaseIndent'
+            }, {
+        	xtype: 'tbseparator'
+            }, {
+        	icon: '/intranet/images/navbar_default/link_add.png',
+        	tooltip: 'Add dependency',
+        	id: 'buttonAddDependency'
+            }, {
+        	icon: '/intranet/images/navbar_default/link_break.png',
+        	tooltip: 'Break dependency',
+        	id: 'buttonBreakDependency'
+            }, '->' , {
+        	icon: '/intranet/images/navbar_default/zoom_in.png',
+        	tooltip: 'Zoom in time axis',
+        	id: 'buttonZoomIn'
+            }, {
+        	icon: '/intranet/images/navbar_default/zoom_out.png',
+        	tooltip: 'Zoom out of time axis',
+        	id: 'buttonZoomOut'
+            }, {
+        	text: 'Configuration',
+        	icon: '/intranet/images/navbar_default/wrench.png',
+        	menu: configMenu
+            }, {
+        	text: 'Help',
+        	icon: '/intranet/images/navbar_default/help.png',
+        	menu: helpMenu
+            }, {
+        	text: 'This is Alpha!',
+        	icon: '/intranet/images/navbar_default/bug.png',
+        	menu: alphaMenu
+            }
+        ]
+    });
+
+    /*
+     * GanttButtonController
+     * This controller is only responsible for button actions
+     */
+    Ext.define('PO.controller.gantt_editor.GanttButtonController', {
+	extend: 'Ext.app.Controller',
+
+	// Variables
+	debug: false,
+	'ganttTreePanel': null,
+	'ganttDrawComponent': null,
+
+	refs: [
+            { ref: 'ganttTreePanel', selector: '#ganttTreePanel' }
+	],
+	
+	init: function() {
+	    var me = this;
+            if (me.debug) { console.log('PO.controller.gantt_editor.GanttButtonController: init'); }
+
+            this.control({
+		'#buttonLoad': { click: this.onButtonLoad },
+		'#buttonSave': { click: this.onButtonSave },
+		'#buttonAdd': { click: { fn: me.ganttTreePanel.onButtonAdd, scope: me.ganttTreePanel }},
+		'#buttonDelete': { click: { fn: me.ganttTreePanel.onButtonDelete, scope: me.ganttTreePanel }},
+		'#buttonReduceIndent': { click: { fn: me.ganttTreePanel.onButtonReduceIndent, scope: me.ganttTreePanel }},
+		'#buttonIncreaseIndent': { click: { fn: me.ganttTreePanel.onButtonIncreaseIndent, scope: me.ganttTreePanel }},
+		'#buttonAddDependency': { click: this.onButton },
+		'#buttonBreakDependency': { click: this.onButton },
+		'#buttonZoomIn': { click: this.onZoomIn },
+		'#buttonZoomOut': { click: this.onZoomOut },
+		'#buttonSettings': { click: this.onButton },
+		scope: me.ganttTreePanel
+            });
+
+            // Listen to changes in the selction model in order to enable/disable the "delete" button.
+            me.ganttTreePanel.on('selectionchange', this.onTreePanelSelectionChange, this);
+
+            // Listen to a click into the empty space below the tree in order to add a new task
+            me.ganttTreePanel.on('containerclick', me.ganttTreePanel.onContainerClick, me.ganttTreePanel);
+
+            // Listen to special keys
+            me.ganttTreePanel.on('cellkeydown', this.onCellKeyDown, me.ganttTreePanel);
+            me.ganttTreePanel.on('beforecellkeydown', this.onBeforeCellKeyDown, me.ganttTreePanel);
+
+            return this;
+	},
+
+	onButtonLoad: function() {
+            console.log('GanttButtonController.ButtonLoad');
+	},
+
+	onButtonSave: function() {
+            console.log('GanttButtonController.ButtonSave');
+	    
+	},
+
+	onZoomIn: function() {
+            console.log('GanttButtonController.onZoomIn');
+	    this.ganttDrawComponent.onZoomIn();
+	},
+
+	onZoomOut: function() {
+            console.log('GanttButtonController.onZoomOut');
+	    this.ganttDrawComponent.onZoomOut();
+	},
+
+	/**
+	 * Control the enabled/disabled status of the (-) (Delete) button
+	 */
+	onTreePanelSelectionChange: function(view, records) {
+            if (this.debug) { console.log('GanttButtonController.onTreePanelSelectionChange'); }
+            var buttonDelete = Ext.getCmp('buttonDelete');
+
+            if (1 == records.length) {            // Exactly one record enabled
+		var record = records[0];
+		buttonDelete.setDisabled(!record.isLeaf());
+            } else {                              // Zero or two or more records enabled
+		buttonDelete.setDisabled(true);
+            }
+	},
+
+	/**
+	 * Disable default tree key actions
+	 */
+	onBeforeCellKeyDown: function(me, htmlTd, cellIndex, record, htmlTr, rowIndex, e, eOpts ) {
+            var keyCode = e.getKey();
+            var keyCtrl = e.ctrlKey;
+            if (this.debug) { console.log('GanttButtonController.onBeforeCellKeyDown: code='+keyCode+', ctrl='+keyCtrl); }
+            var panel = this;
+            switch (keyCode) {
+            case 8: 				// backspace 8
+		panel.onButtonDelete();
+		break;
+            case 37: 				// cursor left
+		if (keyCtrl) {
+        	    panel.onButtonReduceIndent();
+        	    return false;                   // Disable default action (fold tree)
+		}
+		break;
+            case 39: 				// cursor right
+		if (keyCtrl) {
+        	    panel.onButtonIncreaseIndent();
+        	    return false;                   // Disable default action (unfold tree)
+		}
+		break;
+            case 45: 				// insert 45
+		panel.onButtonAdd();
+		break;
+            case 46: 				// delete 46
+		panel.onButtonDelete();
+		break;
+            }
+
+            return true;                            // Enable default TreePanel actions for keys
+	},
+
+	/**
+	 * Handle various key actions
+	 */
+	onCellKeyDown: function(table, htmlTd, cellIndex, record, htmlTr, rowIndex, e, eOpts) {
+            var keyCode = e.getKey();
+            var keyCtrl = e.ctrlKey;
+            // console.log('GanttButtonController.onCellKeyDown: code='+keyCode+', ctrl='+keyCtrl);
 	}
-    ]
-});
+    });
 
 
+
+    /*
+     * GanttResizeController
+     * This controller is only responsible for editor geometry and resizing:
+     * <ul>
+     * <li>The boundaries of the outer window
+     * <li>The separator between the treePanel and the ganttPanel
+     * </ul>
+     */
+    Ext.define('PO.controller.gantt_editor.GanttResizeController', {
+	extend: 'Ext.app.Controller',
+
+	debug: false,
+	'ganttTreePanel': null,
+	'ganttDrawComponent': null,
+
+	refs: [
+            { ref: 'ganttTreePanel', selector: '#ganttTreePanel' }
+	],
+	
+	init: function() {
+	    var me = this;
+            if (me.debug) { console.log('PO.controller.gantt_editor.GanttResizeController: init'); }
+
+	    // Handle collapsable side menu
+	    sideBarTab.on('click', me.onSideBarResize, me);
+
+	    // Deal with resizing the main window
+	    Ext.EventManager.onWindowResize(me.onWindowsResize, me);    
+
+
+	    borderPanel.on('resize', onBorderPanelResize);
+	    Ext.EventManager.onWindowResize(onWindowResize);
+	    var sideBarTab = Ext.get('sideBarTab');
+	    sideBarTab.on('click', onSidebarResize);
+
+
+            return this;
+	},
+
+	onResize: function (sideBarWidth) {
+            console.log('launchApplication.onResize: Starting');
+            var screenWidth = Ext.getBody().getViewSize().width;
+            var width = screenWidth - sideBarWidth;
+            borderPanel.setSize(width, borderPanelHeight);
+        // No redraw necessary, because borderPanel initiates a redraw anyway
+            console.log('launchApplication.onResize: Finished');
+	},
+
+	onWindowResize: function () {
+            console.log('launchApplication.onWindowResize: Starting');
+            var sideBar = Ext.get('sidebar');                               // ]po[ left side bar component
+            var sideBarWidth = sideBar.getSize().width;
+            if (sideBarWidth > 100) {
+		sideBarWidth = 340;                                         // Determines size when Sidebar visible
+            } else {
+		sideBarWidth = 85;                                          // Determines size when Sidebar collapsed
+            }
+            onResize(sideBarWidth);
+            console.log('launchApplication.onWindowResize: Finished');
+	},
+	
+	/**
+	 * Manually changed the size of the borderPanel
+	 */
+	onBorderPanelResize: function () {
+            console.log('launchApplication.onBorderPanelResize: Starting');
+            portfolioPlannerProjectPanel.redraw();
+            portfolioPlannerCostCenterPanel.redraw();
+            console.log('launchApplication.onBorderPanelResize: Finished');
+	};
+
+	/**
+	 * Clicked on the ]po[ "side menu" bar for showing/hiding the left-menu
+	 */
+	onSidebarResize: function () {
+            console.log('launchApplication.onSidebarResize: Starting');
+            var sideBar = Ext.get('sidebar');                               // ]po[ left side bar component
+            var sideBarWidth = sideBar.getSize().width;
+            // We get the event _before_ the sideBar has changed it's size.
+            // So we actually need to the the oposite of the sidebar size:
+            if (sideBarWidth > 100) {
+		sideBarWidth = 85;                                          // Determines size when Sidebar collapsed
+            } else {
+		sideBarWidth = 340;                                         // Determines size when Sidebar visible
+            }
+            onResize(sideBarWidth);
+            console.log('launchApplication.onSidebarResize: Finished');
+	};
+    });
+
+
+    // Launch the left-hand side task tree
     var ganttTreePanel = Ext.create('PO.view.gantt.GanttTreePanel', {
         width:		300,
         region:		'west',
     });
 
-    var ganttDrawComponent = Ext.create('PO.view.gantt.GanttDrawComponent', {
-        ganttTreePanel: ganttTreePanel,
+    // Launch the right-hand side Gantt display
+    var ganttDrawComponent = Ext.create('PO.view.gantt_editor.GanttTaskPanel', {
         region: 'center',
         viewBox: false,
-        gradients: [{
-            id: 'gradientId',
-            angle: 66,
-            stops: {
-                0: { color: '#cdf' },
-                100: { color: '#ace' }
-            }
-        }, {
-            id: 'gradientId2',
-            angle: 0,
-            stops: {
-                0: { color: '#590' },
-                20: { color: '#599' },
-                100: { color: '#ddd' }
-            }
-        }]
-    });
-
-    var ganttRightSide = Ext.create('Ext.panel.Panel', {
-        title: false,
-        layout: 'border',
-        region: 'center',
-        collapsible: false,
         width: 300,
         height: 300,
-        defaults: {                                                  // These defaults produce a bar to resize the timeline
-            collapsible: true,
-            split: true,
-            bodyPadding: 0
-        },
-        items: [
-            ganttDrawComponent
+
+        objectPanel: ganttTreePanel,
+        objectStore: taskTreeStore,
+        taskDependencyStore: taskDependencyStore,
+
+        reportStartDate: new Date('@report_start_date@'),
+        reportEndDate: new Date('@report_end_date@'),
+        preferenceStore: senchaPreferenceStore,
+
+        gradients: [
+            {id:'gradientId', angle:66, stops:{0:{color:'#cdf'}, 100:{color:'#ace'}}}, 
+            {id:'gradientId2', angle:0, stops:{0:{color:'#590'}, 20:{color:'#599'}, 100:{color:'#ddd'}}}
         ]
     });
-
 
     // Outer Gantt editor jointing the two parts (TreePanel + Draw)
     var screenSize = Ext.getBody().getViewSize();    // Size calculation based on specific ]po[ layout
@@ -800,8 +1048,8 @@ Ext.define('PO.view.gantt_editor.GanttButtonPanel', {
         height: height,
         resizable: true,				// Add handles to the panel, so the user can change size
         items: [
-            ganttRightSide,
-            ganttTreePanel
+            ganttTreePanel,
+            ganttDrawComponent
         ],
         renderTo: '@gantt_editor_id@'
     });
@@ -809,18 +1057,20 @@ Ext.define('PO.view.gantt_editor.GanttButtonPanel', {
     // Initiate controller
     var sideBarTab = Ext.get('sideBarTab');
     var renderDiv = Ext.get('@gantt_editor_id@');
-    var ganttButtonController = Ext.create('PO.controller.gantt.GanttButtonController', {
-        'renderDiv': renderDiv,
-        'ganttEditor': ganttEditor,
-        'ganttButtonController': ganttButtonController,
+
+    //
+    var ganttButtonController = Ext.create('PO.controller.gantt_editor.GanttButtonController', {
         'ganttTreePanel': ganttTreePanel,
         'ganttDrawComponent': ganttDrawComponent
     });
     ganttButtonController.init(this).onLaunch(this);
 
-    // Handle collapsable side menu
-    sideBarTab.on('click', ganttButtonController.onSideBarResize, ganttButtonController);
-    Ext.EventManager.onWindowResize(ganttButtonController.onWindowsResize, ganttButtonController);    // Deal with resizing the main window
+    ///
+    var ganttResizeController = Ext.create('PO.controller.gantt_editor.GanttResizeController', {
+        'ganttTreePanel': ganttTreePanel,
+        'ganttDrawComponent': ganttDrawComponent
+    });
+    ganttResizeController.init(this).onLaunch(this);
 
 };
 
@@ -832,22 +1082,23 @@ Ext.define('PO.view.gantt_editor.GanttButtonPanel', {
  * actual applicaiton.
  */
 Ext.onReady(function() {
-    Ext.QuickTips.init();                                                       // No idea why this is necessary, but it is...
+    Ext.QuickTips.init();                                               	// No idea why this is necessary, but it is...
 
     var taskTreeStore = Ext.create('PO.store.timesheet.TaskTreeStore');
     var senchaPreferenceStore = Ext.create('PO.store.user.SenchaPreferenceStore');
+    var taskDependencyStore = Ext.create('PO.store.timesheet.TimesheetTaskDependencyStore');
 
     // Store Coodinator starts app after all stores have been loaded:
     var coordinator = Ext.create('PO.controller.StoreLoadCoordinator', {
         stores: [
             'taskTreeStore',
-	    'senchaPreferenceStore'
+            'senchaPreferenceStore'
         ],
         listeners: {
             load: function() {
-                if ("boolean" == typeof this.loadedP) { return; }                // Check if the application was launched before
-                launchGanttEditor();                                             // Launch the actual application.
-                this.loadedP = true;                                             // Mark the application as launched
+                if ("boolean" == typeof this.loadedP) { return; }        	// Check if the application was launched before
+                launchGanttEditor();                                     	// Launch the actual application.
+                this.loadedP = true;                                     	// Mark the application as launched
             }
         }
     });
@@ -860,11 +1111,21 @@ Ext.onReady(function() {
         }
     });
 
-    senchaPreferenceStore.load({                                                 // Preferences for the GanttEditor
+    // User preferences
+    senchaPreferenceStore.load({                                         	// Preferences for the GanttEditor
         callback: function() {
             console.log('PO.store.user.SenchaPreferenceStore: loaded');
         }
     });
+
+    // Load dependencies between tasks
+    taskDependencyStore.getProxy().url = '/intranet-reporting/view';
+    taskDependencyStore.getProxy().extraParams = { 
+        format: 'json', 
+        report_code: 'rest_intra_project_task_dependencies',
+        project_id: @project_id@
+    };
+    taskDependencyStore.load();
 
 });
 </script>
