@@ -20,6 +20,7 @@ Ext.require([
     'PO.store.timesheet.TaskTreeStore',
     'PO.store.user.SenchaPreferenceStore',
     'PO.view.gantt.AbstractGanttPanel',
+    'PO.view.menu.AlphaMenu',
     'PO.view.menu.HelpMenu'
 ]);
 
@@ -607,25 +608,10 @@ function launchGanttEditor(){
      * Alpha Menu
      *********************************************************************** */
 
-    var alphaMenu = Ext.create('PO.view.menu.HelpMenu', {
+    var alphaMenu = Ext.create('PO.view.menu.AlphaMenu', {
         id: 'alphaMenu',
         style: {overflow: 'visible'},					// For the Combo popup
-        store: Ext.create('Ext.data.Store', { fields: ['text', 'url'], data: [
-            {text: '<b>This is Experimental and "Alpha" Software</b> - Please see known issues below', url: 'http://www.project-open.com/en/package_intranet_gantt_editor'},
-            {text: '-'},
-            {text: 'Bug: Ssssshow red dependency arrows if somebody disables a referenced project'},
-            {text: 'Ext: Show Save only if something has changed (project store)'},
-            {text: "Bug: Firefox doesn't show cost centers when the ExtJS page is longer than the browser page"},
-            {text: "Bug: Don't show SLAs and similar projects"},
-            {text: 'Ext: Exclude certain other (small) projects? How?'},
-            {text: 'Ext: Allow some form of left/right scrolling. Arrow in date bar?'},
-            {text: 'Ext: Should enable/disable change the project status? Or just notify PMs?'},
-            {text: 'Ext: Add Columns: Show sums'},
-            {text: 'Ext: Show departments hierarchy'},
-            {text: 'Ext: Show unassigned users'},
-            {text: 'Ext: Reset Configuration should also reset stored status'},
-            {text: "Bug: Reset Configuration doesn't work anymore"}
-        ]})
+	slaId: 1478943					                // ID of the ]po[ "PD Gantt Editor" project
     });
 
     /* ***********************************************************************
@@ -989,7 +975,7 @@ function launchGanttEditor(){
             portfolioPlannerProjectPanel.redraw();
             portfolioPlannerCostCenterPanel.redraw();
             console.log('launchApplication.onBorderPanelResize: Finished');
-	};
+	},
 
 	/**
 	 * Clicked on the ]po[ "side menu" bar for showing/hiding the left-menu
@@ -1007,7 +993,7 @@ function launchGanttEditor(){
             }
             onResize(sideBarWidth);
             console.log('launchApplication.onSidebarResize: Finished');
-	};
+	}
     });
 
 
