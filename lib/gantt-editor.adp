@@ -29,7 +29,7 @@ Ext.require([
  * Like a chart Series, displays a list of tasks
  * using Gantt bars.
  */
-Ext.define('PO.view.gantt_editor.GanttTaskPanel', {
+Ext.define('PO.view.gantt_editor.GanttBarPanel', {
     extend: 'PO.view.gantt.AbstractGanttPanel',
 
     requires: [
@@ -53,25 +53,11 @@ Ext.define('PO.view.gantt_editor.GanttTaskPanel', {
      */
     initComponent: function() {
         var me = this;
-        console.log('PO.view.gantt_editor.GanttTaskPanel.initComponent: Starting');
+        console.log('PO.view.gantt_editor.GanttBarPanel.initComponent: Starting');
         this.callParent(arguments);
 
         me.barHeight = 15;
-	me.arrowheadSize = 5;
-	/*
-        me.axisStartX = 10;
-        me.axisEndX = 490;
-        me.ganttWidth = 500;
-        me.ganttHeight = 300;
-        me.axisHeight = 20;                             // Height of each(!) axis, there should be two.
-        me.dndBase = null;                              // Drag-and-drop starting point
-        me.dndBaseObject = null;
-        me.dndTranslate = [0,0];                        // Default translate of the surface
-        me.dndStartRawCoordinates = null;
-        me.taskModelHash = {};
-	*/
-
-
+        me.arrowheadSize = 5;
 
         // Attract events from the TreePanel showing the task names etc.
         me.objectPanel.on({
@@ -116,12 +102,9 @@ Ext.define('PO.view.gantt_editor.GanttTaskPanel', {
             me.taskModelHash[id] = model;		// Quick storage of models
         });
 
-        me.axisStartDate = me.currentMonth(me.reportStartDate);
-        me.axisEndDate = me.nextMonth(me.reportEndDate);
-
         this.addEvents('move');
 
-        console.log('PO.view.gantt_editor.GanttTaskPanel.initComponent: Finished');
+        console.log('PO.view.gantt_editor.GanttBarPanel.initComponent: Finished');
     },
 
     /**
@@ -166,16 +149,16 @@ Ext.define('PO.view.gantt_editor.GanttTaskPanel', {
      */
     onProjectGridViewReady: function() {
         var me = this;
-        console.log('PO.view.gantt_editor.GanttTaskPanel.onProjectGridViewReady: Starting');
+        console.log('PO.view.gantt_editor.GanttBarPanel.onProjectGridViewReady: Starting');
 
-        console.log('PO.view.gantt_editor.GanttTaskPanel.onProjectGridViewReady: Finished');
+        console.log('PO.view.gantt_editor.GanttBarPanel.onProjectGridViewReady: Finished');
     },
 
     onProjectGridSortChange: function(headerContainer, column, direction, eOpts) {
         var me = this;
-        console.log('PO.view.gantt_editor.GanttTaskPanel.onProjectGridSortChange: Starting');
+        console.log('PO.view.gantt_editor.GanttBarPanel.onProjectGridSortChange: Starting');
         me.redraw();
-        console.log('PO.view.gantt_editor.GanttTaskPanel.onProjectGridSortChange: Finished');
+        console.log('PO.view.gantt_editor.GanttBarPanel.onProjectGridSortChange: Finished');
     },
 
     /**
@@ -183,7 +166,7 @@ Ext.define('PO.view.gantt_editor.GanttTaskPanel', {
      */
     onSpriteRightClick: function(event, sprite) {
         var me = this;
-        console.log('PO.view.gantt_editor.GanttTaskPanel.onSpriteRightClick: Starting: '+ sprite);
+        console.log('PO.view.gantt_editor.GanttBarPanel.onSpriteRightClick: Starting: '+ sprite);
         if (null == sprite) { return; }                     	// Something went completely wrong...
 
         var className = sprite.model.$className;
@@ -197,7 +180,7 @@ Ext.define('PO.view.gantt_editor.GanttTaskPanel', {
         default:
             alert('Undefined model class: '+className);
         }
-        console.log('PO.view.gantt_editor.GanttTaskPanel.onSpriteRightClick: Finished');
+        console.log('PO.view.gantt_editor.GanttBarPanel.onSpriteRightClick: Finished');
     },
 
     /**
@@ -205,7 +188,7 @@ Ext.define('PO.view.gantt_editor.GanttTaskPanel', {
      */
     onDependencyRightClick: function(event, sprite) {
         var me = this;
-        console.log('PO.view.gantt_editor.GanttTaskPanel.onDependencyRightClick: Starting: '+ sprite);
+        console.log('PO.view.gantt_editor.GanttBarPanel.onDependencyRightClick: Starting: '+ sprite);
         if (null == sprite) { return; }                     	// Something went completely wrong...
         var dependencyModel = sprite.model;
 
@@ -222,11 +205,11 @@ Ext.define('PO.view.gantt_editor.GanttTaskPanel', {
                         me.taskDependencyStore.remove(dependencyModel);   	// Remove from store
                         dependencyModel.destroy({
                             success: function() {
-                        	console.log('Dependency destroyed');
-                        	me.redraw();
+                                console.log('Dependency destroyed');
+                                me.redraw();
                             },
                             failure: function(model, operation) {
-                        	console.log('Error destroying dependency: '+operation.request.proxy.reader.rawData.message);
+                                console.log('Error destroying dependency: '+operation.request.proxy.reader.rawData.message);
                             }
                         });
                     }
@@ -234,7 +217,7 @@ Ext.define('PO.view.gantt_editor.GanttTaskPanel', {
             });
         }
         me.dependencyContextMenu.showAt(event.getXY());
-        console.log('PO.view.gantt_editor.GanttTaskPanel.onDependencyRightClick: Finished');
+        console.log('PO.view.gantt_editor.GanttBarPanel.onDependencyRightClick: Finished');
     },
 
     /**
@@ -242,7 +225,7 @@ Ext.define('PO.view.gantt_editor.GanttTaskPanel', {
      */
     onProjectRightClick: function(event, sprite) {
         var me = this;
-        console.log('PO.view.gantt_editor.GanttTaskPanel.onProjectRightClick: '+ sprite);
+        console.log('PO.view.gantt_editor.GanttBarPanel.onProjectRightClick: '+ sprite);
         if (null == sprite) { return; }                     	// Something went completely wrong...
     },
 
@@ -253,7 +236,7 @@ Ext.define('PO.view.gantt_editor.GanttTaskPanel', {
      */
     onSpriteDnD: function(fromSprite, toSprite, diffPoint) {
         var me = this;
-        console.log('PO.view.gantt_editor.GanttTaskPanel.onSpriteDnD: Starting: '+
+        console.log('PO.view.gantt_editor.GanttBarPanel.onSpriteDnD: Starting: '+
                     fromSprite+' -> '+toSprite+', [' + diffPoint+']');
 
         if (null == fromSprite) { return; } // Something went completely wrong...
@@ -262,7 +245,7 @@ Ext.define('PO.view.gantt_editor.GanttTaskPanel', {
         } else {
             me.onProjectMove(fromSprite, diffPoint[0]);    	// Dropped on empty space or on the same bar
         }
-        console.log('PO.view.gantt_editor.GanttTaskPanel.onSpriteDnD: Finished');
+        console.log('PO.view.gantt_editor.GanttBarPanel.onSpriteDnD: Finished');
     },
 
     /**
@@ -274,7 +257,7 @@ Ext.define('PO.view.gantt_editor.GanttTaskPanel', {
         var me = this;
         var projectModel = projectSprite.model;
         if (!projectModel) return;
-        console.log('PO.view.gantt_editor.GanttTaskPanel.onProjectMove: Starting');
+        console.log('PO.view.gantt_editor.GanttBarPanel.onProjectMove: Starting');
 
         var bBox = me.dndBaseSprite.getBBox();
         var diffTime = Math.floor(1.0 * xDiff * (me.axisEndDate.getTime() - me.axisStartDate.getTime()) / (me.axisEndX - me.axisStartX));
@@ -298,7 +281,7 @@ Ext.define('PO.view.gantt_editor.GanttTaskPanel', {
         projectModel.set('end_date', endDate.toISOString().substring(0,10));
 
         me.redraw();
-        console.log('PO.view.gantt_editor.GanttTaskPanel.onProjectMove: Finished');
+        console.log('PO.view.gantt_editor.GanttBarPanel.onProjectMove: Finished');
     },
 
     /**
@@ -321,14 +304,14 @@ Ext.define('PO.view.gantt_editor.GanttTaskPanel', {
         if (null == toTaskId) { return; }					// Something went wrong...
 
         // Create a new dependency object
-        console.log('PO.view.gantt.AbstractGanttPanel.createDependency: '+fromTaskId+' -> '+toTaskId);
+        console.log('PO.view.gantt.GanttBarPanel.createDependency: '+fromTaskId+' -> '+toTaskId);
         var dependency = new Ext.create('PO.model.timesheet.TimesheetTaskDependency', {
             task_id_one: fromTaskId,
             task_id_two: toTaskId
         });
         dependency.save({
             success: function(depModel, operation) {
-                console.log('PO.view.gantt.AbstractGanttPanel.createDependency: successfully created dependency');
+                console.log('PO.view.gantt.GanttBarPanel.createDependency: successfully created dependency');
                 
                 // Reload the store, because the store gets extra information from the data-source
                 me.taskDependencyStore.reload({
@@ -372,15 +355,15 @@ Ext.define('PO.view.gantt_editor.GanttTaskPanel', {
         // Iterate through all children and draw dependencies
         if (me.preferenceStore.getPreferenceBoolean('show_project_dependencies', true)) {
             rootNode.cascadeBy(function(model) {
-        	var viewNode = ganttTreeView.getNode(model);
-        	var dependentTasks = model.get('successors');
-        	if (dependentTasks instanceof Array) {
+                var viewNode = ganttTreeView.getNode(model);
+                var dependentTasks = model.get('successors');
+                if (dependentTasks instanceof Array) {
                     for (var i = 0, len = dependentTasks.length; i < len; i++) {
-        		var depTask = dependentTasks[i];
-        		var depNode = me.taskModelHash[depTask];
-        		me.drawDependency(model, depNode, model);
+                	var depTask = dependentTasks[i];
+                	var depNode = me.taskModelHash[depTask];
+                	me.drawDependency(model, depNode, model);
                     }
-        	}
+                }
             });
         }
         console.log('PO.class.GanttDrawComponent.redraw: Finished');
@@ -425,10 +408,10 @@ Ext.define('PO.view.gantt_editor.GanttTaskPanel', {
         if (endY > startY) {
             // startY = startY + me.barHeight;
             sDirected = -s;            // Draw "normal" arrowhead pointing downwards
-	    startY = startY - 2;
+            startY = startY - 2;
             endY = endY + 0;
         } else {
-	    startY = startY - me.barHeight + 4;
+            startY = startY - me.barHeight + 4;
             endY = endY + me.barHeight - 2;
             sDirected = +s;            // Draw arrowhead pointing upward
         }
@@ -459,18 +442,18 @@ Ext.define('PO.view.gantt_editor.GanttTaskPanel', {
         }).show(true);
         arrowLine.model = dependencyModel;
 
-	// Add a tool tip to the dependency
-	var html = "<b>Project Dependency</b>:<br>" +
-	    "From task <a href='/intranet/projects/view?project_id=" + dependencyModel.get('task_id_one') + "' target='_blank'>" + dependencyModel.get('task_one_name') + "</a> of " +
-	    "project <a href='/intranet/projects/view?project_id=" + dependencyModel.get('main_project_id_one') + "' target='_blank'>" + dependencyModel.get('main_project_name_one') + "</a> to " +
-	    "task <a href='/intranet/projects/view?project_id=" + dependencyModel.get('task_id_two') + "' target='_blank'>" + dependencyModel.get('task_two_name') + "</a> of " +
-	    "project <a href='/intranet/projects/view?project_id=" + dependencyModel.get('main_project_id_two') + "' target='_blank'>" + dependencyModel.get('main_project_name_two') + "</a>";
+        // Add a tool tip to the dependency
+        var html = "<b>Project Dependency</b>:<br>" +
+            "From task <a href='/intranet/projects/view?project_id=" + dependencyModel.get('task_id_one') + "' target='_blank'>" + dependencyModel.get('task_one_name') + "</a> of " +
+            "project <a href='/intranet/projects/view?project_id=" + dependencyModel.get('main_project_id_one') + "' target='_blank'>" + dependencyModel.get('main_project_name_one') + "</a> to " +
+            "task <a href='/intranet/projects/view?project_id=" + dependencyModel.get('task_id_two') + "' target='_blank'>" + dependencyModel.get('task_two_name') + "</a> of " +
+            "project <a href='/intranet/projects/view?project_id=" + dependencyModel.get('main_project_id_two') + "' target='_blank'>" + dependencyModel.get('main_project_name_two') + "</a>";
         var tip1 = Ext.create("Ext.tip.ToolTip", { target: arrowHead.el, width: 250, html: html, hideDelay: 1000 }); // give 1 second to click on project link
         var tip2 = Ext.create("Ext.tip.ToolTip", { target: arrowLine.el, width: 250, html: html, hideDelay: 1000 });
         console.log('PO.view.portfolio_planner.PortfolioPlannerProjectPanel.drawTaskDependency: Finished');
 
 
-	return;
+        return;
 
 
         // Draw the main connection line between start and end.
@@ -524,7 +507,7 @@ Ext.define('PO.view.gantt_editor.GanttTaskPanel', {
         var startTime = new Date(start_date).getTime();
         var endTime = new Date(end_date).getTime() + 1000.0 * 3600 * 24;	// plus one day
 
-        if (me.debug) { console.log('PO.view.gantt_editor.GanttTaskPanel.drawProjectBar: project_name='+project_name+', start_date='+start_date+", end_date="+end_date); }
+        if (me.debug) { console.log('PO.view.gantt_editor.GanttBarPanel.drawProjectBar: project_name='+project_name+', start_date='+start_date+", end_date="+end_date); }
 
         // Calculate the other coordinates
         var x = me.date2x(startTime);
@@ -611,7 +594,7 @@ function launchGanttEditor(){
     var alphaMenu = Ext.create('PO.view.menu.AlphaMenu', {
         id: 'alphaMenu',
         style: {overflow: 'visible'},					// For the Combo popup
-	slaId: 1478943					                // ID of the ]po[ "PD Gantt Editor" project
+        slaId: 1478943					                // ID of the ]po[ "PD Gantt Editor" project
     });
 
     /* ***********************************************************************
@@ -637,35 +620,35 @@ function launchGanttEditor(){
                         if (url != '@page_url@') { return; }
                         model.destroy();
                     });
-        	    // Reset column configuration
-        	    projectGridColumnConfig.each(function(model) { 
-        		model.destroy({
-        		    success: function(model) {
-        			console.log('configMenuOnResetConfiguration: Successfully destroyed a CC config');
-        			var count = projectGridColumnConfig.count() + costCenterGridColumnConfig.count();
-        			if (0 == count) {
-        			    // Reload the page. 
-        			    var params = Ext.urlDecode(location.search.substring(1));
-        			    var url = window.location.pathname + '?' + Ext.Object.toQueryString(params);
-        			    window.location = url;
-        			}
-        		    }
-        		}); 
-        	    });
-        	    costCenterGridColumnConfig.each(function(model) { 
-        		model.destroy({
-        		    success: function(model) {
-        			console.log('configMenuOnResetConfiguration: Successfully destroyed a CC config');
-        			var count = projectGridColumnConfig.count() + costCenterGridColumnConfig.count();
-        			if (0 == count) {
-        			    // Reload the page. 
-        			    var params = Ext.urlDecode(location.search.substring(1));
-        			    var url = window.location.pathname + '?' + Ext.Object.toQueryString(params);
-        			    window.location = url;
-        			}
-        		    }
-        		}); 
-        	    });
+                    // Reset column configuration
+                    projectGridColumnConfig.each(function(model) { 
+                	model.destroy({
+                	    success: function(model) {
+                		console.log('configMenuOnResetConfiguration: Successfully destroyed a CC config');
+                		var count = projectGridColumnConfig.count() + costCenterGridColumnConfig.count();
+                		if (0 == count) {
+                		    // Reload the page. 
+                		    var params = Ext.urlDecode(location.search.substring(1));
+                		    var url = window.location.pathname + '?' + Ext.Object.toQueryString(params);
+                		    window.location = url;
+                		}
+                	    }
+                	}); 
+                    });
+                    costCenterGridColumnConfig.each(function(model) { 
+                	model.destroy({
+                	    success: function(model) {
+                		console.log('configMenuOnResetConfiguration: Successfully destroyed a CC config');
+                		var count = projectGridColumnConfig.count() + costCenterGridColumnConfig.count();
+                		if (0 == count) {
+                		    // Reload the page. 
+                		    var params = Ext.urlDecode(location.search.substring(1));
+                		    var url = window.location.pathname + '?' + Ext.Object.toQueryString(params);
+                		    window.location = url;
+                		}
+                	    }
+                	}); 
+                    });
                 }
         }, '-']
     });
@@ -715,64 +698,64 @@ function launchGanttEditor(){
         },
         tbar: [
             {
-        	text: 'OK',
-        	icon: '/intranet/images/navbar_default/disk.png',
-        	tooltip: 'Save the project to the ]po[ back-end',
-        	id: 'buttonSave'
+                text: 'OK',
+                icon: '/intranet/images/navbar_default/disk.png',
+                tooltip: 'Save the project to the ]po[ back-end',
+                id: 'buttonSave'
             }, {
-        	icon: '/intranet/images/navbar_default/folder_go.png',
-        	tooltip: 'Load a project from he ]po[ back-end',
-        	id: 'buttonLoad'
+                icon: '/intranet/images/navbar_default/folder_go.png',
+                tooltip: 'Load a project from he ]po[ back-end',
+                id: 'buttonLoad'
             }, {
-        	xtype: 'tbseparator' 
+                xtype: 'tbseparator' 
             }, {
-        	icon: '/intranet/images/navbar_default/add.png',
-        	tooltip: 'Add a new task',
-        	id: 'buttonAdd'
+                icon: '/intranet/images/navbar_default/add.png',
+                tooltip: 'Add a new task',
+                id: 'buttonAdd'
             }, {
-        	icon: '/intranet/images/navbar_default/delete.png',
-        	tooltip: 'Delete a task',
-        	id: 'buttonDelete'
+                icon: '/intranet/images/navbar_default/delete.png',
+                tooltip: 'Delete a task',
+                id: 'buttonDelete'
             }, {
-        	xtype: 'tbseparator' 
+                xtype: 'tbseparator' 
             }, {
-        	icon: '/intranet/images/navbar_default/arrow_left.png',
-        	tooltip: 'Reduce Indent',
-        	id: 'buttonReduceIndent'
+                icon: '/intranet/images/navbar_default/arrow_left.png',
+                tooltip: 'Reduce Indent',
+                id: 'buttonReduceIndent'
             }, {
-        	icon: '/intranet/images/navbar_default/arrow_right.png',
-        	tooltip: 'Increase Indent',
-        	id: 'buttonIncreaseIndent'
+                icon: '/intranet/images/navbar_default/arrow_right.png',
+                tooltip: 'Increase Indent',
+                id: 'buttonIncreaseIndent'
             }, {
-        	xtype: 'tbseparator'
+                xtype: 'tbseparator'
             }, {
-        	icon: '/intranet/images/navbar_default/link_add.png',
-        	tooltip: 'Add dependency',
-        	id: 'buttonAddDependency'
+                icon: '/intranet/images/navbar_default/link_add.png',
+                tooltip: 'Add dependency',
+                id: 'buttonAddDependency'
             }, {
-        	icon: '/intranet/images/navbar_default/link_break.png',
-        	tooltip: 'Break dependency',
-        	id: 'buttonBreakDependency'
+                icon: '/intranet/images/navbar_default/link_break.png',
+                tooltip: 'Break dependency',
+                id: 'buttonBreakDependency'
             }, '->' , {
-        	icon: '/intranet/images/navbar_default/zoom_in.png',
-        	tooltip: 'Zoom in time axis',
-        	id: 'buttonZoomIn'
+                icon: '/intranet/images/navbar_default/zoom_in.png',
+                tooltip: 'Zoom in time axis',
+                id: 'buttonZoomIn'
             }, {
-        	icon: '/intranet/images/navbar_default/zoom_out.png',
-        	tooltip: 'Zoom out of time axis',
-        	id: 'buttonZoomOut'
+                icon: '/intranet/images/navbar_default/zoom_out.png',
+                tooltip: 'Zoom out of time axis',
+                id: 'buttonZoomOut'
             }, {
-        	text: 'Configuration',
-        	icon: '/intranet/images/navbar_default/wrench.png',
-        	menu: configMenu
+                text: 'Configuration',
+                icon: '/intranet/images/navbar_default/wrench.png',
+                menu: configMenu
             }, {
-        	text: 'Help',
-        	icon: '/intranet/images/navbar_default/help.png',
-        	menu: helpMenu
+                text: 'Help',
+                icon: '/intranet/images/navbar_default/help.png',
+                menu: helpMenu
             }, {
-        	text: 'This is Alpha!',
-        	icon: '/intranet/images/navbar_default/bug.png',
-        	menu: alphaMenu
+                text: 'This is Alpha!',
+                icon: '/intranet/images/navbar_default/bug.png',
+                menu: alphaMenu
             }
         ]
     });
@@ -782,34 +765,34 @@ function launchGanttEditor(){
      * This controller is only responsible for button actions
      */
     Ext.define('PO.controller.gantt_editor.GanttButtonController', {
-	extend: 'Ext.app.Controller',
+        extend: 'Ext.app.Controller',
 
-	// Variables
-	debug: false,
-	'ganttTreePanel': null,
-	'ganttDrawComponent': null,
+        // Variables
+        debug: false,
+        'ganttTreePanel': null,
+        'ganttBarPanel': null,
 
-	refs: [
+        refs: [
             { ref: 'ganttTreePanel', selector: '#ganttTreePanel' }
-	],
-	
-	init: function() {
-	    var me = this;
+        ],
+        
+        init: function() {
+            var me = this;
             if (me.debug) { console.log('PO.controller.gantt_editor.GanttButtonController: init'); }
 
             this.control({
-		'#buttonLoad': { click: this.onButtonLoad },
-		'#buttonSave': { click: this.onButtonSave },
-		'#buttonAdd': { click: { fn: me.ganttTreePanel.onButtonAdd, scope: me.ganttTreePanel }},
-		'#buttonDelete': { click: { fn: me.ganttTreePanel.onButtonDelete, scope: me.ganttTreePanel }},
-		'#buttonReduceIndent': { click: { fn: me.ganttTreePanel.onButtonReduceIndent, scope: me.ganttTreePanel }},
-		'#buttonIncreaseIndent': { click: { fn: me.ganttTreePanel.onButtonIncreaseIndent, scope: me.ganttTreePanel }},
-		'#buttonAddDependency': { click: this.onButton },
-		'#buttonBreakDependency': { click: this.onButton },
-		'#buttonZoomIn': { click: this.onZoomIn },
-		'#buttonZoomOut': { click: this.onZoomOut },
-		'#buttonSettings': { click: this.onButton },
-		scope: me.ganttTreePanel
+                '#buttonLoad': { click: this.onButtonLoad },
+                '#buttonSave': { click: this.onButtonSave },
+                '#buttonAdd': { click: { fn: me.ganttTreePanel.onButtonAdd, scope: me.ganttTreePanel }},
+                '#buttonDelete': { click: { fn: me.ganttTreePanel.onButtonDelete, scope: me.ganttTreePanel }},
+                '#buttonReduceIndent': { click: { fn: me.ganttTreePanel.onButtonReduceIndent, scope: me.ganttTreePanel }},
+                '#buttonIncreaseIndent': { click: { fn: me.ganttTreePanel.onButtonIncreaseIndent, scope: me.ganttTreePanel }},
+                '#buttonAddDependency': { click: this.onButton },
+                '#buttonBreakDependency': { click: this.onButton },
+                '#buttonZoomIn': { click: this.onZoomIn },
+                '#buttonZoomOut': { click: this.onZoomOut },
+                '#buttonSettings': { click: this.onButton },
+                scope: me.ganttTreePanel
             });
 
             // Listen to changes in the selction model in order to enable/disable the "delete" button.
@@ -823,88 +806,86 @@ function launchGanttEditor(){
             me.ganttTreePanel.on('beforecellkeydown', this.onBeforeCellKeyDown, me.ganttTreePanel);
 
             return this;
-	},
+        },
 
-	onButtonLoad: function() {
+        onButtonLoad: function() {
             console.log('GanttButtonController.ButtonLoad');
-	},
+        },
 
-	onButtonSave: function() {
+        onButtonSave: function() {
             console.log('GanttButtonController.ButtonSave');
-	    
-	},
+            
+        },
 
-	onZoomIn: function() {
+        onZoomIn: function() {
             console.log('GanttButtonController.onZoomIn');
-	    this.ganttDrawComponent.onZoomIn();
-	},
+            this.ganttBarPanel.onZoomIn();
+        },
 
-	onZoomOut: function() {
+        onZoomOut: function() {
             console.log('GanttButtonController.onZoomOut');
-	    this.ganttDrawComponent.onZoomOut();
-	},
+            this.ganttBarPanel.onZoomOut();
+        },
 
-	/**
-	 * Control the enabled/disabled status of the (-) (Delete) button
-	 */
-	onTreePanelSelectionChange: function(view, records) {
+        /**
+         * Control the enabled/disabled status of the (-) (Delete) button
+         */
+        onTreePanelSelectionChange: function(view, records) {
             if (this.debug) { console.log('GanttButtonController.onTreePanelSelectionChange'); }
             var buttonDelete = Ext.getCmp('buttonDelete');
 
             if (1 == records.length) {            // Exactly one record enabled
-		var record = records[0];
-		buttonDelete.setDisabled(!record.isLeaf());
+                var record = records[0];
+                buttonDelete.setDisabled(!record.isLeaf());
             } else {                              // Zero or two or more records enabled
-		buttonDelete.setDisabled(true);
+                buttonDelete.setDisabled(true);
             }
-	},
+        },
 
-	/**
-	 * Disable default tree key actions
-	 */
-	onBeforeCellKeyDown: function(me, htmlTd, cellIndex, record, htmlTr, rowIndex, e, eOpts ) {
+        /**
+         * Disable default tree key actions
+         */
+        onBeforeCellKeyDown: function(me, htmlTd, cellIndex, record, htmlTr, rowIndex, e, eOpts ) {
             var keyCode = e.getKey();
             var keyCtrl = e.ctrlKey;
             if (this.debug) { console.log('GanttButtonController.onBeforeCellKeyDown: code='+keyCode+', ctrl='+keyCtrl); }
             var panel = this;
             switch (keyCode) {
             case 8: 				// backspace 8
-		panel.onButtonDelete();
-		break;
+                panel.onButtonDelete();
+                break;
             case 37: 				// cursor left
-		if (keyCtrl) {
-        	    panel.onButtonReduceIndent();
-        	    return false;                   // Disable default action (fold tree)
-		}
-		break;
+                if (keyCtrl) {
+                    panel.onButtonReduceIndent();
+                    return false;                   // Disable default action (fold tree)
+                }
+                break;
             case 39: 				// cursor right
-		if (keyCtrl) {
-        	    panel.onButtonIncreaseIndent();
-        	    return false;                   // Disable default action (unfold tree)
-		}
-		break;
+                if (keyCtrl) {
+                    panel.onButtonIncreaseIndent();
+                    return false;                   // Disable default action (unfold tree)
+                }
+                break;
             case 45: 				// insert 45
-		panel.onButtonAdd();
-		break;
+                panel.onButtonAdd();
+                break;
             case 46: 				// delete 46
-		panel.onButtonDelete();
-		break;
+                panel.onButtonDelete();
+                break;
             }
 
             return true;                            // Enable default TreePanel actions for keys
-	},
+        },
 
-	/**
-	 * Handle various key actions
-	 */
-	onCellKeyDown: function(table, htmlTd, cellIndex, record, htmlTr, rowIndex, e, eOpts) {
+        /**
+         * Handle various key actions
+         */
+        onCellKeyDown: function(table, htmlTd, cellIndex, record, htmlTr, rowIndex, e, eOpts) {
             var keyCode = e.getKey();
             var keyCtrl = e.ctrlKey;
             // console.log('GanttButtonController.onCellKeyDown: code='+keyCode+', ctrl='+keyCtrl);
-	}
+        }
     });
-
-
 
     /*
      * GanttResizeController
@@ -915,100 +896,110 @@ function launchGanttEditor(){
      * </ul>
      */
     Ext.define('PO.controller.gantt_editor.GanttResizeController', {
-	extend: 'Ext.app.Controller',
+        extend: 'Ext.app.Controller',
 
-	debug: false,
-	'ganttTreePanel': null,
-	'ganttDrawComponent': null,
+        debug: false,
+        'ganttButtonPanel': null,			// Defined during initialization
+        'ganttTreePanel': null,				// Defined during initialization
+        'ganttBarPanel': null,				// Defined during initialization
 
-	refs: [
+        refs: [
             { ref: 'ganttTreePanel', selector: '#ganttTreePanel' }
-	],
-	
-	init: function() {
-	    var me = this;
+        ],
+        
+        init: function() {
+            var me = this;
             if (me.debug) { console.log('PO.controller.gantt_editor.GanttResizeController: init'); }
 
-	    // Handle collapsable side menu
-	    sideBarTab.on('click', me.onSideBarResize, me);
-
-	    // Deal with resizing the main window
-	    Ext.EventManager.onWindowResize(me.onWindowsResize, me);    
-
-
-	    borderPanel.on('resize', onBorderPanelResize);
-	    Ext.EventManager.onWindowResize(onWindowResize);
-	    var sideBarTab = Ext.get('sideBarTab');
-	    sideBarTab.on('click', onSidebarResize);
-
-
+            var sideBarTab = Ext.get('sideBarTab');	    // ]po[ side-bar collapses the left-hand menu
+            sideBarTab.on('click', me.onSideBarResize, me);	    // Handle collapsable side menu
+            Ext.EventManager.onWindowResize(me.onWindowResize, me);    	    // Deal with resizing the main window
+            me.ganttButtonPanel.on('resize', me.onGanttButtonPanelResize, me);	    // Deal with resizing the outer boundaries
             return this;
-	},
+        },
 
-	onResize: function (sideBarWidth) {
-            console.log('launchApplication.onResize: Starting');
-            var screenWidth = Ext.getBody().getViewSize().width;
-            var width = screenWidth - sideBarWidth;
-            borderPanel.setSize(width, borderPanelHeight);
-        // No redraw necessary, because borderPanel initiates a redraw anyway
-            console.log('launchApplication.onResize: Finished');
-	},
+        /**
+         * Adapt the size of the ganttButtonPanel (the outer Gantt panel)
+         * to the available drawing area.
+         * Takes the size of the browser and subtracts the sideBar at the
+         * left and the size of the menu on top.
+         */
+        onResize: function (sideBarWidth) {
+            var me = this;
+            console.log('PO.controller.gantt_editor.GanttResizeController.onResize: Starting');
 
-	onWindowResize: function () {
-            console.log('launchApplication.onWindowResize: Starting');
-            var sideBar = Ext.get('sidebar');                               // ]po[ left side bar component
-            var sideBarWidth = sideBar.getSize().width;
-            if (sideBarWidth > 100) {
-		sideBarWidth = 340;                                         // Determines size when Sidebar visible
-            } else {
-		sideBarWidth = 85;                                          // Determines size when Sidebar collapsed
+            if (undefined === sideBarWidth) {
+                sideBarWidth = Ext.get('sidebar').getSize().width;
             }
-            onResize(sideBarWidth);
-            console.log('launchApplication.onWindowResize: Finished');
-	},
-	
-	/**
-	 * Manually changed the size of the borderPanel
-	 */
-	onBorderPanelResize: function () {
-            console.log('launchApplication.onBorderPanelResize: Starting');
-            portfolioPlannerProjectPanel.redraw();
-            portfolioPlannerCostCenterPanel.redraw();
-            console.log('launchApplication.onBorderPanelResize: Finished');
-	},
 
-	/**
-	 * Clicked on the ]po[ "side menu" bar for showing/hiding the left-menu
-	 */
-	onSidebarResize: function () {
-            console.log('launchApplication.onSidebarResize: Starting');
+            var screenSize = Ext.getBody().getViewSize();
+            var width = screenSize.width - sideBarWidth - 100;
+            var height = screenSize.height - 280;
+
+            me.ganttButtonPanel.setSize(width, height);
+
+            console.log('PO.controller.gantt_editor.GanttResizeController.onResize: Finished');
+        },
+
+        /**
+         * Clicked on the ]po[ "side menu" bar for showing/hiding the left-menu
+         */
+        onSideBarResize: function () {
+            var me = this;
+            console.log('PO.controller.gantt_editor.GanttResizeController.onSidebarResize: Starting');
             var sideBar = Ext.get('sidebar');                               // ]po[ left side bar component
             var sideBarWidth = sideBar.getSize().width;
             // We get the event _before_ the sideBar has changed it's size.
             // So we actually need to the the oposite of the sidebar size:
             if (sideBarWidth > 100) {
-		sideBarWidth = 85;                                          // Determines size when Sidebar collapsed
+                sideBarWidth = 2;                                          // Determines size when Sidebar collapsed
             } else {
-		sideBarWidth = 340;                                         // Determines size when Sidebar visible
+                sideBarWidth = 245;                                         // Determines size when Sidebar visible
             }
-            onResize(sideBarWidth);
-            console.log('launchApplication.onSidebarResize: Finished');
-	}
+            me.onResize(sideBarWidth);
+            console.log('PO.controller.gantt_editor.GanttResizeController.onSidebarResize: Finished');
+        },
+
+        onWindowResize: function () {
+            var me = this;
+            console.log('PO.controller.gantt_editor.GanttResizeController.onWindowResize: Starting');
+            var sideBar = Ext.get('sidebar');                               // ]po[ left side bar component
+            var sideBarWidth = sideBar.getSize().width;
+            if (sideBarWidth > 100) {
+                sideBarWidth = 340;                                         // Determines size when Sidebar visible
+            } else {
+                sideBarWidth = 85;                                          // Determines size when Sidebar collapsed
+            }
+            me.onResize(sideBarWidth);
+            console.log('PO.controller.gantt_editor.GanttResizeController.onWindowResize: Finished');
+        },
+        
+        /**
+         * Manually changed the size of the ganttButtonPanel
+         */
+        onGanttButtonPanelResize: function () {
+            var me = this;
+            console.log('PO.controller.gantt_editor.GanttResizeController.onGanttButtonPanelResize: Starting');
+            me.ganttBarPanel.redraw();
+            console.log('PO.controller.gantt_editor.GanttResizeController.onGanttButtonPanelResize: Finished');
+        }
     });
 
-
-    // Launch the left-hand side task tree
+    // Left-hand side task tree
     var ganttTreePanel = Ext.create('PO.view.gantt.GanttTreePanel', {
         width:		300,
         region:		'west',
     });
 
-    // Launch the right-hand side Gantt display
-    var ganttDrawComponent = Ext.create('PO.view.gantt_editor.GanttTaskPanel', {
+    // Right-hand side Gantt display
+    var ganttBarPanel = Ext.create('PO.view.gantt_editor.GanttBarPanel', {
         region: 'center',
         viewBox: false,
         width: 300,
         height: 300,
+
+	overflowX: 'scroll',                            // Allows for horizontal scrolling, but not vertical
+        scrollFlags: {x: true},
 
         objectPanel: ganttTreePanel,
         objectStore: taskTreeStore,
@@ -1025,38 +1016,31 @@ function launchGanttEditor(){
     });
 
     // Outer Gantt editor jointing the two parts (TreePanel + Draw)
-    var screenSize = Ext.getBody().getViewSize();    // Size calculation based on specific ]po[ layout
-    var sideBarSize = Ext.get('sidebar').getSize();
-    var width = screenSize.width - sideBarSize.width - 95;
-    var height = screenSize.height - 280;
-    var ganttEditor = Ext.create('PO.view.gantt_editor.GanttButtonPanel', {
-        width: width,
-        height: height,
+    var ganttButtonPanel = Ext.create('PO.view.gantt_editor.GanttButtonPanel', {
         resizable: true,				// Add handles to the panel, so the user can change size
         items: [
             ganttTreePanel,
-            ganttDrawComponent
+            ganttBarPanel
         ],
         renderTo: '@gantt_editor_id@'
     });
 
-    // Initiate controller
-    var sideBarTab = Ext.get('sideBarTab');
-    var renderDiv = Ext.get('@gantt_editor_id@');
-
     //
     var ganttButtonController = Ext.create('PO.controller.gantt_editor.GanttButtonController', {
+        'ganttButtonPanel': ganttButtonPanel,
         'ganttTreePanel': ganttTreePanel,
-        'ganttDrawComponent': ganttDrawComponent
+        'ganttBarPanel': ganttBarPanel
     });
     ganttButtonController.init(this).onLaunch(this);
 
-    ///
+    // 
     var ganttResizeController = Ext.create('PO.controller.gantt_editor.GanttResizeController', {
+        'ganttButtonPanel': ganttButtonPanel,
         'ganttTreePanel': ganttTreePanel,
-        'ganttDrawComponent': ganttDrawComponent
+        'ganttBarPanel': ganttBarPanel
     });
     ganttResizeController.init(this).onLaunch(this);
+    ganttResizeController.onResize();    // Set the size of the outer GanttButton Panel
 
 };
 
@@ -1068,7 +1052,7 @@ function launchGanttEditor(){
  * actual applicaiton.
  */
 Ext.onReady(function() {
-    Ext.QuickTips.init();                                               	// No idea why this is necessary, but it is...
+    Ext.QuickTips.init();                                                       // No idea why this is necessary, but it is...
 
     var taskTreeStore = Ext.create('PO.store.timesheet.TaskTreeStore');
     var senchaPreferenceStore = Ext.create('PO.store.user.SenchaPreferenceStore');
