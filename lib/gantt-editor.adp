@@ -1004,10 +1004,10 @@ function launchGanttEditor(){
         objectPanel: ganttTreePanel,
         objectStore: taskTreeStore,
         taskDependencyStore: taskDependencyStore,
+        preferenceStore: senchaPreferenceStore,
 
         reportStartDate: new Date('@report_start_date@'),
         reportEndDate: new Date('@report_end_date@'),
-        preferenceStore: senchaPreferenceStore,
 
         gradients: [
             {id:'gradientId', angle:66, stops:{0:{color:'#cdf'}, 100:{color:'#ace'}}}, 
