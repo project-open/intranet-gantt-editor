@@ -257,6 +257,7 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
         var me = this;
         var projectModel = projectSprite.model;
         if (!projectModel) return;
+	var projectId = projectModel.get('id');
         console.log('PO.view.gantt_editor.GanttBarPanel.onProjectMove: Starting');
 
         var bBox = me.dndBaseSprite.getBBox();
