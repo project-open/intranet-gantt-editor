@@ -96,6 +96,11 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
         });
 
         // Iterate through all children of the root node and check if they are visible
+        me.objectStore.on({
+            'datachanged': me.redraw,
+            'scope': this
+        });
+
         var rootNode = me.objectStore.getRootNode();
         rootNode.cascadeBy(function(model) {
             var id = model.get('id');
@@ -113,6 +118,7 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
      * These values will appear in the TaskTreeStore.
      */
     onItemCollapse: function(taskModel) {
+        alert('onItemCollapse');
         var me = this;
         var object_id = taskModel.get('id');
         Ext.Ajax.request({
@@ -128,6 +134,7 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
      * Please see onItemCollapse for further documentation.
      */
     onItemExpand: function(taskModel) {
+        alert('onItemExpand');
         var me = this;
         console.log('PO.class.GanttDrawComponent.onItemExpand: ');
 
@@ -257,7 +264,7 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
         var me = this;
         var projectModel = projectSprite.model;
         if (!projectModel) return;
-	var projectId = projectModel.get('id');
+        var projectId = projectModel.get('id');
         console.log('PO.view.gantt_editor.GanttBarPanel.onProjectMove: Starting');
 
         var bBox = me.dndBaseSprite.getBBox();
@@ -505,6 +512,8 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
         var project_name = project.get('project_name');
         var start_date = project.get('start_date').substring(0,10);
         var end_date = project.get('end_date').substring(0,10);
+        var predecessors = project.get('predecessors');
+        var assignees = project.get('assignees');                               // Array of {id,percent,name,email,initials}
         var startTime = new Date(start_date).getTime();
         var endTime = new Date(end_date).getTime() + 1000.0 * 3600 * 24;	// plus one day
 
@@ -549,6 +558,19 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
             }).show(true);
         }
         spriteBar.model = project;					// Store the task information for the sprite
+
+        // Add some
+        var text = "";
+        assignees.forEach(function(assignee) {
+            if (0 == assignee.percent) { return; }			// Don't show empty assignments
+            if ("" != text) { text = text + ', '; }
+            text = text + assignee.initials;
+            if (100 != assignee.percent) {
+                text = text + '['+assignee.percent+'%]';
+            }
+        });
+        var axisText = surface.add({type:'text', text:text, x:x+w+2, y:y+d, fill:'#000', font:"10px Arial"}).show(true);
+
 
         // Store the start and end points of the bar
         var id = project.get('id');
@@ -988,8 +1010,9 @@ function launchGanttEditor(){
 
     // Left-hand side task tree
     var ganttTreePanel = Ext.create('PO.view.gantt.GanttTreePanel', {
-        width:		300,
+        width:		400,
         region:		'west',
+        store:		taskTreeStore
     });
 
     // Right-hand side Gantt display
@@ -999,7 +1022,7 @@ function launchGanttEditor(){
         width: 300,
         height: 300,
 
-	overflowX: 'scroll',                            // Allows for horizontal scrolling, but not vertical
+        overflowX: 'scroll',                            // Allows for horizontal scrolling, but not vertical
         scrollFlags: {x: true},
 
         objectPanel: ganttTreePanel,
@@ -1026,7 +1049,6 @@ function launchGanttEditor(){
         renderTo: '@gantt_editor_id@'
     });
 
-    //
     var ganttButtonController = Ext.create('PO.controller.gantt_editor.GanttButtonController', {
         'ganttButtonPanel': ganttButtonPanel,
         'ganttTreePanel': ganttTreePanel,
