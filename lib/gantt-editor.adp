@@ -20,6 +20,7 @@ Ext.require([
     'PO.store.timesheet.TaskTreeStore',
     'PO.store.user.SenchaPreferenceStore',
     'PO.view.field.PODateField',                      // Custom ]po[ Date editor field
+    'PO.view.field.POComboGrid',
     'PO.view.gantt.AbstractGanttPanel',
     'PO.view.menu.AlphaMenu',
     'PO.view.menu.HelpMenu'
