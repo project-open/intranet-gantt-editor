@@ -19,6 +19,7 @@ Ext.require([
     'PO.model.timesheet.TimesheetTask',
     'PO.store.timesheet.TaskTreeStore',
     'PO.store.user.SenchaPreferenceStore',
+    'PO.view.field.PODateField',                      // Custom ]po[ Date editor field
     'PO.view.gantt.AbstractGanttPanel',
     'PO.view.menu.AlphaMenu',
     'PO.view.menu.HelpMenu'
@@ -510,8 +511,10 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
         var me = this;
         var surface = me.surface;
         var project_name = project.get('project_name');
-        var start_date = project.get('start_date').substring(0,10);
-        var end_date = project.get('end_date').substring(0,10);
+        var start_date = project.get('start_date');
+	start_date = start_date.substring(0,10);
+        var end_date = project.get('end_date');
+	end_date = end_date.substring(0,10);
         var predecessors = project.get('predecessors');
         var assignees = project.get('assignees');                               // Array of {id,percent,name,email,initials}
         var startTime = new Date(start_date).getTime();
@@ -559,18 +562,20 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
         }
         spriteBar.model = project;					// Store the task information for the sprite
 
-        // Add some
+        // Convert assignment information into a string
+	// and write behind the Gantt bar
         var text = "";
-        assignees.forEach(function(assignee) {
-            if (0 == assignee.percent) { return; }			// Don't show empty assignments
-            if ("" != text) { text = text + ', '; }
-            text = text + assignee.initials;
-            if (100 != assignee.percent) {
-                text = text + '['+assignee.percent+'%]';
-            }
-        });
-        var axisText = surface.add({type:'text', text:text, x:x+w+2, y:y+d, fill:'#000', font:"10px Arial"}).show(true);
-
+	if ("" != assignees) {
+            assignees.forEach(function(assignee) {
+		if (0 == assignee.percent) { return; }			// Don't show empty assignments
+		if ("" != text) { text = text + ', '; }
+		text = text + assignee.initials;
+		if (100 != assignee.percent) {
+                    text = text + '['+assignee.percent+'%]';
+		}
+            });
+            var axisText = surface.add({type:'text', text:text, x:x+w+2, y:y+d, fill:'#000', font:"10px Arial"}).show(true);
+	}
 
         // Store the start and end points of the bar
         var id = project.get('id');
@@ -1010,7 +1015,7 @@ function launchGanttEditor(){
 
     // Left-hand side task tree
     var ganttTreePanel = Ext.create('PO.view.gantt.GanttTreePanel', {
-        width:		400,
+        width:		800,
         region:		'west',
         store:		taskTreeStore
     });
@@ -1080,11 +1085,13 @@ Ext.onReady(function() {
     var taskTreeStore = Ext.create('PO.store.timesheet.TaskTreeStore');
     var senchaPreferenceStore = Ext.create('PO.store.user.SenchaPreferenceStore');
     var taskDependencyStore = Ext.create('PO.store.timesheet.TimesheetTaskDependencyStore');
+    var taskStatusStore = Ext.create('PO.store.timesheet.TaskStatusStore');
 
     // Store Coodinator starts app after all stores have been loaded:
     var coordinator = Ext.create('PO.controller.StoreLoadCoordinator', {
         stores: [
             'taskTreeStore',
+            'taskStatusStore',
             'senchaPreferenceStore'
         ],
         listeners: {
