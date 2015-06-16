@@ -21,6 +21,8 @@ Ext.require([
     'PO.store.user.SenchaPreferenceStore',
     'PO.view.field.PODateField',                      // Custom ]po[ Date editor field
     'PO.view.field.POComboGrid',
+    'PO.view.field.POTaskAssignmentField',
+    'PO.view.field.POTaskAssignment',
     'PO.view.gantt.AbstractGanttPanel',
     'PO.view.menu.AlphaMenu',
     'PO.view.menu.HelpMenu'
