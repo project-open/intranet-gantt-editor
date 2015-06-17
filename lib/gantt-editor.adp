@@ -1089,13 +1089,15 @@ Ext.onReady(function() {
     var senchaPreferenceStore = Ext.create('PO.store.user.SenchaPreferenceStore');
     var taskDependencyStore = Ext.create('PO.store.timesheet.TimesheetTaskDependencyStore');
     var taskStatusStore = Ext.create('PO.store.timesheet.TaskStatusStore');
+    var projectMemberStore = Ext.create('PO.store.user.UserStore');
 
     // Store Coodinator starts app after all stores have been loaded:
     var coordinator = Ext.create('PO.controller.StoreLoadCoordinator', {
         stores: [
             'taskTreeStore',
             'taskStatusStore',
-            'senchaPreferenceStore'
+            'senchaPreferenceStore',
+            'userStore'
         ],
         listeners: {
             load: function() {
@@ -1105,6 +1107,13 @@ Ext.onReady(function() {
             }
         }
     });
+
+    // Get the list of users assigned to this project
+    projectMemberStore.getProxy().extraParams = { 
+        format: 'json', 
+        query: 'user_id in (select object_id_two from acs_rels where object_id_one = @project_id@)'
+    };
+    projectMemberStore.load();
 
     // Load stores that need parameters
     taskTreeStore.getProxy().extraParams = { project_id: @project_id@ };
