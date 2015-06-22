@@ -1078,14 +1078,75 @@ function launchGanttEditor(){
 	title: 'General',
 	layout: 'anchor',
 	defaultType: 'textfield',
-	items: [{
-	    fieldLabel: 'First Name',
-	    name: 'first',
-	    allowBlank: false
-	},{
-	    fieldLabel: 'Last Name',
-	    name: 'last',
-	    allowBlank: false
+	fieldDefaults: {
+	    labelAlign: 'right',
+	    labelWidth: 90,
+	    msgTarget: 'qtip'
+	},
+        items: [{
+	    xtype: 'fieldset',
+	    title: 'General Information',
+	    defaultType: 'textfield',
+	    layout: 'anchor',
+	    items: [{
+		fieldLabel: 'Name',
+		name: 'project_name',
+		allowBlank: false
+	    }, {
+		xtype: 'fieldcontainer',
+		fieldLabel: 'Duration',
+		layout: 'hbox',
+		items: [{
+		    xtype: 'numberfield',
+		    name: 'duration_units',
+		    hideLabel: true,
+		    width: 70,
+		    value: '1',
+		    minValue: 0,
+		    allowBlank: false
+		}, {
+		    xtype: 'combobox',
+		    name: 'duration_uom',
+		    displayField: 'category',
+		    valueField: 'category_id',
+		    queryMode: 'local',
+		    emptyText: 'Day',
+		    hideLabel: true,
+		    width: 50,
+		    margins: '0 6 0 0',
+		    store: Ext.create('Ext.data.Store', { fields: ['category_id', 'category'], data: [
+			{category_id: 321, category: 'Day'},
+			{category_id: 320, category: 'Hour'}
+		    ]}),
+		    allowBlank: false,
+		    forceSelection: true
+		}, {
+		    xtype: 'checkbox',
+		    name: 'estimated_p',
+		    boxLabel: 'Estimated',
+		    hideLabel: true,
+		    checked: false,
+		    margin: '0 0 10 0'
+		}]
+	    }, {
+		xtype: 'numberfield',
+		fieldLabel: '% Done',
+		name: 'percent_complete',
+		width: 140,
+		value: '0',
+		minValue: 0,
+		maxValue: 100,
+		allowBlank: false
+	    }, {
+		xtype: 'numberfield',
+		fieldLabel: 'Priority',
+		name: 'task_priority',
+		width: 150,
+		value: '500',
+		minValue: 0,
+		maxValue: 1000,
+		allowBlank: false
+	    }]
 	}]
     });
     
