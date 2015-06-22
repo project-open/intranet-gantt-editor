@@ -22,7 +22,7 @@ Ext.require([
     'PO.view.field.PODateField',                      // Custom ]po[ Date editor field
     'PO.view.field.POComboGrid',
     'PO.view.field.POTaskAssignment',
-    'PO.view.field.POProjectMemberCombo',
+//    'PO.view.field.POProjectMemberCombo',
     'PO.view.gantt.AbstractGanttPanel',
     'PO.view.menu.AlphaMenu',
     'PO.view.menu.HelpMenu'
@@ -1073,6 +1073,55 @@ function launchGanttEditor(){
     ganttResizeController.init(this).onLaunch(this);
     ganttResizeController.onResize();    // Set the size of the outer GanttButton Panel
 
+
+    var taskPropertyFormGeneral = Ext.create('Ext.form.Panel', {
+	title: 'General',
+	layout: 'anchor',
+	defaultType: 'textfield',
+	items: [{
+	    fieldLabel: 'First Name',
+	    name: 'first',
+	    allowBlank: false
+	},{
+	    fieldLabel: 'Last Name',
+	    name: 'last',
+	    allowBlank: false
+	}]
+    });
+    
+    var taskPropertyTabpanel = Ext.create("Ext.tab.Panel",{
+	border: false,
+	items: [
+	    taskPropertyFormGeneral,
+	    {
+		title: 'Note',
+		xtype: 'grid',
+		border: false,
+		columns: [{header: 'World'}],                 // One header just for show. There's no data,
+		store: Ext.create('Ext.data.ArrayStore', {}) // A dummy empty data store
+	    }, {
+		title: 'Resources',
+		xtype: 'grid',
+		border: false,
+		columns: [{header: 'World'}],                 // One header just for show. There's no data,
+		store: Ext.create('Ext.data.ArrayStore', {}) // A dummy empty data store
+	    }
+	]
+    });
+
+    var taskPropertyWindow = Ext.create("Ext.Window",{
+	title: 'Extra window!',
+	width: 500,
+	height: 400,
+	closable: true,
+	resizable: true,
+	html: 'A window that is a modal!',
+	modal: false,
+	layout: 'fit',
+	items: taskPropertyTabpanel
+    }).show();
+
+    
 };
 
 
