@@ -1074,14 +1074,25 @@ function launchGanttEditor(){
     ganttResizeController.onResize();    // Set the size of the outer GanttButton Panel
 
 
+    var taskPropertyFormNotes = Ext.create('Ext.form.Panel', {
+	title: 'Notes',
+	layout: 'fit',
+	items: [{
+	    xtype: 'htmleditor',
+	    enableColors: false,
+	    enableAlignments: true,
+	    name: 'description'
+	}]
+    });
+    
     var taskPropertyFormGeneral = Ext.create('Ext.form.Panel', {
 	title: 'General',
 	layout: 'anchor',
-	defaultType: 'textfield',
 	fieldDefaults: {
 	    labelAlign: 'right',
 	    labelWidth: 90,
-	    msgTarget: 'qtip'
+	    msgTarget: 'qtip',
+	    margins: '5 5 5 5',
 	},
         items: [{
 	    xtype: 'fieldset',
@@ -1147,6 +1158,26 @@ function launchGanttEditor(){
 		maxValue: 1000,
 		allowBlank: false
 	    }]
+	}, {
+	    xtype: 'fieldset',
+	    title: 'Dates',
+	    defaultType: 'datefield',
+	    layout: 'anchor',
+	    items: [{
+		xtype: 'datefield',
+		fieldLabel: 'Start',
+		name: 'start_date',
+		allowBlank: false,
+		format: 'Y-m-d',
+		value: new Date()
+	    }, {
+		xtype: 'datefield',
+		fieldLabel: 'End',
+		name: 'ebd_date',
+		allowBlank: false,
+		format: 'Y-m-d',
+		value: new Date()
+	    }]
 	}]
     });
     
@@ -1154,6 +1185,7 @@ function launchGanttEditor(){
 	border: false,
 	items: [
 	    taskPropertyFormGeneral,
+	    taskPropertyFormNotes,
 	    {
 		title: 'Note',
 		xtype: 'grid',
@@ -1167,16 +1199,24 @@ function launchGanttEditor(){
 		columns: [{header: 'World'}],                 // One header just for show. There's no data,
 		store: Ext.create('Ext.data.ArrayStore', {}) // A dummy empty data store
 	    }
-	]
+	],
+	buttons: [{
+	    text: 'OK',
+	    scope: this,
+	    handler: this.onOk
+	}, {
+	    text: 'Cancel',
+	    scope: this,
+	    handler: this.onCancel
+	}]    
     });
 
     var taskPropertyWindow = Ext.create("Ext.Window",{
-	title: 'Extra window!',
+	title: 'Task Properties',
 	width: 500,
 	height: 400,
 	closable: true,
 	resizable: true,
-	html: 'A window that is a modal!',
 	modal: false,
 	layout: 'fit',
 	items: taskPropertyTabpanel
