@@ -122,7 +122,6 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
      * These values will appear in the TaskTreeStore.
      */
     onItemCollapse: function(taskModel) {
-        alert('onItemCollapse');
         var me = this;
         var object_id = taskModel.get('id');
         Ext.Ajax.request({
@@ -138,7 +137,6 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
      * Please see onItemCollapse for further documentation.
      */
     onItemExpand: function(taskModel) {
-        alert('onItemExpand');
         var me = this;
         console.log('PO.class.GanttDrawComponent.onItemExpand: ');
 
@@ -1073,16 +1071,8 @@ function launchGanttEditor(){
     ganttResizeController.init(this).onLaunch(this);
     ganttResizeController.onResize();    // Set the size of the outer GanttButton Panel
 
-
-    // Find the first task in the tree
-    var root = taskTreeStore.getRootNode();
-    var task = root.firstChild;
-    task = task.childNodes[1];
     // Panel showing task properties
-    var taskPropertyWindow = Ext.create("PO.view.gantt.GanttTaskPropertyPanel", {
-    });
-    taskPropertyWindow.show();
-    taskPropertyWindow.setValue(task);
+    var taskPropertyWindow = Ext.create("PO.view.gantt.GanttTaskPropertyPanel");
     
 };
 
