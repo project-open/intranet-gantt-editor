@@ -22,7 +22,7 @@ Ext.require([
     'PO.view.field.PODateField',                      // Custom ]po[ Date editor field
     'PO.view.field.POComboGrid',
     'PO.view.field.POTaskAssignment',
-//    'PO.view.field.POProjectMemberCombo',
+    'PO.view.gantt.GanttTaskPropertyPanel',
     'PO.view.gantt.AbstractGanttPanel',
     'PO.view.menu.AlphaMenu',
     'PO.view.menu.HelpMenu'
@@ -1074,154 +1074,15 @@ function launchGanttEditor(){
     ganttResizeController.onResize();    // Set the size of the outer GanttButton Panel
 
 
-    var taskPropertyFormNotes = Ext.create('Ext.form.Panel', {
-	title: 'Notes',
-	layout: 'fit',
-	items: [{
-	    xtype: 'htmleditor',
-	    enableColors: false,
-	    enableAlignments: true,
-	    name: 'description'
-	}]
+    // Find the first task in the tree
+    var root = taskTreeStore.getRootNode();
+    var task = root.firstChild;
+    task = task.firstChild;
+    // Panel showing task properties
+    var taskPropertyWindow = Ext.create("PO.view.gantt.GanttTaskPropertyPanel", {
     });
-    
-    var taskPropertyFormGeneral = Ext.create('Ext.form.Panel', {
-	title: 'General',
-	layout: 'anchor',
-	fieldDefaults: {
-	    labelAlign: 'right',
-	    labelWidth: 90,
-	    msgTarget: 'qtip',
-	    margins: '5 5 5 5',
-	},
-        items: [{
-	    xtype: 'fieldset',
-	    title: 'General Information',
-	    defaultType: 'textfield',
-	    layout: 'anchor',
-	    items: [{
-		fieldLabel: 'Name',
-		name: 'project_name',
-		allowBlank: false
-	    }, {
-		xtype: 'fieldcontainer',
-		fieldLabel: 'Duration',
-		layout: 'hbox',
-		items: [{
-		    xtype: 'numberfield',
-		    name: 'duration_units',
-		    hideLabel: true,
-		    width: 70,
-		    value: '1',
-		    minValue: 0,
-		    allowBlank: false
-		}, {
-		    xtype: 'combobox',
-		    name: 'duration_uom',
-		    displayField: 'category',
-		    valueField: 'category_id',
-		    queryMode: 'local',
-		    emptyText: 'Day',
-		    hideLabel: true,
-		    width: 50,
-		    margins: '0 6 0 0',
-		    store: Ext.create('Ext.data.Store', { fields: ['category_id', 'category'], data: [
-			{category_id: 321, category: 'Day'},
-			{category_id: 320, category: 'Hour'}
-		    ]}),
-		    allowBlank: false,
-		    forceSelection: true
-		}, {
-		    xtype: 'checkbox',
-		    name: 'estimated_p',
-		    boxLabel: 'Estimated',
-		    hideLabel: true,
-		    checked: false,
-		    margin: '0 0 10 0'
-		}]
-	    }, {
-		xtype: 'numberfield',
-		fieldLabel: '% Done',
-		name: 'percent_complete',
-		width: 140,
-		value: '0',
-		minValue: 0,
-		maxValue: 100,
-		allowBlank: false
-	    }, {
-		xtype: 'numberfield',
-		fieldLabel: 'Priority',
-		name: 'task_priority',
-		width: 150,
-		value: '500',
-		minValue: 0,
-		maxValue: 1000,
-		allowBlank: false
-	    }]
-	}, {
-	    xtype: 'fieldset',
-	    title: 'Dates',
-	    defaultType: 'datefield',
-	    layout: 'anchor',
-	    items: [{
-		xtype: 'datefield',
-		fieldLabel: 'Start',
-		name: 'start_date',
-		allowBlank: false,
-		format: 'Y-m-d',
-		value: new Date()
-	    }, {
-		xtype: 'datefield',
-		fieldLabel: 'End',
-		name: 'ebd_date',
-		allowBlank: false,
-		format: 'Y-m-d',
-		value: new Date()
-	    }]
-	}]
-    });
-    
-    var taskPropertyTabpanel = Ext.create("Ext.tab.Panel",{
-	border: false,
-	items: [
-	    taskPropertyFormGeneral,
-	    taskPropertyFormNotes,
-	    {
-		title: 'Note',
-		xtype: 'grid',
-		border: false,
-		columns: [{header: 'World'}],                 // One header just for show. There's no data,
-		store: Ext.create('Ext.data.ArrayStore', {}) // A dummy empty data store
-	    }, {
-		title: 'Resources',
-		xtype: 'grid',
-		border: false,
-		columns: [{header: 'World'}],                 // One header just for show. There's no data,
-		store: Ext.create('Ext.data.ArrayStore', {}) // A dummy empty data store
-	    }
-	],
-	buttons: [{
-	    text: 'OK',
-	    scope: this,
-	    handler: this.onOk
-	}, {
-	    text: 'Cancel',
-	    scope: this,
-	    handler: this.onCancel
-	}]    
-    });
-
-    var taskPropertyWindow = Ext.create("Ext.Window",{
-	title: 'Task Properties',
-	width: 500,
-	height: 400,
-	closable: true,
-	resizable: true,
-	modal: false,
-	layout: 'fit',
-	items: taskPropertyTabpanel
-    }).show();
-
+    taskPropertyWindow.show();
+    taskPropertyWindow.setValue(task);
     
 };
 
