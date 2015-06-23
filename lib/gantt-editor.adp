@@ -1077,7 +1077,7 @@ function launchGanttEditor(){
     // Find the first task in the tree
     var root = taskTreeStore.getRootNode();
     var task = root.firstChild;
-    task = task.firstChild;
+    task = task.childNodes[1];
     // Panel showing task properties
     var taskPropertyWindow = Ext.create("PO.view.gantt.GanttTaskPropertyPanel", {
     });
