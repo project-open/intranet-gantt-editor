@@ -1090,7 +1090,8 @@ Ext.onReady(function() {
     var senchaPreferenceStore = Ext.create('PO.store.user.SenchaPreferenceStore');
     var taskDependencyStore = Ext.create('PO.store.timesheet.TimesheetTaskDependencyStore');
     var taskStatusStore = Ext.create('PO.store.timesheet.TaskStatusStore');
-    var projectMemberStore = Ext.create('PO.store.user.UserStore');
+    var projectMemberStore = Ext.create('PO.store.user.UserStore', {storeId: 'projectMemberStore'});
+    var userStore = Ext.create('PO.store.user.UserStore', {storeId: 'userStore'});
 
     // Store Coodinator starts app after all stores have been loaded:
     var coordinator = Ext.create('PO.controller.StoreLoadCoordinator', {
@@ -1140,6 +1141,14 @@ Ext.onReady(function() {
     };
     taskDependencyStore.load();
 
+    // User store - load last, because this can take some while...
+    // Load only Employees.
+    userStore.getProxy().extraParams = { 
+        format: 'json', 
+        query: "user_id in (select object_id_two from acs_rels where object_id_one in (select group_id where group_name = 'Employees'))"
+    };
+    userStore.load();
+			       
 });
 </script>
 </div>
