@@ -25,8 +25,14 @@ set gantt_editor_id "gantt_editor_$gantt_editor_rand"
 
 
 db_1row project_info "
-	select	start_date::date as report_start_date,
-		end_date::date as report_end_date
-	from	im_projects
-	where	project_id = :project_id
+select	max(end_date) + '7 days'::interval as report_end_date,
+	min(start_date) - '7 days'::interval as report_start_date
+from	(
+	select	sub_p.start_date,
+		sub_p.end_date
+	from	im_projects sub_p,
+		im_projects main_p
+	where	sub_p.tree_sortkey between main_p.tree_sortkey and tree_right(main_p.tree_sortkey) and
+		main_p.project_id = :project_id
+	) t
 "
