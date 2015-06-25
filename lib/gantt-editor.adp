@@ -530,7 +530,6 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
         var h = me.ganttBarHeight;						// Height of the bars
         var d = Math.floor(h / 2.0) + 1;					// Size of the indent of the super-project bar
 
-
         if (!project.hasChildNodes()) {
             var spriteBar = surface.add({
                 type: 'rect', x: x, y: y, width: w, height: h, radius: 3,
