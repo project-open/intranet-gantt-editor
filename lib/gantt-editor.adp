@@ -1071,9 +1071,18 @@ function launchGanttEditor(){
     ganttResizeController.init(this).onLaunch(this);
     ganttResizeController.onResize();    // Set the size of the outer GanttButton Panel
 
-    // Panel showing task properties
-    var taskPropertyWindow = Ext.create("PO.view.gantt.GanttTaskPropertyPanel");
-    
+    // Create the panel showing properties of a task,
+    // but don't show it yet.
+    var taskPropertyPanel = Ext.create("PO.view.gantt.GanttTaskPropertyPanel");
+
+    /*
+    var root = taskTreeStore.getRootNode();
+    var mainProject = root.childNodes[0];
+    var firstTask = mainProject.childNodes[1];
+    taskPropertyPanel.setValue(firstTask);
+    taskPropertyPanel.setActiveTab('taskPropertyAssignments');
+    taskPropertyPanel.show();
+    */
 };
 
 
@@ -1099,7 +1108,7 @@ Ext.onReady(function() {
             'taskTreeStore',
             'taskStatusStore',
             'senchaPreferenceStore',
-            'userStore'
+            'projectMemberStore'
         ],
         listeners: {
             load: function() {
@@ -1145,7 +1154,7 @@ Ext.onReady(function() {
     // Load only Employees.
     userStore.getProxy().extraParams = { 
         format: 'json', 
-        query: "user_id in (select object_id_two from acs_rels where object_id_one in (select group_id where group_name = 'Employees'))"
+        query: "user_id in (select object_id_two from acs_rels where object_id_one in (select group_id from groups where group_name = 'Employees'))"
     };
     userStore.load();
 			       
