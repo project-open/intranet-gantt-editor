@@ -726,14 +726,23 @@ function launchGanttEditor(){
         },
         tbar: [
             {
-                text: 'OK',
                 icon: '/intranet/images/navbar_default/disk.png',
-                tooltip: 'Save the project to the ]po[ back-end',
-                id: 'buttonSave'
+                tooltip: 'Save the project to the ]po[ backend',
+                id: 'buttonSave',
+		disabled: true
             }, {
-                icon: '/intranet/images/navbar_default/folder_go.png',
-                tooltip: 'Load a project from he ]po[ back-end',
-                id: 'buttonLoad'
+                icon: '/intranet/images/navbar_default/arrow_refresh.png',
+                tooltip: 'Reload project data from ]po[ backend, discarding changes',
+                id: 'buttonReload'
+            }, {
+                icon: '/intranet/images/navbar_default/arrow_out.png',
+                tooltip: 'Maximize the editor &nbsp;',
+                id: 'buttonMaximize'
+            }, {
+                icon: '/intranet/images/navbar_default/arrow_in.png',
+                tooltip: 'Minimize the editor &nbsp;',
+                id: 'buttonMinimize',
+		hidden: true
             }, {
                 xtype: 'tbseparator' 
             }, {
@@ -799,7 +808,8 @@ function launchGanttEditor(){
         debug: false,
         'ganttTreePanel': null,
         'ganttBarPanel': null,
-
+	'taskTreeStore': null,
+	
         refs: [
             { ref: 'ganttTreePanel', selector: '#ganttTreePanel' }
         ],
@@ -809,8 +819,10 @@ function launchGanttEditor(){
             if (me.debug) { console.log('PO.controller.gantt_editor.GanttButtonController: init'); }
 
             this.control({
-                '#buttonLoad': { click: this.onButtonLoad },
+                '#buttonReload': { click: this.onButtonReload },
                 '#buttonSave': { click: this.onButtonSave },
+                '#buttonMaximize': { click: this.onButtonMaximize },
+                '#buttonMinimize': { click: this.onButtonMinimize },
                 '#buttonAdd': { click: { fn: me.ganttTreePanel.onButtonAdd, scope: me.ganttTreePanel }},
                 '#buttonDelete': { click: { fn: me.ganttTreePanel.onButtonDelete, scope: me.ganttTreePanel }},
                 '#buttonReduceIndent': { click: { fn: me.ganttTreePanel.onButtonReduceIndent, scope: me.ganttTreePanel }},
@@ -836,15 +848,41 @@ function launchGanttEditor(){
             return this;
         },
 
-        onButtonLoad: function() {
-            console.log('GanttButtonController.ButtonLoad');
+        onButtonReload: function() {
+            console.log('GanttButtonController.ButtonReload');
         },
 
         onButtonSave: function() {
             console.log('GanttButtonController.ButtonSave');
-            
+	    var me = this;
+            me.taskTreeStore.save();
+	    // Now block the "Save" button, unless some data are changed.
+	    var buttonSave = Ext.getCmp('buttonSave');
+	    buttonSave.setDisabled(true);
         },
 
+	onButtonMaximize: function() {
+            console.log('GanttButtonController.onButtonMaximize');
+	    var buttonMaximize = Ext.getCmp('buttonMaximize');
+	    var buttonMinimize = Ext.getCmp('buttonMinimize');
+	    buttonMaximize.setVisible(false);
+	    buttonMinimize.setVisible(true);
+
+	    var renderDiv = Ext.get("@gantt_editor_id@");
+	    renderDiv.dom.style.position = 'absolute';
+	    renderDiv.setWidth(100);
+	    renderDiv.setHeight(100);
+	    
+	},
+	
+	onButtonMinimize: function() {
+            console.log('GanttButtonController.onButtonMinimize');
+	    var buttonMaximize = Ext.getCmp('buttonMaximize');
+	    var buttonMinimize = Ext.getCmp('buttonMinimize');
+	    buttonMaximize.setVisible(true);
+	    buttonMinimize.setVisible(false);
+	},
+	
         onZoomIn: function() {
             console.log('GanttButtonController.onZoomIn');
             this.ganttBarPanel.onZoomIn();
@@ -1057,7 +1095,8 @@ function launchGanttEditor(){
     var ganttButtonController = Ext.create('PO.controller.gantt_editor.GanttButtonController', {
         'ganttButtonPanel': ganttButtonPanel,
         'ganttTreePanel': ganttTreePanel,
-        'ganttBarPanel': ganttBarPanel
+        'ganttBarPanel': ganttBarPanel,
+	'taskTreeStore': taskTreeStore
     });
     ganttButtonController.init(this).onLaunch(this);
 
