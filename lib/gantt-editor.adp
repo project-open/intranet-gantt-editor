@@ -1015,7 +1015,7 @@ function launchGanttEditor(){
 
     // Left-hand side task tree
     var ganttTreePanel = Ext.create('PO.view.gantt.GanttTreePanel', {
-        width:		800,
+        width:		500,
         region:		'west',
         store:		taskTreeStore
     });
