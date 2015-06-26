@@ -513,9 +513,9 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
         var surface = me.surface;
         var project_name = project.get('project_name');
         var start_date = project.get('start_date');
-	start_date = start_date.substring(0,10);
+        start_date = start_date.substring(0,10);
         var end_date = project.get('end_date');
-	end_date = end_date.substring(0,10);
+        end_date = end_date.substring(0,10);
         var predecessors = project.get('predecessors');
         var assignees = project.get('assignees');                               // Array of {id,percent,name,email,initials}
         var startTime = new Date(start_date).getTime();
@@ -563,19 +563,21 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
         spriteBar.model = project;					// Store the task information for the sprite
 
         // Convert assignment information into a string
-	// and write behind the Gantt bar
+        // and write behind the Gantt bar
+	var projectMemberStore = Ext.StoreManager.get('projectMemberStore');
         var text = "";
-	if ("" != assignees) {
+        if ("" != assignees) {
             assignees.forEach(function(assignee) {
-		if (0 == assignee.percent) { return; }			// Don't show empty assignments
-		if ("" != text) { text = text + ', '; }
-		text = text + assignee.initials;
-		if (100 != assignee.percent) {
+                if (0 == assignee.percent) { return; }			// Don't show empty assignments
+		var userModel = projectMemberStore.getById(""+assignee.user_id);
+                if ("" != text) { text = text + ', '; }
+                text = text + userModel.get('first_names').substr(0,1) + userModel.get('last_name').substr(0,1);
+                if (100 != assignee.percent) {
                     text = text + '['+assignee.percent+'%]';
-		}
+                }
             });
             var axisText = surface.add({type:'text', text:text, x:x+w+2, y:y+d, fill:'#000', font:"10px Arial"}).show(true);
-	}
+        }
 
         // Store the start and end points of the bar
         var id = project.get('id');
@@ -729,7 +731,7 @@ function launchGanttEditor(){
                 icon: '/intranet/images/navbar_default/disk.png',
                 tooltip: 'Save the project to the ]po[ backend',
                 id: 'buttonSave',
-		disabled: true
+                disabled: true
             }, {
                 icon: '/intranet/images/navbar_default/arrow_refresh.png',
                 tooltip: 'Reload project data from ]po[ backend, discarding changes',
@@ -742,7 +744,7 @@ function launchGanttEditor(){
                 icon: '/intranet/images/navbar_default/arrow_in.png',
                 tooltip: 'Minimize the editor &nbsp;',
                 id: 'buttonMinimize',
-		hidden: true
+                hidden: true
             }, {
                 xtype: 'tbseparator' 
             }, {
@@ -808,8 +810,8 @@ function launchGanttEditor(){
         debug: false,
         'ganttTreePanel': null,
         'ganttBarPanel': null,
-	'taskTreeStore': null,
-	
+        'taskTreeStore': null,
+        
         refs: [
             { ref: 'ganttTreePanel', selector: '#ganttTreePanel' }
         ],
@@ -854,35 +856,35 @@ function launchGanttEditor(){
 
         onButtonSave: function() {
             console.log('GanttButtonController.ButtonSave');
-	    var me = this;
+            var me = this;
             me.taskTreeStore.save();
-	    // Now block the "Save" button, unless some data are changed.
-	    var buttonSave = Ext.getCmp('buttonSave');
-	    buttonSave.setDisabled(true);
+            // Now block the "Save" button, unless some data are changed.
+            var buttonSave = Ext.getCmp('buttonSave');
+            buttonSave.setDisabled(true);
         },
 
-	onButtonMaximize: function() {
+        onButtonMaximize: function() {
             console.log('GanttButtonController.onButtonMaximize');
-	    var buttonMaximize = Ext.getCmp('buttonMaximize');
-	    var buttonMinimize = Ext.getCmp('buttonMinimize');
-	    buttonMaximize.setVisible(false);
-	    buttonMinimize.setVisible(true);
+            var buttonMaximize = Ext.getCmp('buttonMaximize');
+            var buttonMinimize = Ext.getCmp('buttonMinimize');
+            buttonMaximize.setVisible(false);
+            buttonMinimize.setVisible(true);
 
-	    var renderDiv = Ext.get("@gantt_editor_id@");
-	    renderDiv.dom.style.position = 'absolute';
-	    renderDiv.setWidth(100);
-	    renderDiv.setHeight(100);
-	    
-	},
-	
-	onButtonMinimize: function() {
+            var renderDiv = Ext.get("@gantt_editor_id@");
+            renderDiv.dom.style.position = 'absolute';
+            renderDiv.setWidth(100);
+            renderDiv.setHeight(100);
+            
+        },
+        
+        onButtonMinimize: function() {
             console.log('GanttButtonController.onButtonMinimize');
-	    var buttonMaximize = Ext.getCmp('buttonMaximize');
-	    var buttonMinimize = Ext.getCmp('buttonMinimize');
-	    buttonMaximize.setVisible(true);
-	    buttonMinimize.setVisible(false);
-	},
-	
+            var buttonMaximize = Ext.getCmp('buttonMaximize');
+            var buttonMinimize = Ext.getCmp('buttonMinimize');
+            buttonMaximize.setVisible(true);
+            buttonMinimize.setVisible(false);
+        },
+        
         onZoomIn: function() {
             console.log('GanttButtonController.onZoomIn');
             this.ganttBarPanel.onZoomIn();
@@ -1096,7 +1098,7 @@ function launchGanttEditor(){
         'ganttButtonPanel': ganttButtonPanel,
         'ganttTreePanel': ganttTreePanel,
         'ganttBarPanel': ganttBarPanel,
-	'taskTreeStore': taskTreeStore
+        'taskTreeStore': taskTreeStore
     });
     ganttButtonController.init(this).onLaunch(this);
 
@@ -1195,7 +1197,7 @@ Ext.onReady(function() {
         query: "user_id in (select object_id_two from acs_rels where object_id_one in (select group_id from groups where group_name = 'Employees'))"
     };
     userStore.load();
-			       
+       
 });
 </script>
 </div>
