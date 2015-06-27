@@ -1066,18 +1066,14 @@ function launchGanttEditor(){
         viewBox: false,
         width: 300,
         height: 300,
-
         overflowX: 'scroll',                            // Allows for horizontal scrolling, but not vertical
         scrollFlags: {x: true},
-
         objectPanel: ganttTreePanel,
         objectStore: taskTreeStore,
         taskDependencyStore: taskDependencyStore,
         preferenceStore: senchaPreferenceStore,
-
-        reportStartDate: new Date('@report_start_date@'),
-        reportEndDate: new Date('@report_end_date@'),
-
+        axisStartDate: new Date('@report_start_date@'),
+        axisEndDate: new Date('@report_end_date@'),
         gradients: [
             {id:'gradientId', angle:66, stops:{0:{color:'#cdf'}, 100:{color:'#ace'}}}, 
             {id:'gradientId2', angle:0, stops:{0:{color:'#590'}, 20:{color:'#599'}, 100:{color:'#ddd'}}}
@@ -1094,6 +1090,7 @@ function launchGanttEditor(){
         renderTo: '@gantt_editor_id@'
     });
 
+    // Controller that deals with button events.
     var ganttButtonController = Ext.create('PO.controller.gantt_editor.GanttButtonController', {
         'ganttButtonPanel': ganttButtonPanel,
         'ganttTreePanel': ganttTreePanel,
@@ -1102,7 +1099,7 @@ function launchGanttEditor(){
     });
     ganttButtonController.init(this).onLaunch(this);
 
-    // 
+    // Contoller to handle size and resizing related events
     var ganttResizeController = Ext.create('PO.controller.gantt_editor.GanttResizeController', {
         'ganttButtonPanel': ganttButtonPanel,
         'ganttTreePanel': ganttTreePanel,
@@ -1116,6 +1113,7 @@ function launchGanttEditor(){
     var taskPropertyPanel = Ext.create("PO.view.gantt.GanttTaskPropertyPanel");
 
     /*
+    // Open the TaskPropertyPanel in order to speedup debugging
     var root = taskTreeStore.getRootNode();
     var mainProject = root.childNodes[0];
     var firstTask = mainProject.childNodes[1];
