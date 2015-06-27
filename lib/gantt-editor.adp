@@ -347,14 +347,13 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
         var me = this;
         if (undefined === me.surface) { return; }
 
-        var ganttTreeView = me.objectPanel.getView();
-        var rootNode = me.objectStore.getRootNode();
-
-        // me.surface.setSize(me.ganttSurfaceWidth, me.surface.height);	// Set the size of the drawing area
         me.surface.removeAll();
+        me.surface.setSize(me.ganttSurfaceWidth, me.surface.height);    // Set the size of the drawing area
         me.drawAxis();                         	// Draw the top axis
 
         // Iterate through all children of the root node and check if they are visible
+        var ganttTreeView = me.objectPanel.getView();
+        var rootNode = me.objectStore.getRootNode();
         rootNode.cascadeBy(function(model) {
             var viewNode = ganttTreeView.getNode(model);
             if (viewNode == null) { return; }    	// hidden nodes/models don't have a viewNode, so we don't need to draw a bar.
@@ -461,48 +460,7 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
         var tip1 = Ext.create("Ext.tip.ToolTip", { target: arrowHead.el, width: 250, html: html, hideDelay: 1000 }); // give 1 second to click on project link
         var tip2 = Ext.create("Ext.tip.ToolTip", { target: arrowLine.el, width: 250, html: html, hideDelay: 1000 });
         console.log('PO.view.portfolio_planner.PortfolioPlannerProjectPanel.drawTaskDependency: Finished');
-
-
         return;
-
-
-        // Draw the main connection line between start and end.
-        var line = me.surface.add({
-            type: 'path',
-            stroke: '#444',
-            'shape-rendering': 'crispy-edges',
-            'stroke-width': 0.5,
-            path: 'M '+ (startX) + ',' + (startY)
-                + 'L '+ (endX+s)   + ',' + (startY)
-                + 'L '+ (endX+s)   + ',' + (endY)
-        }).show(true);
-
-
-        if (endY > startY) {
-            // Draw "normal" arrowhead pointing downwards
-            var arrowHead = me.surface.add({
-                type: 'path',
-                stroke: '#444',
-                fill: '#444',
-                'stroke-width': 0.5,
-                path: 'M '+ (endX+s)   + ',' + (endY)
-                    + 'L '+ (endX-s+s) + ',' + (endY-s)
-                    + 'L '+ (endX+2*s) + ',' + (endY-s)
-                    + 'L '+ (endX+s)   + ',' + (endY)
-            }).show(true);
-        } else {
-            // Draw arrowhead pointing upward
-            var arrowHead = me.surface.add({
-                type: 'path',
-                stroke: '#444',
-                fill: '#444',
-                'stroke-width': 0.5,
-                path: 'M '+ (endX+s)   + ',' + (endY)
-                    + 'L '+ (endX-s+s) + ',' + (endY+s)				// +s here on the Y coordinate, so that the arrow...
-                    + 'L '+ (endX+2*s) + ',' + (endY+s)				// .. points from bottom up.
-                    + 'L '+ (endX+s)   + ',' + (endY)
-            }).show(true);
-        }
     },
 
     /**
@@ -516,6 +474,7 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
         start_date = start_date.substring(0,10);
         var end_date = project.get('end_date');
         end_date = end_date.substring(0,10);
+        var percentCompleted = parseFloat(project.get('percent_completed'));
         var predecessors = project.get('predecessors');
         var assignees = project.get('assignees');                               // Array of {id,percent,name,email,initials}
         var startTime = new Date(start_date).getTime();
@@ -536,11 +495,42 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
                 fill: 'url(#gradientId)',
                 stroke: 'blue',
                 'stroke-width': 0.3,
+        	// style: { cursor: 'move' },
                 listeners: {							// Highlight the sprite on mouse-over
                     mouseover: function() { this.animate({duration: 500, to: {'stroke-width': 2.0}}); },
                     mouseout: function()  { this.animate({duration: 500, to: {'stroke-width': 0.3}}); }
                 }
             }).show(true);
+
+            var spriteBarHandleSize = surface.add({
+                type: 'rect', x: x+w-1, y: y, width: 2, height: h,
+                stroke: 'red',
+        	fill: 'red',
+                'stroke-width': 0.1,
+		'stroke-opacity': 0.0,
+		opacity: 0.0,
+        	style: { cursor: 'e-resize' }
+            }).show(true);
+
+            // Show a line for %done, followed by a draggable bar.
+            if (!isNaN(percentCompleted)) {
+        	var spriteBarLinePercentCompleted = surface.add({
+                    type: 'path',
+                    stroke: 'black',
+                    'stroke-width': 0.5,
+                    path: 'M '+ x + ',' + (y+h/2)
+        		+ 'L '+ (x+w*percentCompleted/100) + ',' + (y+h/2)
+        	}).show(true);
+        	
+        	var spriteBarHandlePercentCompleted = surface.add({
+                    type: 'rect', x: x+(w*percentCompleted/100), y: y+1, width: 0.5, height: h-2,
+                    stroke: 'black',
+        	    fill: 'black',
+                    'stroke-width': 0.5,
+        	    style: { cursor: 'col-resize' }
+        	}).show(true);
+            }
+
         } else {
             var spriteBar = surface.add({
                 type: 'path',
@@ -564,12 +554,12 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
 
         // Convert assignment information into a string
         // and write behind the Gantt bar
-	var projectMemberStore = Ext.StoreManager.get('projectMemberStore');
+        var projectMemberStore = Ext.StoreManager.get('projectMemberStore');
         var text = "";
         if ("" != assignees) {
             assignees.forEach(function(assignee) {
                 if (0 == assignee.percent) { return; }			// Don't show empty assignments
-		var userModel = projectMemberStore.getById(""+assignee.user_id);
+        	var userModel = projectMemberStore.getById(""+assignee.user_id);
                 if ("" != text) { text = text + ', '; }
                 text = text + userModel.get('first_names').substr(0,1) + userModel.get('last_name').substr(0,1);
                 if (100 != assignee.percent) {
