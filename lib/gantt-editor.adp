@@ -501,9 +501,10 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
                     mouseout: function()  { this.animate({duration: 500, to: {'stroke-width': 0.3}}); }
                 }
             }).show(true);
+            spriteBar.model = project;					// Store the task information for the sprite
 
             var spriteBarHandleSize = surface.add({
-                type: 'rect', x: x+w-1, y: y, width: 2, height: h,
+                type: 'rect', x: x+w-1, y: y, width: 4, height: h,
                 stroke: 'red',
         	fill: 'red',
                 'stroke-width': 0.1,
@@ -511,6 +512,7 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
 		opacity: 0.0,
         	style: { cursor: 'e-resize' }
             }).show(true);
+            spriteBarHandleSize.model = project;					// Store the task information for the sprite
 
             // Show a line for %done, followed by a draggable bar.
             if (!isNaN(percentCompleted)) {
@@ -520,15 +522,15 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
                     'stroke-width': 0.5,
                     path: 'M '+ x + ',' + (y+h/2)
         		+ 'L '+ (x+w*percentCompleted/100) + ',' + (y+h/2)
-        	}).show(true);
-        	
+        	}).show(true);       	
         	var spriteBarHandlePercentCompleted = surface.add({
-                    type: 'rect', x: x+(w*percentCompleted/100), y: y+1, width: 0.5, height: h-2,
+                    type: 'rect', x: x+(w*percentCompleted/100), y: y+1, width: 4, height: h-2,
                     stroke: 'black',
         	    fill: 'black',
                     'stroke-width': 0.5,
         	    style: { cursor: 'col-resize' }
         	}).show(true);
+		spriteBarHandlePercentCompleted.model = project;			// Store the task information for the sprite
             }
 
         } else {
@@ -550,7 +552,6 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
                 }
             }).show(true);
         }
-        spriteBar.model = project;					// Store the task information for the sprite
 
         // Convert assignment information into a string
         // and write behind the Gantt bar
