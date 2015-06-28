@@ -863,11 +863,21 @@ function launchGanttEditor(){
             me.ganttTreePanel.on('cellkeydown', this.onCellKeyDown, me.ganttTreePanel);
             me.ganttTreePanel.on('beforecellkeydown', this.onBeforeCellKeyDown, me.ganttTreePanel);
 
+            // Listen to any changes in store records
+	    me.taskTreeStore.on({'update': me.onTaskTreeStoreUpdate, 'scope': this});
+
             return this;
         },
 
+	/**
+	 * The user has reloaded the project data and therefore
+	 * discarded any browser-side changes. So disable the 
+	 * "Save" button now.
+	 */
         onButtonReload: function() {
             console.log('GanttButtonController.ButtonReload');
+            var buttonSave = Ext.getCmp('buttonSave');
+            buttonSave.setDisabled(true);
         },
 
         onButtonSave: function() {
@@ -877,6 +887,17 @@ function launchGanttEditor(){
             // Now block the "Save" button, unless some data are changed.
             var buttonSave = Ext.getCmp('buttonSave');
             buttonSave.setDisabled(true);
+        },
+
+	/**
+	 * Some record of the taskTreeStore has changed.
+	 * Enable the "Save" button to save these changes.
+	 */
+        onTaskTreeStoreUpdate: function() {
+            console.log('GanttButtonController.onTaskTreeStoreUpdate');
+            var me = this;
+            var buttonSave = Ext.getCmp('buttonSave');
+            buttonSave.setDisabled(false);                                    // Allow to "save" changes
         },
 
         onButtonMaximize: function() {
