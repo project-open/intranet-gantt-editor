@@ -565,9 +565,9 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
                 fill: 'url(#gradientId)',
 		zIndex: 0,
                 path: 'M '+ x + ',' + y
-                    + 'L '+ (x+width) + ',' + (y)
-                    + 'L '+ (x+width) + ',' + (y+h)
-                    + 'L '+ (x+width-d) + ',' + (y+h-d)
+                    + 'L '+ (x+w) + ',' + (y)
+                    + 'L '+ (x+w) + ',' + (y+h)
+                    + 'L '+ (x+w-d) + ',' + (y+h-d)
                     + 'L '+ (x+d) + ',' + (y+h-d)
                     + 'L '+ (x) + ',' + (y+h)
                     + 'L '+ (x) + ',' + (y),
@@ -1164,10 +1164,10 @@ function launchGanttEditor(){
 	    var parentEndDate = new Date(parent.get('end_date').substring(0,10));
 
 	    // Calculate the maximum end date of all siblings
-	    var maxEndDate = new Date('2099-12-31');
+	    var maxEndDate = new Date('2000-01-01');
 	    parent.eachChild(function(sibling) {
 		var siblingEndDate = new Date(sibling.get('end_date').substring(0,10));
-		if (siblingEndDate.getTime() < maxEndDate.getTime()) {
+		if (siblingEndDate.getTime() > maxEndDate.getTime()) {
 		    maxEndDate = siblingEndDate;
 		}
 	    });
