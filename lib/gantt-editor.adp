@@ -245,10 +245,9 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
      */
     onSpriteDnD: function(fromSprite, toSprite, diffPoint) {
         var me = this;
-        console.log('PO.view.gantt_editor.GanttBarPanel.onSpriteDnD: Starting: '+
-                    fromSprite+' -> '+toSprite+', [' + diffPoint+']');
-
+        console.log('PO.view.gantt_editor.GanttBarPanel.onSpriteDnD: Starting: ['+diffPoint+']'); console.log(fromSprite); console.log(toSprite);
         if (null == fromSprite) { return; } // Something went completely wrong...
+
         if (null != toSprite && fromSprite != toSprite) {
             me.onCreateDependency(fromSprite, toSprite);    	// dropped on another sprite - create dependency
         } else {
@@ -431,6 +430,7 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
             stroke: color,
             fill: color,
             'stroke-width': 0.5,
+	    zIndex: -100,
             path: 'M '+ (endX)   + ',' + (endY)            // point of arrow head
                 + 'L '+ (endX-s) + ',' + (endY + sDirected)
                 + 'L '+ (endX+s) + ',' + (endY + sDirected)
@@ -444,6 +444,7 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
             stroke: color,
             'shape-rendering': 'crispy-edges',
             'stroke-width': 0.5,
+	    zIndex: -100,
             path: 'M '+ (startX) + ',' + (startY)
                 + 'L '+ (startX) + ',' + (startY - sDirected)
                 + 'L '+ (endX)   + ',' + (endY + sDirected * 2)
@@ -495,6 +496,7 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
                 fill: 'url(#gradientId)',
                 stroke: 'blue',
                 'stroke-width': 0.3,
+		zIndex: 0,
         	// style: { cursor: 'move' },
                 listeners: {							// Highlight the sprite on mouse-over
                     mouseover: function() { this.animate({duration: 500, to: {'stroke-width': 2.0}}); },
@@ -502,6 +504,7 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
                 }
             }).show(true);
             spriteBar.model = project;					// Store the task information for the sprite
+	    spriteBar.spriteType = 'ganttbar';
 
             var spriteBarHandleSize = surface.add({
                 type: 'rect', x: x+w-1, y: y, width: 4, height: h,
@@ -510,27 +513,48 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
                 'stroke-width': 0.1,
 		'stroke-opacity': 0.0,
 		opacity: 0.0,
+		zIndex: 50,
         	style: { cursor: 'e-resize' }
             }).show(true);
             spriteBarHandleSize.model = project;					// Store the task information for the sprite
+            spriteBarHandleSize.baseSprite = spriteBar;					// Store the task information for the sprite
+            spriteBarHandleSize.spriteType = 'resize';
 
             // Show a line for %done, followed by a draggable bar.
             if (!isNaN(percentCompleted)) {
+		var opacity = 0.0;
+		if (percentCompleted > 0.0) opacity = 1.0;
         	var spriteBarLinePercentCompleted = surface.add({
                     type: 'path',
                     stroke: 'black',
                     'stroke-width': 0.5,
+		    zIndex: 10,
+		    opacity: opacity,
                     path: 'M '+ x + ',' + (y+h/2)
         		+ 'L '+ (x+w*percentCompleted/100) + ',' + (y+h/2)
         	}).show(true);       	
         	var spriteBarHandlePercentCompleted = surface.add({
-                    type: 'rect', x: x+(w*percentCompleted/100), y: y+1, width: 4, height: h-2,
+                    type: 'rect', x: x+(w*percentCompleted/100), y: y+1, width: 3, height: h-2,
                     stroke: 'black',
         	    fill: 'black',
-                    'stroke-width': 0.5,
+                    'stroke-width': 0.0,
+		    zIndex: 20,
+		    opacity: opacity,
         	    style: { cursor: 'col-resize' }
         	}).show(true);
 		spriteBarHandlePercentCompleted.model = project;			// Store the task information for the sprite
+		spriteBarHandlePercentCompleted.spriteType = 'percent';
+
+/*        	var spriteBarHandlePercentCompleted = surface.add({
+                    type: 'path',
+                    stroke: 'black',
+                    'stroke-width': 4,
+		    zIndex: 20,
+        	    style: { cursor: 'col-resize' },
+                    path: 'M '+ (x+w*percentCompleted/100) + ',' + y
+        		+ 'L '+ (x+w*percentCompleted/100) + ',' + (y+h)
+        	}).show(true);
+*/
             }
 
         } else {
@@ -539,6 +563,7 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
                 stroke: 'blue',
                 'stroke-width': 0.3,
                 fill: 'url(#gradientId)',
+		zIndex: 0,
                 path: 'M '+ x + ',' + y
                     + 'L '+ (x+width) + ',' + (y)
                     + 'L '+ (x+width) + ',' + (y+h)
@@ -1044,6 +1069,120 @@ function launchGanttEditor(){
         }
     });
 
+    /*
+     * GanttSchedulingController
+     * Reacts to changes of start_date, end_date, work, assignments
+     * and possibly other task fields and modifies other tasks 
+     * according to the specified scheduling type:
+     * <ul>
+     * <li>No scheduling
+     * <li>Manually scheduled tasks
+     * <li>Single project scheduling
+     * <li>Multiproject scheduling
+     * </ul>
+     */
+    Ext.define('PO.controller.gantt_editor.GanttSchedulingController', {
+        extend: 'Ext.app.Controller',
+
+        debug: true,
+        'ganttTreePanel': null,				// Defined during initialization
+        'taskTreeStore': null,				// Defined during initialization
+
+        init: function() {
+            var me = this;
+            if (me.debug) { console.log('PO.controller.gantt_editor.GanttSchedulingController.init: Starting'); }
+
+	    me.taskTreeStore.on({
+		'update': me.onUpdate,                          // Listen to any changes in store records
+		'scope': this
+	    });
+
+            if (me.debug) { console.log('PO.controller.gantt_editor.GanttSchedulingController.init: Finished'); }
+            return this;
+        },
+
+	onUpdate: function(treeStore, model, operation, fieldsChanged, event) {
+	    var me = this;
+	    // console.log('PO.controller.gantt_editor.GanttSchedulingController.onUpdate: Starting');
+	    fieldsChanged.forEach(function(fieldName) {
+		console.log('PO.controller.gantt_editor.GanttSchedulingController.onUpdate: Field changed='+fieldName);
+
+		switch (fieldName) {
+		case "start_date":
+		    me.onStartDateChanged(treeStore,model,operation,event);
+		    break;
+		case "end_date":
+		    me.onEndDateChanged(treeStore,model,operation,event);
+		    break;
+		}
+		
+	    });
+	    // console.log('PO.controller.gantt_editor.GanttSchedulingController.onUpdate: Finished');
+	},
+
+	/**
+	 * The start_date of a task has changed.
+	 * Check if this new date is before the start_date of it's parent.
+	 * In this case we need to adjust the parent.
+	 */
+	onStartDateChanged: function(treeStore,model,operation,event) {
+	    var me = this;
+	    console.log('PO.controller.gantt_editor.GanttSchedulingController.onStartDateChanged: Starting');
+	    var parent = model.parentNode;
+	    if (!parent) return;
+	    var parentStartDate = new Date(parent.get('start_date').substring(0,10));
+
+	    // Calculate the minimum start date of all siblings
+	    var minStartDate = new Date('2099-12-31');
+	    parent.eachChild(function(sibling) {
+		var siblingStartDate = new Date(sibling.get('start_date').substring(0,10));
+		if (siblingStartDate.getTime() < minStartDate.getTime()) {
+		    minStartDate = siblingStartDate;
+		}
+	    });
+
+	    // Check if we have to update the parent
+	    if (parentStartDate.getTime() != minStartDate.getTime()) {
+		// The siblings start different than the parent - update the parent.
+		console.log('PO.controller.gantt_editor.GanttSchedulingController.onStartDateChanged: Updating parent at level='+parent.getDepth());
+                parent.set('start_date', Ext.Date.format(minStartDate, 'Y-m-d'));              // This will call this event recursively
+	    }
+	    console.log('PO.controller.gantt_editor.GanttSchedulingController.onStartDateChanged: Finished');
+	},
+
+	/**
+	 * The end_date of a task has changed.
+	 * Check if this new date is after the end_date of it's parent.
+	 * In this case we need to adjust the parent.
+	 */
+	onEndDateChanged: function(treeStore,model,operation,event) {
+	    var me = this;
+	    console.log('PO.controller.gantt_editor.GanttSchedulingController.onEndDateChanged: Starting');
+
+	    var parent = model.parentNode;
+	    if (!parent) return;
+	    var parentEndDate = new Date(parent.get('end_date').substring(0,10));
+
+	    // Calculate the maximum end date of all siblings
+	    var maxEndDate = new Date('2099-12-31');
+	    parent.eachChild(function(sibling) {
+		var siblingEndDate = new Date(sibling.get('end_date').substring(0,10));
+		if (siblingEndDate.getTime() < maxEndDate.getTime()) {
+		    maxEndDate = siblingEndDate;
+		}
+	    });
+
+	    // Check if we have to update the parent
+	    if (parentEndDate.getTime() != maxEndDate.getTime()) {
+		// The siblings end different than the parent - update the parent.
+		console.log('PO.controller.gantt_editor.GanttSchedulingController.onEndDateChanged: Updating parent at level='+parent.getDepth());
+                parent.set('end_date', Ext.Date.format(maxEndDate, 'Y-m-d'));              // This will call this event recursively
+	    }
+
+	    console.log('PO.controller.gantt_editor.GanttSchedulingController.onEndDateChanged: Finished');
+	},
+    });
+
     // Left-hand side task tree
     var ganttTreePanel = Ext.create('PO.view.gantt.GanttTreePanel', {
         width:		500,
@@ -1102,6 +1241,14 @@ function launchGanttEditor(){
     // Create the panel showing properties of a task,
     // but don't show it yet.
     var taskPropertyPanel = Ext.create("PO.view.gantt.GanttTaskPropertyPanel");
+    taskPropertyPanel.hide();
+
+    // Deal with changes of Gantt data and perform scheduling
+    var ganttSchedulingController = Ext.create('PO.controller.gantt_editor.GanttSchedulingController', {
+	'taskTreeStore': taskTreeStore,
+        'ganttTreePanel': ganttTreePanel
+    });
+    ganttSchedulingController.init(this).onLaunch(this);
 
     /*
     // Open the TaskPropertyPanel in order to speedup debugging
