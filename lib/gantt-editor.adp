@@ -907,6 +907,7 @@ function launchGanttEditor(){
             buttonMaximize.setVisible(false);
             buttonMinimize.setVisible(true);
 
+	    // !!! ToDo: Klaus
             var renderDiv = Ext.get("@gantt_editor_id@");
             renderDiv.dom.style.position = 'absolute';
             renderDiv.setWidth(100);
