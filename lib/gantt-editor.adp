@@ -87,7 +87,6 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
 
         // Catch the event that the object got moved
         me.on({
-            'spritednd': me.onSpriteDnD,
             'spriterightclick': me.onSpriteRightClick,
             'resize': me.redraw,
             'scope': this
@@ -177,8 +176,10 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
         var me = this;
         console.log('PO.view.gantt_editor.GanttBarPanel.onSpriteRightClick: Starting: '+ sprite);
         if (null == sprite) { return; }                     	// Something went completely wrong...
+	alert('rightclick');
 
-        var className = sprite.model.$className;
+	var projectModel = sprite.dndConfig.model;
+        var className = projectModel.$className;
         switch(className) {
         case 'PO.model.timesheet.TimesheetTaskDependency': 
             this.onDependencyRightClick(event, sprite);
@@ -199,7 +200,7 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
         var me = this;
         console.log('PO.view.gantt_editor.GanttBarPanel.onDependencyRightClick: Starting: '+ sprite);
         if (null == sprite) { return; }                     	// Something went completely wrong...
-        var dependencyModel = sprite.model;
+        var dependencyModel = sprite.dndConfig.model;
 
         // Menu for right-clicking a dependency arrow.
         if (!me.dependencyContextMenu) {
@@ -238,24 +239,6 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
         if (null == sprite) { return; }                     	// Something went completely wrong...
     },
 
-
-    /**
-     * Deal with a Drag-and-Drop operation
-     * and distinguish between the various types.
-     */
-    onSpriteDnD: function(fromSprite, toSprite, diffPoint) {
-        var me = this;
-        console.log('PO.view.gantt_editor.GanttBarPanel.onSpriteDnD: Starting: ['+diffPoint+']'); console.log(fromSprite); console.log(toSprite);
-        if (null == fromSprite) { return; } // Something went completely wrong...
-
-        if (null != toSprite && fromSprite != toSprite) {
-            me.onCreateDependency(fromSprite, toSprite);    	// dropped on another sprite - create dependency
-        } else {
-            me.onProjectMove(fromSprite, diffPoint[0]);    	// Dropped on empty space or on the same bar
-        }
-        console.log('PO.view.gantt_editor.GanttBarPanel.onSpriteDnD: Finished');
-    },
-
     /**
      * Move the project forward or backward in time.
      * This function is called by onMouseUp as a
@@ -263,7 +246,7 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
      */
     onProjectMove: function(projectSprite, xDiff) {
         var me = this;
-        var projectModel = projectSprite.model;
+        var projectModel = projectSprite.dndConfig.model;
         if (!projectModel) return;
         var projectId = projectModel.get('id');
         console.log('PO.view.gantt_editor.GanttBarPanel.onProjectMove: Starting');
@@ -300,8 +283,8 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
      */
     onCreateDependency: function(fromSprite, toSprite) {
         var me = this;
-        var fromTaskModel = fromSprite.model;
-        var toTaskModel = toSprite.model;
+        var fromTaskModel = fromSprite.dndConfig.model;
+        var toTaskModel = toSprite.dndConfig.model;
         if (null == fromTaskModel) return;
         if (null == toTaskModel) return;
         console.log('PO.view.portfolio_planner.PortfolioPlannerTaskPanel.onCreateDependency: Starting: '+fromTaskModel.get('id')+' -> '+toTaskModel.get('id'));
@@ -430,13 +413,13 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
             stroke: color,
             fill: color,
             'stroke-width': 0.5,
-	    zIndex: -100,
+            zIndex: -100,
             path: 'M '+ (endX)   + ',' + (endY)            // point of arrow head
                 + 'L '+ (endX-s) + ',' + (endY + sDirected)
                 + 'L '+ (endX+s) + ',' + (endY + sDirected)
                 + 'L '+ (endX)   + ',' + (endY)
         }).show(true);
-        arrowHead.model = dependencyModel;
+        arrowHead.dndConfig.model = dependencyModel;
 
         // Draw the main connection line between start and end.
         var arrowLine = me.surface.add({
@@ -444,13 +427,13 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
             stroke: color,
             'shape-rendering': 'crispy-edges',
             'stroke-width': 0.5,
-	    zIndex: -100,
+            zIndex: -100,
             path: 'M '+ (startX) + ',' + (startY)
                 + 'L '+ (startX) + ',' + (startY - sDirected)
                 + 'L '+ (endX)   + ',' + (endY + sDirected * 2)
                 + 'L '+ (endX)   + ',' + (endY + sDirected)
         }).show(true);
-        arrowLine.model = dependencyModel;
+        arrowLine.dndConfig.model = dependencyModel;
 
         // Add a tool tip to the dependency
         var html = "<b>Project Dependency</b>:<br>" +
@@ -496,66 +479,121 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
                 fill: 'url(#gradientId)',
                 stroke: 'blue',
                 'stroke-width': 0.3,
-		zIndex: 0,
+                zIndex: 0,
         	// style: { cursor: 'move' },
                 listeners: {							// Highlight the sprite on mouse-over
                     mouseover: function() { this.animate({duration: 500, to: {'stroke-width': 2.0}}); },
                     mouseout: function()  { this.animate({duration: 500, to: {'stroke-width': 0.3}}); }
                 }
             }).show(true);
-            spriteBar.model = project;					// Store the task information for the sprite
-	    spriteBar.spriteType = 'ganttbar';
+            spriteBar.dndConfig = {
+            	model: project,					// Store the task information for the sprite
+                handleSprite: spriteBar,
+                dragSprite: spriteBar,
+                dragType: 'move',
+                dragAction: function(panel, e, diff, dndConfig) {
+                    console.log('PO.view.gantt_editor.GanttBarPanel.drawProjectBar.spriteBar.dragAction:');
+		    var baseBBox = panel.dndBaseSprite.getBBox();
+		    
+                    panel.dndShadowSprite.setAttributes({                       // Shift the shadow horizontally
+                	// translate: {x: diff[0], y: 0}
+			w: baseBBox.width + diff[0]
+                    }, true);
+                },
+                dropAction: function(panel, e, diff, dndConfig) {
+                    console.log('PO.view.gantt_editor.GanttBarPanel.drawProjectBar.spriteBar.dropAction:');
+		    var point = me.getMousePoint(e);
+		    
+                    // Check where the user has dropped the mouse
+		    var baseSprite = panel.dndBaseSprite;
+		    if (!baseSprite) { return; }                                // Something went completely wrong...
+                    var dropSprite = panel.getSpriteForPoint(point);
+                    if (baseSprite == dropSprite) { dropSprite = null; }	// Dropped on the same sprite? => normal drop
+
+                    if (0 == Math.abs(diff[0]) + Math.abs(diff[1])) {
+			return;                	                                // Drag-start == drag-end or single-click
+                    } else {
+                	// Fire event in order to notify listerns about the move
+                	var model = dndConfig.model;
+			if (null != dropSprite) {
+			    me.onCreateDependency(baseSprite, dropSprite);    	// dropped on another sprite - create dependency
+			} else {
+			    me.onProjectMove(baseSprite, diff[0]);             	// Dropped on empty space or on the same bar
+			}
+		    }
+                }
+            };
 
             var spriteBarHandleSize = surface.add({
                 type: 'rect', x: x+w-1, y: y, width: 4, height: h,
                 stroke: 'red',
         	fill: 'red',
                 'stroke-width': 0.1,
-		'stroke-opacity': 0.0,
-		opacity: 0.0,
-		zIndex: 50,
+                'stroke-opacity': 0.0,
+                opacity: 0.0,
+                zIndex: 50,
         	style: { cursor: 'e-resize' }
             }).show(true);
-            spriteBarHandleSize.model = project;					// Store the task information for the sprite
-            spriteBarHandleSize.baseSprite = spriteBar;					// Store the task information for the sprite
-            spriteBarHandleSize.spriteType = 'resize';
+            spriteBarHandleSize.dndConfig = {
+            	model: project,					// Store the task information for the sprite
+                handleSprite: spriteBarHandleSize,
+                dragSprite: spriteBar,
+                dragType: 'e-resize',
+                dragAction: function(panel, e, diff, dndConfig) {
+                    console.log('PO.view.gantt_editor.GanttBarPanel.drawProjectBar.spriteBarHandleSize.dragAction:');
+                    panel.dndShadowSprite.setAttributes({                       // Shift the shadow horizontally
+                	translate: {x: diff[0], y: 0}
+                    }, true);
+                },
+                dropAction: function(panel, e, diff, dndConfig) {
+                    console.log('PO.view.gantt_editor.GanttBarPanel.drawProjectBar.spriteBarHandleSize.dropAction:');
+		    var point = me.getMousePoint(e);
+		    
+                    // Check where the user has dropped the mouse
+		    var baseSprite = panel.dndBaseSprite;
+		    if (!baseSprite) { return; }                                // Something went completely wrong...
+                    var dropSprite = panel.getSpriteForPoint(point);
+                    if (baseSprite == dropSprite) { dropSprite = null; }	// Dropped on the same sprite? => normal drop
+
+                    if (0 == Math.abs(diff[0]) + Math.abs(diff[1])) {
+			return;                	                                // Drag-start == drag-end or single-click
+                    } else {
+                	// Fire event in order to notify listerns about the move
+                	var model = dndConfig.model;
+			if (null != dropSprite) {
+			    me.onCreateDependency(baseSprite, dropSprite);    	// dropped on another sprite - create dependency
+			} else {
+			    me.onProjectMove(baseSprite, diff[0]);             	// Dropped on empty space or on the same bar
+			}
+		    }
+                }
+            };
 
             // Show a line for %done, followed by a draggable bar.
-            if (!isNaN(percentCompleted)) {
-		var opacity = 0.0;
-		if (percentCompleted > 0.0) opacity = 1.0;
-        	var spriteBarLinePercentCompleted = surface.add({
-                    type: 'path',
-                    stroke: 'black',
-                    'stroke-width': 0.5,
-		    zIndex: 10,
-		    opacity: opacity,
-                    path: 'M '+ x + ',' + (y+h/2)
-        		+ 'L '+ (x+w*percentCompleted/100) + ',' + (y+h/2)
-        	}).show(true);       	
-        	var spriteBarHandlePercentCompleted = surface.add({
-                    type: 'rect', x: x+(w*percentCompleted/100), y: y+1, width: 3, height: h-2,
-                    stroke: 'black',
-        	    fill: 'black',
-                    'stroke-width': 0.0,
-		    zIndex: 20,
-		    opacity: opacity,
-        	    style: { cursor: 'col-resize' }
-        	}).show(true);
-		spriteBarHandlePercentCompleted.model = project;			// Store the task information for the sprite
-		spriteBarHandlePercentCompleted.spriteType = 'percent';
-
-/*        	var spriteBarHandlePercentCompleted = surface.add({
-                    type: 'path',
-                    stroke: 'black',
-                    'stroke-width': 4,
-		    zIndex: 20,
-        	    style: { cursor: 'col-resize' },
-                    path: 'M '+ (x+w*percentCompleted/100) + ',' + y
-        		+ 'L '+ (x+w*percentCompleted/100) + ',' + (y+h)
-        	}).show(true);
-*/
-            }
+            var opacity = 0.0;
+            if (!isNaN(percentCompleted)) percentCompleted = 0;
+            if (percentCompleted > 0.0) opacity = 1.0;
+            var percentW = w*percentCompleted/100;
+            if (percentW < 2) percentW = 2;
+            var spriteBarPercent = surface.add({
+                type: 'rect', x: x, y: y+2, width: percentW, height: (h-6)/2,
+                stroke: 'black',
+        	fill: 'black',
+                'stroke-width': 0.0,
+                zIndex: 20,
+                opacity: opacity,
+        	style: { cursor: 'col-resize' }
+            }).show(true);
+            spriteBarPercent.dndConfig = {
+            	model: project,					// Store the task information for the sprite
+                handleSprite: spriteBarPercent,
+                dragSprite: spriteBar,
+                dragType: 'e-resize',
+                dragAction: function(panel, e, diff, dndConfig) {
+                },
+                dropAction: function(panel, e, diff, dndConfig) {
+                }
+            };
 
         } else {
             var spriteBar = surface.add({
@@ -563,7 +601,7 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
                 stroke: 'blue',
                 'stroke-width': 0.3,
                 fill: 'url(#gradientId)',
-		zIndex: 0,
+                zIndex: 0,
                 path: 'M '+ x + ',' + y
                     + 'L '+ (x+w) + ',' + (y)
                     + 'L '+ (x+w) + ',' + (y+h)
@@ -864,16 +902,16 @@ function launchGanttEditor(){
             me.ganttTreePanel.on('beforecellkeydown', this.onBeforeCellKeyDown, me.ganttTreePanel);
 
             // Listen to any changes in store records
-	    me.taskTreeStore.on({'update': me.onTaskTreeStoreUpdate, 'scope': this});
+            me.taskTreeStore.on({'update': me.onTaskTreeStoreUpdate, 'scope': this});
 
             return this;
         },
 
-	/**
-	 * The user has reloaded the project data and therefore
-	 * discarded any browser-side changes. So disable the 
-	 * "Save" button now.
-	 */
+        /**
+         * The user has reloaded the project data and therefore
+         * discarded any browser-side changes. So disable the 
+         * "Save" button now.
+         */
         onButtonReload: function() {
             console.log('GanttButtonController.ButtonReload');
             var buttonSave = Ext.getCmp('buttonSave');
@@ -889,10 +927,10 @@ function launchGanttEditor(){
             buttonSave.setDisabled(true);
         },
 
-	/**
-	 * Some record of the taskTreeStore has changed.
-	 * Enable the "Save" button to save these changes.
-	 */
+        /**
+         * Some record of the taskTreeStore has changed.
+         * Enable the "Save" button to save these changes.
+         */
         onTaskTreeStoreUpdate: function() {
             console.log('GanttButtonController.onTaskTreeStoreUpdate');
             var me = this;
@@ -907,7 +945,7 @@ function launchGanttEditor(){
             buttonMaximize.setVisible(false);
             buttonMinimize.setVisible(true);
 
-	    // !!! ToDo: Klaus
+            // !!! ToDo: Klaus
             var renderDiv = Ext.get("@gantt_editor_id@");
             renderDiv.dom.style.position = 'absolute';
             renderDiv.setWidth(100);
@@ -1114,95 +1152,95 @@ function launchGanttEditor(){
             var me = this;
             if (me.debug) { console.log('PO.controller.gantt_editor.GanttSchedulingController.init: Starting'); }
 
-	    me.taskTreeStore.on({
-		'update': me.onUpdate,                          // Listen to any changes in store records
-		'scope': this
-	    });
+            me.taskTreeStore.on({
+                'update': me.onUpdate,                          // Listen to any changes in store records
+                'scope': this
+            });
 
             if (me.debug) { console.log('PO.controller.gantt_editor.GanttSchedulingController.init: Finished'); }
             return this;
         },
 
-	onUpdate: function(treeStore, model, operation, fieldsChanged, event) {
-	    var me = this;
-	    // console.log('PO.controller.gantt_editor.GanttSchedulingController.onUpdate: Starting');
-	    fieldsChanged.forEach(function(fieldName) {
-		console.log('PO.controller.gantt_editor.GanttSchedulingController.onUpdate: Field changed='+fieldName);
+        onUpdate: function(treeStore, model, operation, fieldsChanged, event) {
+            var me = this;
+            // console.log('PO.controller.gantt_editor.GanttSchedulingController.onUpdate: Starting');
+            fieldsChanged.forEach(function(fieldName) {
+                console.log('PO.controller.gantt_editor.GanttSchedulingController.onUpdate: Field changed='+fieldName);
 
-		switch (fieldName) {
-		case "start_date":
-		    me.onStartDateChanged(treeStore,model,operation,event);
-		    break;
-		case "end_date":
-		    me.onEndDateChanged(treeStore,model,operation,event);
-		    break;
-		}
-		
-	    });
-	    // console.log('PO.controller.gantt_editor.GanttSchedulingController.onUpdate: Finished');
-	},
+                switch (fieldName) {
+                case "start_date":
+                    me.onStartDateChanged(treeStore,model,operation,event);
+                    break;
+                case "end_date":
+                    me.onEndDateChanged(treeStore,model,operation,event);
+                    break;
+                }
+                
+            });
+            // console.log('PO.controller.gantt_editor.GanttSchedulingController.onUpdate: Finished');
+        },
 
-	/**
-	 * The start_date of a task has changed.
-	 * Check if this new date is before the start_date of it's parent.
-	 * In this case we need to adjust the parent.
-	 */
-	onStartDateChanged: function(treeStore,model,operation,event) {
-	    var me = this;
-	    console.log('PO.controller.gantt_editor.GanttSchedulingController.onStartDateChanged: Starting');
-	    var parent = model.parentNode;
-	    if (!parent) return;
-	    var parentStartDate = new Date(parent.get('start_date').substring(0,10));
+        /**
+         * The start_date of a task has changed.
+         * Check if this new date is before the start_date of it's parent.
+         * In this case we need to adjust the parent.
+         */
+        onStartDateChanged: function(treeStore,model,operation,event) {
+            var me = this;
+            console.log('PO.controller.gantt_editor.GanttSchedulingController.onStartDateChanged: Starting');
+            var parent = model.parentNode;
+            if (!parent) return;
+            var parentStartDate = new Date(parent.get('start_date').substring(0,10));
 
-	    // Calculate the minimum start date of all siblings
-	    var minStartDate = new Date('2099-12-31');
-	    parent.eachChild(function(sibling) {
-		var siblingStartDate = new Date(sibling.get('start_date').substring(0,10));
-		if (siblingStartDate.getTime() < minStartDate.getTime()) {
-		    minStartDate = siblingStartDate;
-		}
-	    });
+            // Calculate the minimum start date of all siblings
+            var minStartDate = new Date('2099-12-31');
+            parent.eachChild(function(sibling) {
+                var siblingStartDate = new Date(sibling.get('start_date').substring(0,10));
+                if (siblingStartDate.getTime() < minStartDate.getTime()) {
+                    minStartDate = siblingStartDate;
+                }
+            });
 
-	    // Check if we have to update the parent
-	    if (parentStartDate.getTime() != minStartDate.getTime()) {
-		// The siblings start different than the parent - update the parent.
-		console.log('PO.controller.gantt_editor.GanttSchedulingController.onStartDateChanged: Updating parent at level='+parent.getDepth());
+            // Check if we have to update the parent
+            if (parentStartDate.getTime() != minStartDate.getTime()) {
+                // The siblings start different than the parent - update the parent.
+                console.log('PO.controller.gantt_editor.GanttSchedulingController.onStartDateChanged: Updating parent at level='+parent.getDepth());
                 parent.set('start_date', Ext.Date.format(minStartDate, 'Y-m-d'));              // This will call this event recursively
-	    }
-	    console.log('PO.controller.gantt_editor.GanttSchedulingController.onStartDateChanged: Finished');
-	},
+            }
+            console.log('PO.controller.gantt_editor.GanttSchedulingController.onStartDateChanged: Finished');
+        },
 
-	/**
-	 * The end_date of a task has changed.
-	 * Check if this new date is after the end_date of it's parent.
-	 * In this case we need to adjust the parent.
-	 */
-	onEndDateChanged: function(treeStore,model,operation,event) {
-	    var me = this;
-	    console.log('PO.controller.gantt_editor.GanttSchedulingController.onEndDateChanged: Starting');
+        /**
+         * The end_date of a task has changed.
+         * Check if this new date is after the end_date of it's parent.
+         * In this case we need to adjust the parent.
+         */
+        onEndDateChanged: function(treeStore,model,operation,event) {
+            var me = this;
+            console.log('PO.controller.gantt_editor.GanttSchedulingController.onEndDateChanged: Starting');
 
-	    var parent = model.parentNode;
-	    if (!parent) return;
-	    var parentEndDate = new Date(parent.get('end_date').substring(0,10));
+            var parent = model.parentNode;
+            if (!parent) return;
+            var parentEndDate = new Date(parent.get('end_date').substring(0,10));
 
-	    // Calculate the maximum end date of all siblings
-	    var maxEndDate = new Date('2000-01-01');
-	    parent.eachChild(function(sibling) {
-		var siblingEndDate = new Date(sibling.get('end_date').substring(0,10));
-		if (siblingEndDate.getTime() > maxEndDate.getTime()) {
-		    maxEndDate = siblingEndDate;
-		}
-	    });
+            // Calculate the maximum end date of all siblings
+            var maxEndDate = new Date('2000-01-01');
+            parent.eachChild(function(sibling) {
+                var siblingEndDate = new Date(sibling.get('end_date').substring(0,10));
+                if (siblingEndDate.getTime() > maxEndDate.getTime()) {
+                    maxEndDate = siblingEndDate;
+                }
+            });
 
-	    // Check if we have to update the parent
-	    if (parentEndDate.getTime() != maxEndDate.getTime()) {
-		// The siblings end different than the parent - update the parent.
-		console.log('PO.controller.gantt_editor.GanttSchedulingController.onEndDateChanged: Updating parent at level='+parent.getDepth());
+            // Check if we have to update the parent
+            if (parentEndDate.getTime() != maxEndDate.getTime()) {
+                // The siblings end different than the parent - update the parent.
+                console.log('PO.controller.gantt_editor.GanttSchedulingController.onEndDateChanged: Updating parent at level='+parent.getDepth());
                 parent.set('end_date', Ext.Date.format(maxEndDate, 'Y-m-d'));              // This will call this event recursively
-	    }
+            }
 
-	    console.log('PO.controller.gantt_editor.GanttSchedulingController.onEndDateChanged: Finished');
-	},
+            console.log('PO.controller.gantt_editor.GanttSchedulingController.onEndDateChanged: Finished');
+        },
     });
 
     // Left-hand side task tree
@@ -1267,7 +1305,7 @@ function launchGanttEditor(){
 
     // Deal with changes of Gantt data and perform scheduling
     var ganttSchedulingController = Ext.create('PO.controller.gantt_editor.GanttSchedulingController', {
-	'taskTreeStore': taskTreeStore,
+        'taskTreeStore': taskTreeStore,
         'ganttTreePanel': ganttTreePanel
     });
     ganttSchedulingController.init(this).onLaunch(this);
