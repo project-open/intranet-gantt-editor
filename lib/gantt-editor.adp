@@ -176,9 +176,9 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
         var me = this;
         console.log('PO.view.gantt_editor.GanttBarPanel.onSpriteRightClick: Starting: '+ sprite);
         if (null == sprite) { return; }                     	// Something went completely wrong...
-	alert('rightclick');
+        alert('rightclick');
 
-	var projectModel = sprite.dndConfig.model;
+        var projectModel = sprite.dndConfig.model;
         var className = projectModel.$className;
         switch(className) {
         case 'PO.model.timesheet.TimesheetTaskDependency': 
@@ -305,6 +305,28 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
     },
 
     /**
+     * Move the end of the percent_completed bar according to mouse-up position.
+     */
+    onProjectPercentResize: function(projectSprite, percentSprite) {
+        var me = this;
+        var projectModel = projectSprite.dndConfig.model;
+        if (!projectModel) return;
+        var projectId = projectModel.get('id');
+        console.log('PO.view.gantt_editor.GanttBarPanel.onProjectPercentResize: Starting');
+
+	var projectBBox = projectSprite.getBBox();
+	var percentBBox = percentSprite.getBBox();
+
+	var projectWidth = projectBBox.width;
+	if (0 == projectWidth) projectWidth = projectWidth + 1;                    // Avoid division by zero.
+	var percent =  Math.floor(100.0 * percentBBox.width / projectWidth);
+        projectModel.set('percent_completed', ""+percent);
+
+        me.redraw();
+        console.log('PO.view.gantt_editor.GanttBarPanel.onProjectPercentResize: Finished');
+    },
+
+    /**
      * Create a dependency between two two tasks.
      * This function is called by onMouseUp as a successful 
      * "drop" action if the drop target is another project.
@@ -379,8 +401,8 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
                 if (dependentTasks instanceof Array) {
                     for (var i = 0, len = dependentTasks.length; i < len; i++) {
                 	var depTask = dependentTasks[i];
-                	var depNode = me.taskModelHash[depTask];
-                	me.drawDependency(model, depNode, model);
+                        var depNode = me.taskModelHash[depTask];
+                        me.drawDependency(model, depNode, model);
                     }
                 }
             });
@@ -448,8 +470,8 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
                 + 'L '+ (endX)   + ',' + (endY)
         }).show(true);
         arrowHead.dndConfig = {
-	    model: dependencyModel
-	};
+            model: dependencyModel
+        };
 
         // Draw the main connection line between start and end.
         var arrowLine = me.surface.add({
@@ -464,8 +486,8 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
                 + 'L '+ (endX)   + ',' + (endY + sDirected)
         }).show(true);
         arrowHead.dndConfig = {
-	    model: dependencyModel
-	};
+            model: dependencyModel
+        };
 
         // Add a tool tip to the dependency
         var html = "<b>Project Dependency</b>:<br>" +
@@ -506,105 +528,124 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
         var d = Math.floor(h / 2.0) + 1;					// Size of the indent of the super-project bar
 
         if (!project.hasChildNodes()) {
+
+            // The main Gantt bar
+            // Drag-and-Drop configuration includes both moving and creating dependencies.
             var spriteBar = surface.add({
                 type: 'rect', x: x, y: y, width: w, height: h, radius: 3,
                 fill: 'url(#gradientId)',
                 stroke: 'blue',
                 'stroke-width': 0.3,
                 zIndex: 0,
-        	// style: { cursor: 'move' },
+                // style: { cursor: 'move' },
                 listeners: {							// Highlight the sprite on mouse-over
                     mouseover: function() { this.animate({duration: 500, to: {'stroke-width': 2.0}}); },
                     mouseout: function()  { this.animate({duration: 500, to: {'stroke-width': 0.3}}); }
                 }
             }).show(true);
             spriteBar.dndConfig = {
-            	model: project,					// Store the task information for the sprite
+                    model: project,					// Store the task information for the sprite
                 handleSprite: spriteBar,
                 dragSprite: spriteBar,
                 dragType: 'move',
                 dragAction: function(panel, e, diff, dndConfig) {
                     console.log('PO.view.gantt_editor.GanttBarPanel.drawProjectBar.spriteBar.dragAction:');
-		    var baseBBox = panel.dndBaseSprite.getBBox();
-		    var shadow = panel.dndShadowSprite;
+                    var baseBBox = panel.dndBaseSprite.getBBox();
+                    var shadow = panel.dndShadowSprite;
                     shadow.setAttributes({translate: {x: diff[0], y: 0}}, true);
                 },
                 dropAction: function(panel, e, diff, dndConfig) {
                     console.log('PO.view.gantt_editor.GanttBarPanel.drawProjectBar.spriteBar.dropAction:');
-		    var point = me.getMousePoint(e);
-		    
+                    var point = me.getMousePoint(e);
+                    
                     // Check where the user has dropped the mouse
-		    var baseSprite = panel.dndBaseSprite;
-		    if (!baseSprite) { return; }                                // Something went completely wrong...
+                    var baseSprite = panel.dndBaseSprite;
+                    if (!baseSprite) { return; }                                // Something went completely wrong...
                     var dropSprite = panel.getSpriteForPoint(point);
                     if (baseSprite == dropSprite) { dropSprite = null; }	// Dropped on the same sprite? => normal drop
 
                     if (0 == Math.abs(diff[0]) + Math.abs(diff[1])) {
-			return;                	                                // Drag-start == drag-end or single-click
+                	return;                                                        // Drag-start == drag-end or single-click
                     } else {
-                	// Fire event in order to notify listerns about the move
-                	var model = dndConfig.model;
-			if (null != dropSprite) {
-			    me.onCreateDependency(baseSprite, dropSprite);    	// dropped on another sprite - create dependency
-			} else {
-			    me.onProjectMove(baseSprite, diff[0]);             	// Dropped on empty space or on the same bar
-			}
-		    }
+                        // Fire event in order to notify listerns about the move
+                        var model = dndConfig.model;
+                	if (null != dropSprite) {
+                	    me.onCreateDependency(baseSprite, dropSprite);    	// dropped on another sprite - create dependency
+                	} else {
+                	    me.onProjectMove(baseSprite, diff[0]);                     // Dropped on empty space or on the same bar
+                	}
+                    }
                 }
             };
 
+            // Resize-Handle of the Gantt Bar:
+            // This is an invisible box at the right end of the bar
+            // used to change the cursor and to initiate a specific
+            // resizing DnD operation.
             var spriteBarHandleSize = surface.add({
                 type: 'rect', x: x+w-2, y: y, width: 4, height: h,
                 stroke: 'red',
-        	fill: 'red',
+                fill: 'red',
                 'stroke-width': 0.1,
                 'stroke-opacity': 0.0,
                 opacity: 0.0,
                 zIndex: 50,
-        	style: { cursor: 'e-resize' }
+                style: { cursor: 'e-resize' }
             }).show(true);
             spriteBarHandleSize.dndConfig = {
-            	model: project,					// Store the task information for the sprite
+                model: project,					// Store the task information for the sprite
                 handleSprite: spriteBarHandleSize,
                 dragSprite: spriteBar,
                 dragType: 'e-resize',
                 dragAction: function(panel, e, diff, dndConfig) {
                     console.log('PO.view.gantt_editor.GanttBarPanel.drawProjectBar.spriteBarHandleSize.dragAction:');
-		    var baseBBox = panel.dndBaseSprite.getBBox();
-		    var shadow = panel.dndShadowSprite;
+                    var baseBBox = panel.dndBaseSprite.getBBox();
+                    var shadow = panel.dndShadowSprite;
                     shadow.setAttributes({
-			width: baseBBox.width + diff[0]
-		    }).show(true);
+                	width: baseBBox.width + diff[0]
+                    }).show(true);
                 },
                 dropAction: function(panel, e, diff, dndConfig) {
                     console.log('PO.view.gantt_editor.GanttBarPanel.drawProjectBar.spriteBarHandleSize.dropAction:');
-		    me.onProjectResize(panel.dndBaseSprite, diff[0]);             	// Changing end-date to match x coo
+                    me.onProjectResize(panel.dndBaseSprite, diff[0]);                     // Changing end-date to match x coo
                 }
             };
 
-            // Show a line for %done, followed by a draggable bar.
+            // Percent_complete bar on top of the Gantt bar:
+            // Allows for special DnD affecting only %done.
             var opacity = 0.0;
-            if (!isNaN(percentCompleted)) percentCompleted = 0;
+            if (isNaN(percentCompleted)) percentCompleted = 0;
             if (percentCompleted > 0.0) opacity = 1.0;
             var percentW = w*percentCompleted/100;
             if (percentW < 2) percentW = 2;
+            opacity = 1.0;
             var spriteBarPercent = surface.add({
                 type: 'rect', x: x, y: y+2, width: percentW, height: (h-6)/2,
                 stroke: 'black',
-        	fill: 'black',
+                fill: 'black',
                 'stroke-width': 0.0,
                 zIndex: 20,
                 opacity: opacity,
-        	style: { cursor: 'col-resize' }
+                style: { cursor: 'col-resize' }
             }).show(true);
             spriteBarPercent.dndConfig = {
-            	model: project,					// Store the task information for the sprite
+                model: project,					// Store the task information for the sprite
+		dragSprite: spriteBarPercent,
                 handleSprite: spriteBarPercent,
-                dragSprite: spriteBar,
+                projectSprite: spriteBar,
                 dragType: 'e-resize',
                 dragAction: function(panel, e, diff, dndConfig) {
+                    console.log('PO.view.gantt_editor.GanttBarPanel.drawProjectBar.spriteBarPercent.dragAction:');
+                    var baseBBox = panel.dndBaseSprite.getBBox();
+                    var shadow = panel.dndShadowSprite;
+                    shadow.setAttributes({
+                	width: baseBBox.width + diff[0]
+                    }).show(true);
                 },
                 dropAction: function(panel, e, diff, dndConfig) {
+                    console.log('PO.view.gantt_editor.GanttBarPanel.drawProjectBar.spriteBarPercent.dropAction:');
+                    var shadow = panel.dndShadowSprite;
+                    me.onProjectPercentResize(dndConfig.projectSprite, shadow);          	// Changing end-date to match x coo
                 }
             };
 
@@ -636,7 +677,7 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
         if ("" != assignees) {
             assignees.forEach(function(assignee) {
                 if (0 == assignee.percent) { return; }			// Don't show empty assignments
-        	var userModel = projectMemberStore.getById(""+assignee.user_id);
+                var userModel = projectMemberStore.getById(""+assignee.user_id);
                 if ("" != text) { text = text + ', '; }
                 text = text + userModel.get('first_names').substr(0,1) + userModel.get('last_name').substr(0,1);
                 if (100 != assignee.percent) {
@@ -719,32 +760,32 @@ function launchGanttEditor(){
                     });
                     // Reset column configuration
                     projectGridColumnConfig.each(function(model) { 
-                	model.destroy({
-                	    success: function(model) {
-                		console.log('configMenuOnResetConfiguration: Successfully destroyed a CC config');
-                		var count = projectGridColumnConfig.count() + costCenterGridColumnConfig.count();
-                		if (0 == count) {
-                		    // Reload the page. 
-                		    var params = Ext.urlDecode(location.search.substring(1));
-                		    var url = window.location.pathname + '?' + Ext.Object.toQueryString(params);
-                		    window.location = url;
-                		}
-                	    }
-                	}); 
+                        model.destroy({
+                            success: function(model) {
+                        	console.log('configMenuOnResetConfiguration: Successfully destroyed a CC config');
+                        	var count = projectGridColumnConfig.count() + costCenterGridColumnConfig.count();
+                        	if (0 == count) {
+                        	    // Reload the page. 
+                        	    var params = Ext.urlDecode(location.search.substring(1));
+                        	    var url = window.location.pathname + '?' + Ext.Object.toQueryString(params);
+                        	    window.location = url;
+                        	}
+                            }
+                        }); 
                     });
                     costCenterGridColumnConfig.each(function(model) { 
-                	model.destroy({
-                	    success: function(model) {
-                		console.log('configMenuOnResetConfiguration: Successfully destroyed a CC config');
-                		var count = projectGridColumnConfig.count() + costCenterGridColumnConfig.count();
-                		if (0 == count) {
-                		    // Reload the page. 
-                		    var params = Ext.urlDecode(location.search.substring(1));
-                		    var url = window.location.pathname + '?' + Ext.Object.toQueryString(params);
-                		    window.location = url;
-                		}
-                	    }
-                	}); 
+                        model.destroy({
+                            success: function(model) {
+                        	console.log('configMenuOnResetConfiguration: Successfully destroyed a CC config');
+                        	var count = projectGridColumnConfig.count() + costCenterGridColumnConfig.count();
+                        	if (0 == count) {
+                        	    // Reload the page. 
+                        	    var params = Ext.urlDecode(location.search.substring(1));
+                        	    var url = window.location.pathname + '?' + Ext.Object.toQueryString(params);
+                        	    window.location = url;
+                        	}
+                            }
+                        }); 
                     });
                 }
         }, '-']
