@@ -277,6 +277,34 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
     },
 
     /**
+     * Move the end-date of the project forward or backward in time.
+     * This function is called after a successful drag-and-drop operation
+     * of the "resize handle" of the bar.
+     */
+    onProjectResize: function(projectSprite, xDiff) {
+        var me = this;
+        var projectModel = projectSprite.dndConfig.model;
+        if (!projectModel) return;
+        var projectId = projectModel.get('id');
+        console.log('PO.view.gantt_editor.GanttBarPanel.onProjectResize: Starting');
+
+        var bBox = me.dndBaseSprite.getBBox();
+        var diffTime = Math.floor(1.0 * xDiff * (me.axisEndDate.getTime() - me.axisStartDate.getTime()) / (me.axisEndX - me.axisStartX));
+        var endTime = new Date(projectModel.get('end_date')).getTime();
+
+        // Save original start- and end time in non-model variables
+        if (!projectModel.orgEndTime) {
+            projectModel.orgEndTime = endTime;
+        }
+        endTime = endTime + diffTime;
+        var endDate = new Date(endTime);
+        projectModel.set('end_date', endDate.toISOString().substring(0,10));
+
+        me.redraw();
+        console.log('PO.view.gantt_editor.GanttBarPanel.onProjectResize: Finished');
+    },
+
+    /**
      * Create a dependency between two two tasks.
      * This function is called by onMouseUp as a successful 
      * "drop" action if the drop target is another project.
@@ -419,7 +447,9 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
                 + 'L '+ (endX+s) + ',' + (endY + sDirected)
                 + 'L '+ (endX)   + ',' + (endY)
         }).show(true);
-        arrowHead.dndConfig.model = dependencyModel;
+        arrowHead.dndConfig = {
+	    model: dependencyModel
+	};
 
         // Draw the main connection line between start and end.
         var arrowLine = me.surface.add({
@@ -433,7 +463,9 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
                 + 'L '+ (endX)   + ',' + (endY + sDirected * 2)
                 + 'L '+ (endX)   + ',' + (endY + sDirected)
         }).show(true);
-        arrowLine.dndConfig.model = dependencyModel;
+        arrowHead.dndConfig = {
+	    model: dependencyModel
+	};
 
         // Add a tool tip to the dependency
         var html = "<b>Project Dependency</b>:<br>" +
@@ -494,11 +526,8 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
                 dragAction: function(panel, e, diff, dndConfig) {
                     console.log('PO.view.gantt_editor.GanttBarPanel.drawProjectBar.spriteBar.dragAction:');
 		    var baseBBox = panel.dndBaseSprite.getBBox();
-		    
-                    panel.dndShadowSprite.setAttributes({                       // Shift the shadow horizontally
-                	// translate: {x: diff[0], y: 0}
-			w: baseBBox.width + diff[0]
-                    }, true);
+		    var shadow = panel.dndShadowSprite;
+                    shadow.setAttributes({translate: {x: diff[0], y: 0}}, true);
                 },
                 dropAction: function(panel, e, diff, dndConfig) {
                     console.log('PO.view.gantt_editor.GanttBarPanel.drawProjectBar.spriteBar.dropAction:');
@@ -525,7 +554,7 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
             };
 
             var spriteBarHandleSize = surface.add({
-                type: 'rect', x: x+w-1, y: y, width: 4, height: h,
+                type: 'rect', x: x+w-2, y: y, width: 4, height: h,
                 stroke: 'red',
         	fill: 'red',
                 'stroke-width': 0.1,
@@ -541,31 +570,15 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
                 dragType: 'e-resize',
                 dragAction: function(panel, e, diff, dndConfig) {
                     console.log('PO.view.gantt_editor.GanttBarPanel.drawProjectBar.spriteBarHandleSize.dragAction:');
-                    panel.dndShadowSprite.setAttributes({                       // Shift the shadow horizontally
-                	translate: {x: diff[0], y: 0}
-                    }, true);
+		    var baseBBox = panel.dndBaseSprite.getBBox();
+		    var shadow = panel.dndShadowSprite;
+                    shadow.setAttributes({
+			width: baseBBox.width + diff[0]
+		    }).show(true);
                 },
                 dropAction: function(panel, e, diff, dndConfig) {
                     console.log('PO.view.gantt_editor.GanttBarPanel.drawProjectBar.spriteBarHandleSize.dropAction:');
-		    var point = me.getMousePoint(e);
-		    
-                    // Check where the user has dropped the mouse
-		    var baseSprite = panel.dndBaseSprite;
-		    if (!baseSprite) { return; }                                // Something went completely wrong...
-                    var dropSprite = panel.getSpriteForPoint(point);
-                    if (baseSprite == dropSprite) { dropSprite = null; }	// Dropped on the same sprite? => normal drop
-
-                    if (0 == Math.abs(diff[0]) + Math.abs(diff[1])) {
-			return;                	                                // Drag-start == drag-end or single-click
-                    } else {
-                	// Fire event in order to notify listerns about the move
-                	var model = dndConfig.model;
-			if (null != dropSprite) {
-			    me.onCreateDependency(baseSprite, dropSprite);    	// dropped on another sprite - create dependency
-			} else {
-			    me.onProjectMove(baseSprite, diff[0]);             	// Dropped on empty space or on the same bar
-			}
-		    }
+		    me.onProjectResize(panel.dndBaseSprite, diff[0]);             	// Changing end-date to match x coo
                 }
             };
 
