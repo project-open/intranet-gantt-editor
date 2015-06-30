@@ -43,12 +43,9 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
         'Ext.layout.component.Draw'
     ],
 
-    // Really Necessary???
-    taskDependencyStore: null,							// Reference to cost center store, set during init
-    preferenceStore: null,
-
-    barHash: {},								// Hash array from object_ids -> Start/end point
+    taskBBoxHash: {},								// Hash array from object_ids -> Start/end point
     taskModelHash: {},								// Start and end date of tasks
+    preferenceStore: null,
 
     /**
      * Starts the main editor panel as the right-hand side
@@ -89,12 +86,6 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
         me.on({
             'spriterightclick': me.onSpriteRightClick,
             'resize': me.redraw,
-            'scope': this
-        });
-
-        // Redraw dependency arrows when loaded
-        me.taskDependencyStore.on({
-            'load': me.onTaskDependencyStoreChange,
             'scope': this
         });
 
@@ -390,116 +381,16 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
         rootNode.cascadeBy(function(model) {
             var viewNode = ganttTreeView.getNode(model);
             if (viewNode == null) { return; }					// Hidden nodes have no viewNode -> no bar
-            // if (!model.isVisible()) { return; }
-            me.drawProjectBar(model, viewNode);
+            me.drawProjectBar(model);
         });
-
-        // Iterate through all children and draw dependencies
-        if (me.preferenceStore.getPreferenceBoolean('show_project_dependencies', true)) {
-            rootNode.cascadeBy(function(model) {
-                var viewNode = ganttTreeView.getNode(model);
-                var dependentTasks = model.get('successors');
-                if (dependentTasks instanceof Array) {
-                    for (var i = 0, len = dependentTasks.length; i < len; i++) {
-                        var depTask = dependentTasks[i];
-                        var depNode = me.taskModelHash[depTask];
-                        me.drawDependency(model, depNode, model);
-                    }
-                }
-            });
-        }
+	
+	// Iterate through all children and draw dependencies
+        rootNode.cascadeBy(function(model) {
+            var viewNode = ganttTreeView.getNode(model);
+            if (viewNode == null) { return; }					// Hidden nodes have no viewNode -> no bar
+            me.drawProjectDependencies(model);
+        });
         console.log('PO.class.GanttDrawComponent.redraw: Finished');
-    },
-
-    /**
-     * Draws a dependency line from one bar to the next one
-     */
-    drawDependency: function(predecessor, successor, dependencyModel) {
-        var me = this;
-
-        if (!predecessor) { 
-            console.log('GanttDrawComponent.drawDependency: predecessor is NULL');
-            return; 
-        }
-        if (!successor) { 
-            console.log('GanttDrawComponent.drawDependency: successor is NULL');
-            return; 
-        }
-
-        var from = predecessor.get('id');
-        var to = successor.get('id');
-        var s = me.arrowheadSize;
-
-        var fromBBox = me.barHash[from];					// We start drawing with the end of the first bar...
-        var toBBox = me.barHash[to];			        		// .. and draw towards the start of the 2nd bar.
-        if (!fromBBox || !toBBox) { return; }
-
-        // Assuming end-to-start dependencies from a earlier task to a later task
-        var startX = fromBBox[2];
-        var startY = fromBBox[3];
-        var endX = toBBox[0];
-        var endY = toBBox[1];
-
-        // Color: Arrows are black if dependencies are OK, or red otherwise
-        var color = '#222';
-        if (endX < startX) { color = 'red'; }
-
-        // Set the vertical start point to Correct the start/end Y position
-        // and the direction of the arrow head
-        var sDirected = null;
-        if (endY > startY) {
-            // startY = startY + me.barHeight;
-            sDirected = -s;							// Draw "normal" arrowhead pointing downwards
-            startY = startY - 2;
-            endY = endY + 0;
-        } else {
-            startY = startY - me.barHeight + 4;
-            endY = endY + me.barHeight - 2;
-            sDirected = +s;							// Draw arrowhead pointing upward
-        }
-
-        // Draw the arrow head (filled)
-        var arrowHead = me.surface.add({
-            type: 'path',
-            stroke: color,
-            fill: color,
-            'stroke-width': 0.5,
-            zIndex: -100,
-            path: 'M '+ (endX)   + ', ' + (endY)					// Point of arrow head
-                + 'L '+ (endX-s) + ', ' + (endY + sDirected)
-                + 'L '+ (endX+s) + ', ' + (endY + sDirected)
-                + 'L '+ (endX)   + ', ' + (endY)
-        }).show(true);
-        arrowHead.dndConfig = {
-            model: dependencyModel
-        };
-
-        // Draw the main connection line between start and end.
-        var arrowLine = me.surface.add({
-            type: 'path',
-            stroke: color,
-            'shape-rendering': 'crispy-edges',
-            'stroke-width': 0.5,
-            zIndex: -100,
-            path: 'M '+ (startX) + ', ' + (startY)
-                + 'L '+ (startX) + ', ' + (startY - sDirected)
-                + 'L '+ (endX)   + ', ' + (endY + sDirected * 2)
-                + 'L '+ (endX)   + ', ' + (endY + sDirected)
-        }).show(true);
-        arrowHead.dndConfig = {
-            model: dependencyModel
-        };
-
-        // Add a tool tip to the dependency
-        var html = "<b>Project Dependency</b>:<br>" +
-            "From task <a href='/intranet/projects/view?project_id=" + dependencyModel.get('task_id_one') + "' target='_blank'>" + dependencyModel.get('task_one_name') + "</a> of " +
-            "project <a href='/intranet/projects/view?project_id=" + dependencyModel.get('main_project_id_one') + "' target='_blank'>" + dependencyModel.get('main_project_name_one') + "</a> to " +
-            "task <a href='/intranet/projects/view?project_id=" + dependencyModel.get('task_id_two') + "' target='_blank'>" + dependencyModel.get('task_two_name') + "</a> of " +
-            "project <a href='/intranet/projects/view?project_id=" + dependencyModel.get('main_project_id_two') + "' target='_blank'>" + dependencyModel.get('main_project_name_two') + "</a>";
-        var tip1 = Ext.create("Ext.tip.ToolTip", { target: arrowHead.el, width: 250, html: html, hideDelay: 1000 }); // give 1 second to click on project link
-        var tip2 = Ext.create("Ext.tip.ToolTip", { target: arrowLine.el, width: 250, html: html, hideDelay: 1000 });
-        console.log('PO.view.portfolio_planner.PortfolioPlannerProjectPanel.drawTaskDependency: Finished');
-        return;
     },
 
     /**
@@ -524,6 +415,11 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
         var w = Math.floor(me.ganttSurfaceWidth * (endTime - startTime) / (me.axisEndDate.getTime() - me.axisStartDate.getTime()));
         var h = me.ganttBarHeight;						// Constant determines height of the bar
         var d = Math.floor(h / 2.0) + 1;					// Size of the indent of the super-project bar
+
+        // Store the start and end points of the Gantt bar
+        var id = project.get('id');
+        me.taskBBoxHash[id] = [x, y, x+w, y+h];					// Remember the outer dimensions of the box for dependency drawing
+        me.taskModelHash[id] = project;						// Remember the models per ID
 
         if (!project.hasChildNodes()) {						// Parent tasks don't have DnD and look different
             // The main Gantt bar with Drag-and-Drop configuration
@@ -653,7 +549,7 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
                 }
             }).show(true);
         }
-
+	
         // Convert assignment information into a string
         // and write behind the Gantt bar
         var projectMemberStore = Ext.StoreManager.get('projectMemberStore');
@@ -669,18 +565,106 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
                 }
             });
             var axisText = surface.add({type:'text', text:text, x:x+w+2, y:y+d, fill:'#000', font:"10px Arial"}).show(true);
-        }
-
-        // Store the start and end points of the bar
-        var id = project.get('id');
-        me.barHash[id] = [x, y, x+w, y+h];						// Move the start of the bar 5px to the right
+	}
     },
 
-    onTaskDependencyStoreChange: function() {
-        console.log('PO.view.portfolio_planner.PortfolioPlannerProjectPanel.onTaskDependencyStoreChange: Starting/Finished');
+    /**
+     * Iterate throught all successors of a Gantt bar
+     * and draw dependencies.
+     */
+    drawProjectDependencies: function(project) {
+        var me = this;
+
+	var successorTasks = project.get('successors');
+	if (!successorTasks instanceof Array) return;
+        if (!me.preferenceStore.getPreferenceBoolean('show_project_dependencies', true)) return;
+
+        for (var i = 0, len = successorTasks.length; i < len; i++) {
+	    var dependencyModel = successorTasks[i];
+            me.drawDependency(dependencyModel);
+        }
+    },
+
+    /**
+     * Draws a dependency line from one bar to the next one
+     */
+    drawDependency: function(dependencyModel) {
+        var me = this;
+
+        var fromId = dependencyModel.pred_id;
+        var toId = dependencyModel.succ_id;
+        var s = me.arrowheadSize;
+
+        var fromBBox = me.taskBBoxHash[fromId];					// We start drawing with the end of the first bar...
+	var fromModel = me.taskModelHash[fromId]
+        var toBBox = me.taskBBoxHash[toId];			        		// .. and draw towards the start of the 2nd bar.
+	var toModel = me.taskModelHash[toId]
+        if (!fromBBox || !toBBox) { return; }
+
+        // Assuming end-to-start dependencies from a earlier task to a later task
+        var startX = fromBBox[2];
+        var startY = fromBBox[3];
+        var endX = toBBox[0];
+        var endY = toBBox[1];
+
+        // Color: Arrows are black if dependencies are OK, or red otherwise
+        var color = '#222';
+        if (endX < startX) { color = 'red'; }
+
+        // Set the vertical start point to Correct the start/end Y position
+        // and the direction of the arrow head
+        var sDirected = null;
+        if (endY > startY) {
+            // startY = startY + me.barHeight;
+            sDirected = -s;							// Draw "normal" arrowhead pointing downwards
+            startY = startY - 2;
+            endY = endY + 0;
+        } else {
+            startY = startY - me.barHeight + 4;
+            endY = endY + me.barHeight - 2;
+            sDirected = +s;							// Draw arrowhead pointing upward
+        }
+
+        // Draw the arrow head (filled)
+        var arrowHead = me.surface.add({
+            type: 'path',
+            stroke: color,
+            fill: color,
+            'stroke-width': 0.5,
+            zIndex: -100,
+            path: 'M '+ (endX)   + ', ' + (endY)					// Point of arrow head
+                + 'L '+ (endX-s) + ', ' + (endY + sDirected)
+                + 'L '+ (endX+s) + ', ' + (endY + sDirected)
+                + 'L '+ (endX)   + ', ' + (endY)
+        }).show(true);
+	arrowHead.dependenyModel = dependencyModel;
+
+        // Draw the main connection line between start and end.
+        var arrowLine = me.surface.add({
+            type: 'path',
+            stroke: color,
+            'shape-rendering': 'crispy-edges',
+            'stroke-width': 0.5,
+            zIndex: -100,
+            path: 'M '+ (startX) + ', ' + (startY)
+                + 'L '+ (startX) + ', ' + (startY - sDirected)
+                + 'L '+ (endX)   + ', ' + (endY + sDirected * 2)
+                + 'L '+ (endX)   + ', ' + (endY + sDirected)
+        }).show(true);
+	arrowHead.dependenyModel = dependencyModel;
+
+        // Add a tool tip to the dependency
+        var html = "<b>Task dependency</b>:<br>" +
+            "From <a href='/intranet/projects/view?project_id=" + fromId + "' target='_blank'>" + fromModel.get('project_name') + "</a> " +
+            "to <a href='/intranet/projects/view?project_id=" + toId + "' target='_blank'>" + toModel.get('project_name') + "</a>";
+
+	// Give 1 second to click on project link
+        var tip1 = Ext.create("Ext.tip.ToolTip", { target: arrowHead.el, width: 250, html: html, hideDelay: 1000 });
+        var tip2 = Ext.create("Ext.tip.ToolTip", { target: arrowLine.el, width: 250, html: html, hideDelay: 1000 });
+        console.log('PO.view.portfolio_planner.PortfolioPlannerProjectPanel.drawTaskDependency: Finished');
+        return;
     }
 });
-
 
 
 /**
@@ -690,10 +674,8 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
  * browser.
  */
 function launchGanttEditor(){
-
     var taskTreeStore = Ext.StoreManager.get('taskTreeStore');
     var senchaPreferenceStore = Ext.StoreManager.get('senchaPreferenceStore');
-    var taskDependencyStore = Ext.StoreManager.get('timesheetTaskDependencyStore');
 
     /* ***********************************************************************
      * Help Menu
@@ -971,6 +953,8 @@ function launchGanttEditor(){
             var me = this;
             var buttonSave = Ext.getCmp('buttonSave');
             buttonSave.setDisabled(false);					// Allow to "save" changes
+
+	    me.ganttBarPanel.redraw();
         },
 
         onButtonMaximize: function() {
@@ -1289,7 +1273,6 @@ function launchGanttEditor(){
         scrollFlags: {x: true},
         objectPanel: ganttTreePanel,
         objectStore: taskTreeStore,
-        taskDependencyStore: taskDependencyStore,
         preferenceStore: senchaPreferenceStore,
         axisStartDate: new Date('@report_start_date@'),
         axisEndDate: new Date('@report_end_date@'),
@@ -1329,7 +1312,7 @@ function launchGanttEditor(){
 
     // Create the panel showing properties of a task,
     // but don't show it yet.
-    var taskPropertyPanel = Ext.create("PO.view.gantt.GanttTaskPropertyPanel");
+    var taskPropertyPanel = Ext.create("PO.view.gantt.GanttTaskPropertyPanel", {});
     taskPropertyPanel.hide();
 
     // Deal with changes of Gantt data and perform scheduling
@@ -1362,7 +1345,6 @@ Ext.onReady(function() {
 
     var taskTreeStore = Ext.create('PO.store.timesheet.TaskTreeStore');
     var senchaPreferenceStore = Ext.create('PO.store.user.SenchaPreferenceStore');
-    var taskDependencyStore = Ext.create('PO.store.timesheet.TimesheetTaskDependencyStore');
     var taskStatusStore = Ext.create('PO.store.timesheet.TaskStatusStore');
     var projectMemberStore = Ext.create('PO.store.user.UserStore', {storeId: 'projectMemberStore'});
     var userStore = Ext.create('PO.store.user.UserStore', {storeId: 'userStore'});
@@ -1405,15 +1387,6 @@ Ext.onReady(function() {
             console.log('PO.store.user.SenchaPreferenceStore: loaded');
         }
     });
-
-    // Load dependencies between tasks
-    taskDependencyStore.getProxy().url = '/intranet-reporting/view';
-    taskDependencyStore.getProxy().extraParams = { 
-        format: 'json',
-        report_code: 'rest_intra_project_task_dependencies',
-        project_id: @project_id@
-    };
-    taskDependencyStore.load();
 
     // User store - load last, because this can take some while. Load only Employees.
     userStore.getProxy().extraParams = { 
