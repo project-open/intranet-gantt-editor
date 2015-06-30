@@ -19,7 +19,7 @@ Ext.require([
     'PO.model.timesheet.TimesheetTask',
     'PO.store.timesheet.TaskTreeStore',
     'PO.store.user.SenchaPreferenceStore',
-    'PO.view.field.PODateField',                      // Custom ]po[ Date editor field
+    'PO.view.field.PODateField',						// Custom ]po[ Date editor field
     'PO.view.field.POComboGrid',
     'PO.view.field.POTaskAssignment',
     'PO.view.gantt.GanttTaskPropertyPanel',
@@ -44,11 +44,11 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
     ],
 
     // Really Necessary???
-    taskDependencyStore: null,					// Reference to cost center store, set during init
+    taskDependencyStore: null,							// Reference to cost center store, set during init
     preferenceStore: null,
 
-    barHash: {},                                     // Hash array from object_ids -> Start/end point
-    taskModelHash: {},						// Start and end date of tasks
+    barHash: {},								// Hash array from object_ids -> Start/end point
+    taskModelHash: {},								// Start and end date of tasks
 
     /**
      * Starts the main editor panel as the right-hand side
@@ -107,7 +107,7 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
         var rootNode = me.objectStore.getRootNode();
         rootNode.cascadeBy(function(model) {
             var id = model.get('id');
-            me.taskModelHash[id] = model;		// Quick storage of models
+            me.taskModelHash[id] = model;					// Quick storage of models
         });
 
         this.addEvents('move');
@@ -175,7 +175,7 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
     onSpriteRightClick: function(event, sprite) {
         var me = this;
         console.log('PO.view.gantt_editor.GanttBarPanel.onSpriteRightClick: Starting: '+ sprite);
-        if (null == sprite) { return; }                     	// Something went completely wrong...
+        if (null == sprite) { return; }     				    	// Something went completely wrong...
         alert('rightclick');
 
         var projectModel = sprite.dndConfig.model;
@@ -199,20 +199,20 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
     onDependencyRightClick: function(event, sprite) {
         var me = this;
         console.log('PO.view.gantt_editor.GanttBarPanel.onDependencyRightClick: Starting: '+ sprite);
-        if (null == sprite) { return; }                     	// Something went completely wrong...
+        if (null == sprite) { return; }     					// Something went completely wrong...
         var dependencyModel = sprite.dndConfig.model;
 
         // Menu for right-clicking a dependency arrow.
         if (!me.dependencyContextMenu) {
             me.dependencyContextMenu = Ext.create('Ext.menu.Menu', {
                 id: 'dependencyContextMenu',
-                style: {overflow: 'visible'}, 	// For the Combo popup
+                style: {overflow: 'visible'},					// For the Combo popup
                 items: [{
                     text: 'Delete Dependency',
                     handler: function() {
                         console.log('dependencyContextMenu.deleteDependency: ');
 
-                        me.taskDependencyStore.remove(dependencyModel);   	// Remove from store
+                        me.taskDependencyStore.remove(dependencyModel);	     	// Remove from store
                         dependencyModel.destroy({
                             success: function() {
                                 console.log('Dependency destroyed');
@@ -236,7 +236,7 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
     onProjectRightClick: function(event, sprite) {
         var me = this;
         console.log('PO.view.gantt_editor.GanttBarPanel.onProjectRightClick: '+ sprite);
-        if (null == sprite) { return; }                     	// Something went completely wrong...
+        if (null == sprite) { return; }     					// Something went completely wrong...
     },
 
     /**
@@ -269,8 +269,8 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
         var startDate = new Date(startTime);
         var endDate = new Date(endTime);
 
-        projectModel.set('start_date', startDate.toISOString().substring(0,10));
-        projectModel.set('end_date', endDate.toISOString().substring(0,10));
+        projectModel.set('start_date', startDate.toISOString().substring(0, 10));
+        projectModel.set('end_date', endDate.toISOString().substring(0, 10));
 
         me.redraw();
         console.log('PO.view.gantt_editor.GanttBarPanel.onProjectMove: Finished');
@@ -298,7 +298,7 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
         }
         endTime = endTime + diffTime;
         var endDate = new Date(endTime);
-        projectModel.set('end_date', endDate.toISOString().substring(0,10));
+        projectModel.set('end_date', endDate.toISOString().substring(0, 10));
 
         me.redraw();
         console.log('PO.view.gantt_editor.GanttBarPanel.onProjectResize: Finished');
@@ -314,15 +314,17 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
         var projectId = projectModel.get('id');
         console.log('PO.view.gantt_editor.GanttBarPanel.onProjectPercentResize: Starting');
 
-	var projectBBox = projectSprite.getBBox();
-	var percentBBox = percentSprite.getBBox();
+        var projectBBox = projectSprite.getBBox();
+        var percentBBox = percentSprite.getBBox();
 
-	var projectWidth = projectBBox.width;
-	if (0 == projectWidth) projectWidth = projectWidth + 1;                    // Avoid division by zero.
-	var percent =  Math.floor(100.0 * percentBBox.width / projectWidth);
-        projectModel.set('percent_completed', ""+percent);
+        var projectWidth = projectBBox.width;
+        if (0 == projectWidth) projectWidth = projectWidth + 1;			// Avoid division by zero.
+        var percent = Math.floor(100.0 * percentBBox.width / projectWidth);
+	if (percent > 100.0) percent = 100;
+	if (percent < 0) percent = 0;
+        projectModel.set('percent_completed', ""+percent);			// Write to project model and update tree via events
 
-        me.redraw();
+        me.redraw();			      					// redraw the entire Gantt editor surface. ToDo: optimize
         console.log('PO.view.gantt_editor.GanttBarPanel.onProjectPercentResize: Finished');
     },
 
@@ -340,9 +342,9 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
         console.log('PO.view.portfolio_planner.PortfolioPlannerTaskPanel.onCreateDependency: Starting: '+fromTaskModel.get('id')+' -> '+toTaskModel.get('id'));
 
         // Try connecting the two tasks via a task dependency
-        var fromTaskId = fromTaskModel.get('task_id');			// String value!
+        var fromTaskId = fromTaskModel.get('task_id');				// String value!
         if (null == fromTaskId) { return; }					// Something went wrong...
-        var toTaskId = toTaskModel.get('task_id');			// String value!
+        var toTaskId = toTaskModel.get('task_id');				// String value!
         if (null == toTaskId) { return; }					// Something went wrong...
 
         // Create a new dependency object
@@ -354,7 +356,6 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
         dependency.save({
             success: function(depModel, operation) {
                 console.log('PO.view.gantt.GanttBarPanel.createDependency: successfully created dependency');
-                
                 // Reload the store, because the store gets extra information from the data-source
                 me.taskDependencyStore.reload({
                     callback: function(records, operation, result) {
@@ -374,21 +375,21 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
     /**
      * Draw all Gantt bars
      */
-    redraw: function(a,b,c,d,e) {
+    redraw: function(a, b, c, d, e) {
         console.log('PO.class.GanttDrawComponent.redraw: Starting');
         var me = this;
         if (undefined === me.surface) { return; }
 
         me.surface.removeAll();
-        me.surface.setSize(me.ganttSurfaceWidth, me.surface.height);    // Set the size of the drawing area
-        me.drawAxis();                         	// Draw the top axis
+        me.surface.setSize(me.ganttSurfaceWidth, me.surface.height);		// Set the size of the drawing area
+        me.drawAxis();								// Draw the top axis
 
         // Iterate through all children of the root node and check if they are visible
         var ganttTreeView = me.objectPanel.getView();
         var rootNode = me.objectStore.getRootNode();
         rootNode.cascadeBy(function(model) {
             var viewNode = ganttTreeView.getNode(model);
-            if (viewNode == null) { return; }    	// hidden nodes/models don't have a viewNode, so we don't need to draw a bar.
+            if (viewNode == null) { return; }					// Hidden nodes have no viewNode -> no bar
             // if (!model.isVisible()) { return; }
             me.drawProjectBar(model, viewNode);
         });
@@ -400,7 +401,7 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
                 var dependentTasks = model.get('successors');
                 if (dependentTasks instanceof Array) {
                     for (var i = 0, len = dependentTasks.length; i < len; i++) {
-                	var depTask = dependentTasks[i];
+                        var depTask = dependentTasks[i];
                         var depNode = me.taskModelHash[depTask];
                         me.drawDependency(model, depNode, model);
                     }
@@ -429,8 +430,8 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
         var to = successor.get('id');
         var s = me.arrowheadSize;
 
-        var fromBBox = me.barHash[from];			// We start drawing with the end of the first bar...
-        var toBBox = me.barHash[to];			        // .. and draw towards the start of the 2nd bar.
+        var fromBBox = me.barHash[from];					// We start drawing with the end of the first bar...
+        var toBBox = me.barHash[to];			        		// .. and draw towards the start of the 2nd bar.
         if (!fromBBox || !toBBox) { return; }
 
         // Assuming end-to-start dependencies from a earlier task to a later task
@@ -448,13 +449,13 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
         var sDirected = null;
         if (endY > startY) {
             // startY = startY + me.barHeight;
-            sDirected = -s;            // Draw "normal" arrowhead pointing downwards
+            sDirected = -s;							// Draw "normal" arrowhead pointing downwards
             startY = startY - 2;
             endY = endY + 0;
         } else {
             startY = startY - me.barHeight + 4;
             endY = endY + me.barHeight - 2;
-            sDirected = +s;            // Draw arrowhead pointing upward
+            sDirected = +s;							// Draw arrowhead pointing upward
         }
 
         // Draw the arrow head (filled)
@@ -464,10 +465,10 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
             fill: color,
             'stroke-width': 0.5,
             zIndex: -100,
-            path: 'M '+ (endX)   + ',' + (endY)            // point of arrow head
-                + 'L '+ (endX-s) + ',' + (endY + sDirected)
-                + 'L '+ (endX+s) + ',' + (endY + sDirected)
-                + 'L '+ (endX)   + ',' + (endY)
+            path: 'M '+ (endX)   + ', ' + (endY)					// Point of arrow head
+                + 'L '+ (endX-s) + ', ' + (endY + sDirected)
+                + 'L '+ (endX+s) + ', ' + (endY + sDirected)
+                + 'L '+ (endX)   + ', ' + (endY)
         }).show(true);
         arrowHead.dndConfig = {
             model: dependencyModel
@@ -480,10 +481,10 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
             'shape-rendering': 'crispy-edges',
             'stroke-width': 0.5,
             zIndex: -100,
-            path: 'M '+ (startX) + ',' + (startY)
-                + 'L '+ (startX) + ',' + (startY - sDirected)
-                + 'L '+ (endX)   + ',' + (endY + sDirected * 2)
-                + 'L '+ (endX)   + ',' + (endY + sDirected)
+            path: 'M '+ (startX) + ', ' + (startY)
+                + 'L '+ (startX) + ', ' + (startY - sDirected)
+                + 'L '+ (endX)   + ', ' + (endY + sDirected * 2)
+                + 'L '+ (endX)   + ', ' + (endY + sDirected)
         }).show(true);
         arrowHead.dndConfig = {
             model: dependencyModel
@@ -508,106 +509,84 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
         var me = this;
         var surface = me.surface;
         var project_name = project.get('project_name');
-        var start_date = project.get('start_date');
-        start_date = start_date.substring(0,10);
-        var end_date = project.get('end_date');
-        end_date = end_date.substring(0,10);
+        var start_date = project.get('start_date').substring(0, 10);		// ISO format without timestamp "2015-07-31"
+        var end_date = project.get('end_date').substring(0, 10);		// ISO format without timestamp
         var percentCompleted = parseFloat(project.get('percent_completed'));
         var predecessors = project.get('predecessors');
-        var assignees = project.get('assignees');                               // Array of {id,percent,name,email,initials}
-        var startTime = new Date(start_date).getTime();
-        var endTime = new Date(end_date).getTime() + 1000.0 * 3600 * 24;	// plus one day
+        var assignees = project.get('assignees');				// Array of {id, percent, name, email, initials}
+        var startTime = new Date(start_date).getTime();				// milliseconds after 1970-01-01
+        var endTime = new Date(end_date).getTime() + 1000.0 * 3600 * 24;	// end_date means 23:59:59 of that day
 
         if (me.debug) { console.log('PO.view.gantt_editor.GanttBarPanel.drawProjectBar: project_name='+project_name+', start_date='+start_date+", end_date="+end_date); }
 
-        // Calculate the other coordinates
-        var x = me.date2x(startTime);
-        var y = me.calcGanttBarYPosition(project);
+        var x = me.date2x(startTime);						// X position based on time scale
+        var y = me.calcGanttBarYPosition(project);				// Y position based on TreePanel y position of task.
         var w = Math.floor(me.ganttSurfaceWidth * (endTime - startTime) / (me.axisEndDate.getTime() - me.axisStartDate.getTime()));
-        var h = me.ganttBarHeight;						// Height of the bars
+        var h = me.ganttBarHeight;						// Constant determines height of the bar
         var d = Math.floor(h / 2.0) + 1;					// Size of the indent of the super-project bar
 
-        if (!project.hasChildNodes()) {
-
-            // The main Gantt bar
-            // Drag-and-Drop configuration includes both moving and creating dependencies.
+        if (!project.hasChildNodes()) {						// Parent tasks don't have DnD and look different
+            // The main Gantt bar with Drag-and-Drop configuration
             var spriteBar = surface.add({
                 type: 'rect', x: x, y: y, width: w, height: h, radius: 3,
                 fill: 'url(#gradientId)',
                 stroke: 'blue',
                 'stroke-width': 0.3,
-                zIndex: 0,
-                // style: { cursor: 'move' },
+                zIndex: 0,							// Neutral zIndex - in the middle
                 listeners: {							// Highlight the sprite on mouse-over
-                    mouseover: function() { this.animate({duration: 500, to: {'stroke-width': 2.0}}); },
+                    mouseover: function() { this.animate({duration: 500, to: {'stroke-width': 0.5}}); },
                     mouseout: function()  { this.animate({duration: 500, to: {'stroke-width': 0.3}}); }
                 }
             }).show(true);
-            spriteBar.dndConfig = {
-                    model: project,					// Store the task information for the sprite
-                handleSprite: spriteBar,
-                dragSprite: spriteBar,
-                dragType: 'move',
-                dragAction: function(panel, e, diff, dndConfig) {
-                    console.log('PO.view.gantt_editor.GanttBarPanel.drawProjectBar.spriteBar.dragAction:');
-                    var baseBBox = panel.dndBaseSprite.getBBox();
-                    var shadow = panel.dndShadowSprite;
-                    shadow.setAttributes({translate: {x: diff[0], y: 0}}, true);
+            spriteBar.dndConfig = {						// Drag-and-drop configuration
+                model: project,							// Store the task information for the sprite
+                baseSprite: spriteBar,						// "Base" sprite for the DnD action
+                dragAction: function(panel, e, diff, dndConfig) {		// Executed onMouseMove in AbstractGanttPanel
+                    var shadow = panel.dndShadowSprite;				// Sprite "shadow" (copy of baseSprite) to move around
+                    shadow.setAttributes({translate: {x: diff[0], y: 0}}, true);// Move shadow according to mouse position
                 },
-                dropAction: function(panel, e, diff, dndConfig) {
+                dropAction: function(panel, e, diff, dndConfig) {		// Executed onMouseUp in AbastractGanttPanel
                     console.log('PO.view.gantt_editor.GanttBarPanel.drawProjectBar.spriteBar.dropAction:');
-                    var point = me.getMousePoint(e);
-                    
-                    // Check where the user has dropped the mouse
-                    var baseSprite = panel.dndBaseSprite;
-                    if (!baseSprite) { return; }                                // Something went completely wrong...
-                    var dropSprite = panel.getSpriteForPoint(point);
-                    if (baseSprite == dropSprite) { dropSprite = null; }	// Dropped on the same sprite? => normal drop
-
-                    if (0 == Math.abs(diff[0]) + Math.abs(diff[1])) {
-                	return;                                                        // Drag-start == drag-end or single-click
+                    var point = me.getMousePoint(e);				// Corrected mouse coordinates
+                    var baseSprite = panel.dndBaseSprite;			// spriteBar to be affected by DnD
+                    if (!baseSprite) { return; }				// Something went completely wrong...
+                    var dropSprite = panel.getSpriteForPoint(point);		// Check where the user has dropped the shadow
+                    if (baseSprite == dropSprite) { dropSprite = null; }	// Dropped on same sprite? => normal drop
+                    if (0 == Math.abs(diff[0]) + Math.abs(diff[1])) {  		// Same point as before?
+                        return;							// Drag-start == drag-end or single-click
+                    }
+                    if (null != dropSprite) {
+                        me.onCreateDependency(baseSprite, dropSprite);		// Dropped on another sprite - create dependency
                     } else {
-                        // Fire event in order to notify listerns about the move
-                        var model = dndConfig.model;
-                	if (null != dropSprite) {
-                	    me.onCreateDependency(baseSprite, dropSprite);    	// dropped on another sprite - create dependency
-                	} else {
-                	    me.onProjectMove(baseSprite, diff[0]);                     // Dropped on empty space or on the same bar
-                	}
+                        me.onProjectMove(baseSprite, diff[0]);			// Dropped on empty space or on the same bar
                     }
                 }
             };
 
-            // Resize-Handle of the Gantt Bar:
-            // This is an invisible box at the right end of the bar
-            // used to change the cursor and to initiate a specific
-            // resizing DnD operation.
-            var spriteBarHandleSize = surface.add({
-                type: 'rect', x: x+w-2, y: y, width: 4, height: h,
-                stroke: 'red',
-                fill: 'red',
-                'stroke-width': 0.1,
-                'stroke-opacity': 0.0,
-                opacity: 0.0,
-                zIndex: 50,
-                style: { cursor: 'e-resize' }
+            // Resize-Handle of the Gantt Bar: This is an invisible box at the right end of the bar
+            // used to change the cursor and to initiate a specific resizing DnD operation.
+            var spriteBarHandle = surface.add({
+                type: 'rect', x: x+w, y: y, width: 4, height: h,		// Located at the right edge of spriteBar.
+                stroke: 'red',	 	      	     				// For debugging - not visible
+                fill: 'red',							// Need to be filled for cursor display
+                opacity: 0.0,							// Invisible
+                zIndex: 50,							// At the very top of the z-stack
+                style: { cursor: 'e-resize' }					// Shows a horizontal arrow cursor
             }).show(true);
-            spriteBarHandleSize.dndConfig = {
-                model: project,					// Store the task information for the sprite
-                handleSprite: spriteBarHandleSize,
-                dragSprite: spriteBar,
-                dragType: 'e-resize',
+            spriteBarHandle.dndConfig = {
+                model: project,							// Store the task information for the sprite
+                baseSprite: spriteBar,
                 dragAction: function(panel, e, diff, dndConfig) {
-                    console.log('PO.view.gantt_editor.GanttBarPanel.drawProjectBar.spriteBarHandleSize.dragAction:');
+                    console.log('PO.view.gantt_editor.GanttBarPanel.drawProjectBar.spriteBarHandle.dragAction:');
                     var baseBBox = panel.dndBaseSprite.getBBox();
                     var shadow = panel.dndShadowSprite;
                     shadow.setAttributes({
-                	width: baseBBox.width + diff[0]
+                        width: baseBBox.width + diff[0]
                     }).show(true);
                 },
                 dropAction: function(panel, e, diff, dndConfig) {
-                    console.log('PO.view.gantt_editor.GanttBarPanel.drawProjectBar.spriteBarHandleSize.dropAction:');
-                    me.onProjectResize(panel.dndBaseSprite, diff[0]);                     // Changing end-date to match x coo
+                    console.log('PO.view.gantt_editor.GanttBarPanel.drawProjectBar.spriteBarHandle.dropAction:');
+                    me.onProjectResize(panel.dndBaseSprite, diff[0]);		// Changing end-date to match x coo
                 }
             };
 
@@ -618,34 +597,39 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
             if (percentCompleted > 0.0) opacity = 1.0;
             var percentW = w*percentCompleted/100;
             if (percentW < 2) percentW = 2;
-            opacity = 1.0;
             var spriteBarPercent = surface.add({
                 type: 'rect', x: x, y: y+2, width: percentW, height: (h-6)/2,
                 stroke: 'black',
                 fill: 'black',
                 'stroke-width': 0.0,
                 zIndex: 20,
-                opacity: opacity,
-                style: { cursor: 'col-resize' }
+                opacity: opacity
             }).show(true);
-            spriteBarPercent.dndConfig = {
-                model: project,					// Store the task information for the sprite
-		dragSprite: spriteBarPercent,
-                handleSprite: spriteBarPercent,
+
+            var spriteBarPercentHandle = surface.add({
+                type: 'rect', x: x+percentW-8, y: y, width: 6, height: h,	// -8: Draw handle left of the resize handle above
+                stroke: 'red',
+                fill: 'red',
+                opacity: 0.0,
+                zIndex: 40,
+                style: { cursor: 'col-resize' }					// Set special cursor shape ("column resize")
+            }).show(true);
+            spriteBarPercentHandle.dndConfig = {
+                model: project,							// Store the task information for the sprite
+                baseSprite: spriteBarPercent,
                 projectSprite: spriteBar,
-                dragType: 'e-resize',
                 dragAction: function(panel, e, diff, dndConfig) {
                     console.log('PO.view.gantt_editor.GanttBarPanel.drawProjectBar.spriteBarPercent.dragAction:');
                     var baseBBox = panel.dndBaseSprite.getBBox();
                     var shadow = panel.dndShadowSprite;
                     shadow.setAttributes({
-                	width: baseBBox.width + diff[0]
+                        width: baseBBox.width + diff[0]
                     }).show(true);
                 },
                 dropAction: function(panel, e, diff, dndConfig) {
                     console.log('PO.view.gantt_editor.GanttBarPanel.drawProjectBar.spriteBarPercent.dropAction:');
                     var shadow = panel.dndShadowSprite;
-                    me.onProjectPercentResize(dndConfig.projectSprite, shadow);          	// Changing end-date to match x coo
+                    me.onProjectPercentResize(dndConfig.projectSprite, shadow);	// Changing end-date to match x coo
                 }
             };
 
@@ -656,14 +640,14 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
                 'stroke-width': 0.3,
                 fill: 'url(#gradientId)',
                 zIndex: 0,
-                path: 'M '+ x + ',' + y
-                    + 'L '+ (x+w) + ',' + (y)
-                    + 'L '+ (x+w) + ',' + (y+h)
-                    + 'L '+ (x+w-d) + ',' + (y+h-d)
-                    + 'L '+ (x+d) + ',' + (y+h-d)
-                    + 'L '+ (x) + ',' + (y+h)
-                    + 'L '+ (x) + ',' + (y),
-                listeners: {						// Highlight the sprite on mouse-over
+                path: 'M '+ x + ', ' + y
+                    + 'L '+ (x+w) + ', ' + (y)
+                    + 'L '+ (x+w) + ', ' + (y+h)
+                    + 'L '+ (x+w-d) + ', ' + (y+h-d)
+                    + 'L '+ (x+d) + ', ' + (y+h-d)
+                    + 'L '+ (x) + ', ' + (y+h)
+                    + 'L '+ (x) + ', ' + (y),
+                listeners: {							// Highlight the sprite on mouse-over
                     mouseover: function() { this.animate({duration: 500, to: {'stroke-width': 2.0}}); },
                     mouseout: function()  { this.animate({duration: 500, to: {'stroke-width': 0.3}}); }
                 }
@@ -676,10 +660,10 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
         var text = "";
         if ("" != assignees) {
             assignees.forEach(function(assignee) {
-                if (0 == assignee.percent) { return; }			// Don't show empty assignments
+                if (0 == assignee.percent) { return; }				// Don't show empty assignments
                 var userModel = projectMemberStore.getById(""+assignee.user_id);
                 if ("" != text) { text = text + ', '; }
-                text = text + userModel.get('first_names').substr(0,1) + userModel.get('last_name').substr(0,1);
+                text = text + userModel.get('first_names').substr(0, 1) + userModel.get('last_name').substr(0, 1);
                 if (100 != assignee.percent) {
                     text = text + '['+assignee.percent+'%]';
                 }
@@ -689,7 +673,7 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
 
         // Store the start and end points of the bar
         var id = project.get('id');
-        me.barHash[id] = [x,y,x+w,y+h];                                  // Move the start of the bar 5px to the right
+        me.barHash[id] = [x, y, x+w, y+h];						// Move the start of the bar 5px to the right
     },
 
     onTaskDependencyStoreChange: function() {
@@ -716,7 +700,7 @@ function launchGanttEditor(){
      *********************************************************************** */
     var helpMenu = Ext.create('PO.view.menu.HelpMenu', {
         id: 'helpMenu',
-        style: {overflow: 'visible'},					// For the Combo popup
+        style: {overflow: 'visible'},						// For the Combo popup
         store: Ext.create('Ext.data.Store', { fields: ['text', 'url'], data: [
             {text: 'Gantt Editor Home', url: 'http://www.project-open.com/en/page_intranet_gantt_editor_index'},
             {text: '-'},
@@ -731,8 +715,8 @@ function launchGanttEditor(){
 
     var alphaMenu = Ext.create('PO.view.menu.AlphaMenu', {
         id: 'alphaMenu',
-        style: {overflow: 'visible'},					// For the Combo popup
-        slaId: 1478943					                // ID of the ]po[ "PD Gantt Editor" project
+        style: {overflow: 'visible'},						// For the Combo popup
+        slaId: 1478943					                	// ID of the ]po[ "PD Gantt Editor" project
     });
 
     /* ***********************************************************************
@@ -748,7 +732,7 @@ function launchGanttEditor(){
 
     var configMenu = Ext.create('Ext.menu.Menu', {
         id: 'configMenu',
-        style: {overflow: 'visible'},     // For the Combo popup
+        style: {overflow: 'visible'},						// For the Combo popup
         items: [{
                 text: 'Reset Configuration',
                 handler: function() {
@@ -762,28 +746,28 @@ function launchGanttEditor(){
                     projectGridColumnConfig.each(function(model) { 
                         model.destroy({
                             success: function(model) {
-                        	console.log('configMenuOnResetConfiguration: Successfully destroyed a CC config');
-                        	var count = projectGridColumnConfig.count() + costCenterGridColumnConfig.count();
-                        	if (0 == count) {
-                        	    // Reload the page. 
-                        	    var params = Ext.urlDecode(location.search.substring(1));
-                        	    var url = window.location.pathname + '?' + Ext.Object.toQueryString(params);
-                        	    window.location = url;
-                        	}
+                                console.log('configMenuOnResetConfiguration: Successfully destroyed a CC config');
+                                var count = projectGridColumnConfig.count() + costCenterGridColumnConfig.count();
+                                if (0 == count) {
+                                    // Reload the page. 
+                                    var params = Ext.urlDecode(location.search.substring(1));
+                                    var url = window.location.pathname + '?' + Ext.Object.toQueryString(params);
+                                    window.location = url;
+                                }
                             }
                         }); 
                     });
                     costCenterGridColumnConfig.each(function(model) { 
                         model.destroy({
                             success: function(model) {
-                        	console.log('configMenuOnResetConfiguration: Successfully destroyed a CC config');
-                        	var count = projectGridColumnConfig.count() + costCenterGridColumnConfig.count();
-                        	if (0 == count) {
-                        	    // Reload the page. 
-                        	    var params = Ext.urlDecode(location.search.substring(1));
-                        	    var url = window.location.pathname + '?' + Ext.Object.toQueryString(params);
-                        	    window.location = url;
-                        	}
+                                console.log('configMenuOnResetConfiguration: Successfully destroyed a CC config');
+                                var count = projectGridColumnConfig.count() + costCenterGridColumnConfig.count();
+                                if (0 == count) {
+                                    // Reload the page. 
+                                    var params = Ext.urlDecode(location.search.substring(1));
+                                    var url = window.location.pathname + '?' + Ext.Object.toQueryString(params);
+                                    window.location = url;
+                                }
                             }
                         }); 
                     });
@@ -913,21 +897,18 @@ function launchGanttEditor(){
      */
     Ext.define('PO.controller.gantt_editor.GanttButtonController', {
         extend: 'Ext.app.Controller',
-
-        // Variables
         debug: false,
-        'ganttTreePanel': null,
-        'ganttBarPanel': null,
-        'taskTreeStore': null,
-        
+        'ganttTreePanel': null,						// Set during init: left-hand task tree panel
+        'ganttBarPanel': null,						// Set during init: right-hand surface with Gantt sprites
+        'taskTreeStore': null,						// Set during init: treeStore with task data
         refs: [
             { ref: 'ganttTreePanel', selector: '#ganttTreePanel' }
         ],
-        
         init: function() {
             var me = this;
             if (me.debug) { console.log('PO.controller.gantt_editor.GanttButtonController: init'); }
 
+	    // Listen to button press events
             this.control({
                 '#buttonReload': { click: this.onButtonReload },
                 '#buttonSave': { click: this.onButtonSave },
@@ -989,7 +970,7 @@ function launchGanttEditor(){
             console.log('GanttButtonController.onTaskTreeStoreUpdate');
             var me = this;
             var buttonSave = Ext.getCmp('buttonSave');
-            buttonSave.setDisabled(false);                                    // Allow to "save" changes
+            buttonSave.setDisabled(false);					// Allow to "save" changes
         },
 
         onButtonMaximize: function() {
@@ -1004,9 +985,8 @@ function launchGanttEditor(){
             renderDiv.dom.style.position = 'absolute';
             renderDiv.setWidth(100);
             renderDiv.setHeight(100);
-            
         },
-        
+
         onButtonMinimize: function() {
             console.log('GanttButtonController.onButtonMinimize');
             var buttonMaximize = Ext.getCmp('buttonMaximize');
@@ -1014,7 +994,7 @@ function launchGanttEditor(){
             buttonMaximize.setVisible(true);
             buttonMinimize.setVisible(false);
         },
-        
+
         onZoomIn: function() {
             console.log('GanttButtonController.onZoomIn');
             this.ganttBarPanel.onZoomIn();
@@ -1032,10 +1012,10 @@ function launchGanttEditor(){
             if (this.debug) { console.log('GanttButtonController.onTreePanelSelectionChange'); }
             var buttonDelete = Ext.getCmp('buttonDelete');
 
-            if (1 == records.length) {            // Exactly one record enabled
+            if (1 == records.length) {						// Exactly one record enabled
                 var record = records[0];
                 buttonDelete.setDisabled(!record.isLeaf());
-            } else {                              // Zero or two or more records enabled
+            } else {								// Zero or two or more records enabled
                 buttonDelete.setDisabled(true);
             }
         },
@@ -1049,30 +1029,29 @@ function launchGanttEditor(){
             if (this.debug) { console.log('GanttButtonController.onBeforeCellKeyDown: code='+keyCode+', ctrl='+keyCtrl); }
             var panel = this;
             switch (keyCode) {
-            case 8: 				// backspace 8
+            case 8:								// Backspace 8
                 panel.onButtonDelete();
                 break;
-            case 37: 				// cursor left
+            case 37:								// Cursor left
                 if (keyCtrl) {
                     panel.onButtonReduceIndent();
-                    return false;                   // Disable default action (fold tree)
+                    return false;						// Disable default action (fold tree)
                 }
                 break;
-            case 39: 				// cursor right
+            case 39:								// Cursor right
                 if (keyCtrl) {
                     panel.onButtonIncreaseIndent();
-                    return false;                   // Disable default action (unfold tree)
+                    return false;						// Disable default action (unfold tree)
                 }
                 break;
-            case 45: 				// insert 45
+            case 45:								// Insert 45
                 panel.onButtonAdd();
                 break;
-            case 46: 				// delete 46
+            case 46:								// Delete 46
                 panel.onButtonDelete();
                 break;
             }
-
-            return true;                            // Enable default TreePanel actions for keys
+            return true;							// Enable default TreePanel actions for keys
         },
 
         /**
@@ -1087,7 +1066,7 @@ function launchGanttEditor(){
 
     /*
      * GanttResizeController
-     * This controller is only responsible for editor geometry and resizing:
+     * This controller is responsible for editor geometry and resizing:
      * <ul>
      * <li>The boundaries of the outer window
      * <li>The separator between the treePanel and the ganttPanel
@@ -1095,24 +1074,23 @@ function launchGanttEditor(){
      */
     Ext.define('PO.controller.gantt_editor.GanttResizeController', {
         extend: 'Ext.app.Controller',
-
         debug: false,
-        'ganttButtonPanel': null,			// Defined during initialization
-        'ganttTreePanel': null,				// Defined during initialization
-        'ganttBarPanel': null,				// Defined during initialization
+        'ganttButtonPanel': null,						// Defined during initialization
+        'ganttTreePanel': null,							// Defined during initialization
+        'ganttBarPanel': null,							// Defined during initialization
 
         refs: [
             { ref: 'ganttTreePanel', selector: '#ganttTreePanel' }
         ],
-        
+
         init: function() {
             var me = this;
             if (me.debug) { console.log('PO.controller.gantt_editor.GanttResizeController: init'); }
 
-            var sideBarTab = Ext.get('sideBarTab');	    // ]po[ side-bar collapses the left-hand menu
-            sideBarTab.on('click', me.onSideBarResize, me);	    // Handle collapsable side menu
-            Ext.EventManager.onWindowResize(me.onWindowResize, me);    	    // Deal with resizing the main window
-            me.ganttButtonPanel.on('resize', me.onGanttButtonPanelResize, me);	    // Deal with resizing the outer boundaries
+            var sideBarTab = Ext.get('sideBarTab');	    			// ]po[ side-bar collapses the left-hand menu
+            sideBarTab.on('click', me.onSideBarResize, me);			// Handle collapsable side menu
+            Ext.EventManager.onWindowResize(me.onWindowResize, me);		// Deal with resizing the main window
+            me.ganttButtonPanel.on('resize', me.onGanttButtonPanelResize, me);	// Deal with resizing the outer boundaries
             return this;
         },
 
@@ -1125,17 +1103,16 @@ function launchGanttEditor(){
         onResize: function (sideBarWidth) {
             var me = this;
             console.log('PO.controller.gantt_editor.GanttResizeController.onResize: Starting');
+            var sideBar = Ext.get('sidebar');					// ]po[ left side bar component
 
             if (undefined === sideBarWidth) {
-                sideBarWidth = Ext.get('sidebar').getSize().width;
+                sideBarWidth = sideBar.getSize().width;
             }
 
-            var screenSize = Ext.getBody().getViewSize();
-            var width = screenSize.width - sideBarWidth - 100;
-            var height = screenSize.height - 280;
-
+            var screenSize = Ext.getBody().getViewSize();			// Total browser size
+            var width = screenSize.width - sideBarWidth - 100;			// What's left after ]po[ side borders
+            var height = screenSize.height - 280;	  			// What's left after ]po[ menu bar on top
             me.ganttButtonPanel.setSize(width, height);
-
             console.log('PO.controller.gantt_editor.GanttResizeController.onResize: Finished');
         },
 
@@ -1145,49 +1122,51 @@ function launchGanttEditor(){
         onSideBarResize: function () {
             var me = this;
             console.log('PO.controller.gantt_editor.GanttResizeController.onSidebarResize: Starting');
-            var sideBar = Ext.get('sidebar');                               // ]po[ left side bar component
+            var sideBar = Ext.get('sidebar');					// ]po[ left side bar component
             var sideBarWidth = sideBar.getSize().width;
             // We get the event _before_ the sideBar has changed it's size.
             // So we actually need to the the oposite of the sidebar size:
             if (sideBarWidth > 100) {
-                sideBarWidth = 2;                                          // Determines size when Sidebar collapsed
+                sideBarWidth = 2;						// Determines size when Sidebar collapsed
             } else {
-                sideBarWidth = 245;                                         // Determines size when Sidebar visible
+                sideBarWidth = 245;						// Determines size when Sidebar visible
             }
-            me.onResize(sideBarWidth);
+            me.onResize(sideBarWidth);						// Perform actual resize
             console.log('PO.controller.gantt_editor.GanttResizeController.onSidebarResize: Finished');
         },
 
+	/**
+	 * The user changed the size of the browser window
+	 */
         onWindowResize: function () {
             var me = this;
             console.log('PO.controller.gantt_editor.GanttResizeController.onWindowResize: Starting');
-            var sideBar = Ext.get('sidebar');                               // ]po[ left side bar component
+            var sideBar = Ext.get('sidebar');					// ]po[ left side bar component
             var sideBarWidth = sideBar.getSize().width;
             if (sideBarWidth > 100) {
-                sideBarWidth = 340;                                         // Determines size when Sidebar visible
+                sideBarWidth = 340;						// Determines size when Sidebar visible
             } else {
-                sideBarWidth = 85;                                          // Determines size when Sidebar collapsed
+                sideBarWidth = 85;						// Determines size when Sidebar collapsed
             }
-            me.onResize(sideBarWidth);
+            me.onResize(sideBarWidth);						// Perform actual resize
             console.log('PO.controller.gantt_editor.GanttResizeController.onWindowResize: Finished');
         },
-        
+    
         /**
          * Manually changed the size of the ganttButtonPanel
          */
         onGanttButtonPanelResize: function () {
             var me = this;
             console.log('PO.controller.gantt_editor.GanttResizeController.onGanttButtonPanelResize: Starting');
-            me.ganttBarPanel.redraw();
+            me.ganttBarPanel.redraw();						// Perform actual resize
             console.log('PO.controller.gantt_editor.GanttResizeController.onGanttButtonPanelResize: Finished');
         }
     });
 
     /*
      * GanttSchedulingController
-     * Reacts to changes of start_date, end_date, work, assignments
-     * and possibly other task fields and modifies other tasks 
-     * according to the specified scheduling type:
+     * Reacts to changes of start_date, end_date, work, assignments and possibly other 
+     * task fields and modifies other tasks according to the specified scheduling type:
      * <ul>
      * <li>No scheduling
      * <li>Manually scheduled tasks
@@ -1197,17 +1176,15 @@ function launchGanttEditor(){
      */
     Ext.define('PO.controller.gantt_editor.GanttSchedulingController', {
         extend: 'Ext.app.Controller',
-
         debug: true,
-        'ganttTreePanel': null,				// Defined during initialization
-        'taskTreeStore': null,				// Defined during initialization
-
+        'ganttTreePanel': null,							// Defined during initialization
+        'taskTreeStore': null,							// Defined during initialization
         init: function() {
             var me = this;
             if (me.debug) { console.log('PO.controller.gantt_editor.GanttSchedulingController.init: Starting'); }
 
             me.taskTreeStore.on({
-                'update': me.onUpdate,                          // Listen to any changes in store records
+                'update': me.onTreeStoreUpdate,					// Listen to any changes in store records
                 'scope': this
             });
 
@@ -1215,23 +1192,21 @@ function launchGanttEditor(){
             return this;
         },
 
-        onUpdate: function(treeStore, model, operation, fieldsChanged, event) {
+        onTreeStoreUpdate: function(treeStore, model, operation, fieldsChanged, event) {
             var me = this;
-            // console.log('PO.controller.gantt_editor.GanttSchedulingController.onUpdate: Starting');
+            console.log('PO.controller.gantt_editor.GanttSchedulingController.onTreeStoreUpdate: Starting');
             fieldsChanged.forEach(function(fieldName) {
-                console.log('PO.controller.gantt_editor.GanttSchedulingController.onUpdate: Field changed='+fieldName);
-
+                console.log('PO.controller.gantt_editor.GanttSchedulingController.onTreeStoreUpdate: Field changed='+fieldName);
                 switch (fieldName) {
                 case "start_date":
-                    me.onStartDateChanged(treeStore,model,operation,event);
+                    me.onStartDateChanged(treeStore, model, operation, event);
                     break;
                 case "end_date":
-                    me.onEndDateChanged(treeStore,model,operation,event);
+                    me.onEndDateChanged(treeStore, model, operation, event);
                     break;
                 }
-                
             });
-            // console.log('PO.controller.gantt_editor.GanttSchedulingController.onUpdate: Finished');
+            console.log('PO.controller.gantt_editor.GanttSchedulingController.onTreeStoreUpdate: Finished');
         },
 
         /**
@@ -1239,17 +1214,17 @@ function launchGanttEditor(){
          * Check if this new date is before the start_date of it's parent.
          * In this case we need to adjust the parent.
          */
-        onStartDateChanged: function(treeStore,model,operation,event) {
+        onStartDateChanged: function(treeStore, model, operation, event) {
             var me = this;
             console.log('PO.controller.gantt_editor.GanttSchedulingController.onStartDateChanged: Starting');
-            var parent = model.parentNode;
+            var parent = model.parentNode;					// 
             if (!parent) return;
-            var parentStartDate = new Date(parent.get('start_date').substring(0,10));
+            var parentStartDate = new Date(parent.get('start_date').substring(0, 10));
 
             // Calculate the minimum start date of all siblings
             var minStartDate = new Date('2099-12-31');
             parent.eachChild(function(sibling) {
-                var siblingStartDate = new Date(sibling.get('start_date').substring(0,10));
+                var siblingStartDate = new Date(sibling.get('start_date').substring(0, 10));
                 if (siblingStartDate.getTime() < minStartDate.getTime()) {
                     minStartDate = siblingStartDate;
                 }
@@ -1259,7 +1234,7 @@ function launchGanttEditor(){
             if (parentStartDate.getTime() != minStartDate.getTime()) {
                 // The siblings start different than the parent - update the parent.
                 console.log('PO.controller.gantt_editor.GanttSchedulingController.onStartDateChanged: Updating parent at level='+parent.getDepth());
-                parent.set('start_date', Ext.Date.format(minStartDate, 'Y-m-d'));              // This will call this event recursively
+                parent.set('start_date', Ext.Date.format(minStartDate, 'Y-m-d'));	// This will call this event recursively
             }
             console.log('PO.controller.gantt_editor.GanttSchedulingController.onStartDateChanged: Finished');
         },
@@ -1269,18 +1244,18 @@ function launchGanttEditor(){
          * Check if this new date is after the end_date of it's parent.
          * In this case we need to adjust the parent.
          */
-        onEndDateChanged: function(treeStore,model,operation,event) {
+        onEndDateChanged: function(treeStore, model, operation, event) {
             var me = this;
             console.log('PO.controller.gantt_editor.GanttSchedulingController.onEndDateChanged: Starting');
 
             var parent = model.parentNode;
             if (!parent) return;
-            var parentEndDate = new Date(parent.get('end_date').substring(0,10));
+            var parentEndDate = new Date(parent.get('end_date').substring(0, 10));
 
             // Calculate the maximum end date of all siblings
             var maxEndDate = new Date('2000-01-01');
             parent.eachChild(function(sibling) {
-                var siblingEndDate = new Date(sibling.get('end_date').substring(0,10));
+                var siblingEndDate = new Date(sibling.get('end_date').substring(0, 10));
                 if (siblingEndDate.getTime() > maxEndDate.getTime()) {
                     maxEndDate = siblingEndDate;
                 }
@@ -1290,7 +1265,7 @@ function launchGanttEditor(){
             if (parentEndDate.getTime() != maxEndDate.getTime()) {
                 // The siblings end different than the parent - update the parent.
                 console.log('PO.controller.gantt_editor.GanttSchedulingController.onEndDateChanged: Updating parent at level='+parent.getDepth());
-                parent.set('end_date', Ext.Date.format(maxEndDate, 'Y-m-d'));              // This will call this event recursively
+                parent.set('end_date', Ext.Date.format(maxEndDate, 'Y-m-d'));	// This will call this event recursively
             }
 
             console.log('PO.controller.gantt_editor.GanttSchedulingController.onEndDateChanged: Finished');
@@ -1310,7 +1285,7 @@ function launchGanttEditor(){
         viewBox: false,
         width: 300,
         height: 300,
-        overflowX: 'scroll',                            // Allows for horizontal scrolling, but not vertical
+        overflowX: 'scroll',							// Allows for horizontal scrolling, but not vertical
         scrollFlags: {x: true},
         objectPanel: ganttTreePanel,
         objectStore: taskTreeStore,
@@ -1319,14 +1294,14 @@ function launchGanttEditor(){
         axisStartDate: new Date('@report_start_date@'),
         axisEndDate: new Date('@report_end_date@'),
         gradients: [
-            {id:'gradientId', angle:66, stops:{0:{color:'#cdf'}, 100:{color:'#ace'}}}, 
+            {id:'gradientId', angle:66, stops:{0:{color:'#cdf'}, 100:{color:'#ace'}}},
             {id:'gradientId2', angle:0, stops:{0:{color:'#590'}, 20:{color:'#599'}, 100:{color:'#ddd'}}}
         ]
     });
 
     // Outer Gantt editor jointing the two parts (TreePanel + Draw)
     var ganttButtonPanel = Ext.create('PO.view.gantt_editor.GanttButtonPanel', {
-        resizable: true,				// Add handles to the panel, so the user can change size
+        resizable: true,							// Add handles to the panel, so the user can change size
         items: [
             ganttTreePanel,
             ganttBarPanel
@@ -1350,7 +1325,7 @@ function launchGanttEditor(){
         'ganttBarPanel': ganttBarPanel
     });
     ganttResizeController.init(this).onLaunch(this);
-    ganttResizeController.onResize();    // Set the size of the outer GanttButton Panel
+    ganttResizeController.onResize();						// Set the size of the outer GanttButton Panel
 
     // Create the panel showing properties of a task,
     // but don't show it yet.
@@ -1383,7 +1358,7 @@ function launchGanttEditor(){
  * actual applicaiton.
  */
 Ext.onReady(function() {
-    Ext.QuickTips.init();                                                       // No idea why this is necessary, but it is...
+    Ext.QuickTips.init();							// No idea why this is necessary, but it is...
 
     var taskTreeStore = Ext.create('PO.store.timesheet.TaskTreeStore');
     var senchaPreferenceStore = Ext.create('PO.store.user.SenchaPreferenceStore');
@@ -1402,16 +1377,16 @@ Ext.onReady(function() {
         ],
         listeners: {
             load: function() {
-                if ("boolean" == typeof this.loadedP) { return; }        	// Check if the application was launched before
-                launchGanttEditor();                                     	// Launch the actual application.
-                this.loadedP = true;                                     	// Mark the application as launched
+                if ("boolean" == typeof this.loadedP) { return; }		// Check if the application was launched before
+                launchGanttEditor();						// Launch the actual application.
+                this.loadedP = true;						// Mark the application as launched
             }
         }
     });
 
     // Get the list of users assigned to this project
     projectMemberStore.getProxy().extraParams = { 
-        format: 'json', 
+        format: 'json',
         query: 'user_id in (select object_id_two from acs_rels where object_id_one = @project_id@)'
     };
     projectMemberStore.load();
@@ -1425,7 +1400,7 @@ Ext.onReady(function() {
     });
 
     // User preferences
-    senchaPreferenceStore.load({                                         	// Preferences for the GanttEditor
+    senchaPreferenceStore.load({						// Preferences for the GanttEditor
         callback: function() {
             console.log('PO.store.user.SenchaPreferenceStore: loaded');
         }
@@ -1434,20 +1409,19 @@ Ext.onReady(function() {
     // Load dependencies between tasks
     taskDependencyStore.getProxy().url = '/intranet-reporting/view';
     taskDependencyStore.getProxy().extraParams = { 
-        format: 'json', 
+        format: 'json',
         report_code: 'rest_intra_project_task_dependencies',
         project_id: @project_id@
     };
     taskDependencyStore.load();
 
-    // User store - load last, because this can take some while...
-    // Load only Employees.
+    // User store - load last, because this can take some while. Load only Employees.
     userStore.getProxy().extraParams = { 
-        format: 'json', 
+        format: 'json',
         query: "user_id in (select object_id_two from acs_rels where object_id_one in (select group_id from groups where group_name = 'Employees'))"
     };
     userStore.load();
-       
+   
 });
 </script>
 </div>
