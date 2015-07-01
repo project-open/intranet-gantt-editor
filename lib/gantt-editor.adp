@@ -784,11 +784,11 @@ function launchGanttEditor(){
 
 
     /**
-     * GanttButtonPanel
+     * GanttPanelContainer
      */
-    Ext.define('PO.view.gantt_editor.GanttButtonPanel', {
+    Ext.define('PO.view.gantt_editor.GanttPanelContainer', {
         extend: 'Ext.panel.Panel',
-        alias: 'ganttButtonPanel',
+        alias: 'ganttPanelContainer',
         width: 900,
         height: 500,
         layout: 'border',
@@ -813,7 +813,7 @@ function launchGanttEditor(){
                 id: 'buttonMaximize'
             }, {
                 icon: '/intranet/images/navbar_default/arrow_in.png',
-                tooltip: 'Minimize the editor &nbsp;',
+                tooltip: 'Restore default editor size &nbsp;',
                 id: 'buttonMinimize',
                 hidden: true
             }, {
@@ -961,11 +961,17 @@ function launchGanttEditor(){
             buttonMaximize.setVisible(false);
             buttonMinimize.setVisible(true);
 
-            // !!! ToDo: Klaus
             var renderDiv = Ext.get("@gantt_editor_id@");
-            renderDiv.dom.style.position = 'absolute';
-            renderDiv.setWidth(100);
-            renderDiv.setHeight(100);
+            renderDiv.setWidth('100%');
+            renderDiv.setHeight('100%');
+	    renderDiv.applyStyles({ 
+		'position':'absolute',
+		'z-index': '2000',
+		'left': '0',
+		'top': '0'
+	    });
+	        
+	    ganttResizeController.onSwitchToFullScreen();
         },
 
         onButtonMinimize: function() {
@@ -974,6 +980,16 @@ function launchGanttEditor(){
             var buttonMinimize = Ext.getCmp('buttonMinimize');
             buttonMaximize.setVisible(true);
             buttonMinimize.setVisible(false);
+
+            var renderDiv = Ext.get("@gantt_editor_id@");
+            renderDiv.setWidth('auto');
+            renderDiv.setHeight('auto');
+            renderDiv.applyStyles({
+                'position':'relative',
+                'z-index': '0',
+            });
+
+            ganttResizeController.onSwitchBackFromFullScreen();
         },
 
         onZoomIn: function() {
@@ -1056,7 +1072,7 @@ function launchGanttEditor(){
     Ext.define('PO.controller.gantt_editor.GanttResizeController', {
         extend: 'Ext.app.Controller',
         debug: false,
-        'ganttButtonPanel': null,						// Defined during initialization
+        'ganttPanelContainer': null,						// Defined during initialization
         'ganttTreePanel': null,							// Defined during initialization
         'ganttBarPanel': null,							// Defined during initialization
 
@@ -1071,12 +1087,12 @@ function launchGanttEditor(){
             var sideBarTab = Ext.get('sideBarTab');	    			// ]po[ side-bar collapses the left-hand menu
             sideBarTab.on('click', me.onSideBarResize, me);			// Handle collapsable side menu
             Ext.EventManager.onWindowResize(me.onWindowResize, me);		// Deal with resizing the main window
-            me.ganttButtonPanel.on('resize', me.onGanttButtonPanelResize, me);	// Deal with resizing the outer boundaries
+            me.ganttPanelContainer.on('resize', me.onGanttPanelContainerResize, me);	// Deal with resizing the outer boundaries
             return this;
         },
 
         /**
-         * Adapt the size of the ganttButtonPanel (the outer Gantt panel)
+         * Adapt the size of the ganttPanelContainer (the outer Gantt panel)
          * to the available drawing area.
          * Takes the size of the browser and subtracts the sideBar at the
          * left and the size of the menu on top.
@@ -1093,7 +1109,7 @@ function launchGanttEditor(){
             var screenSize = Ext.getBody().getViewSize();			// Total browser size
             var width = screenSize.width - sideBarWidth - 100;			// What's left after ]po[ side borders
             var height = screenSize.height - 280;	  			// What's left after ]po[ menu bar on top
-            me.ganttButtonPanel.setSize(width, height);
+            me.ganttPanelContainer.setSize(width, height);
             console.log('PO.controller.gantt_editor.GanttResizeController.onResize: Finished');
         },
 
@@ -1122,25 +1138,63 @@ function launchGanttEditor(){
         onWindowResize: function () {
             var me = this;
             console.log('PO.controller.gantt_editor.GanttResizeController.onWindowResize: Starting');
-            var sideBar = Ext.get('sidebar');					// ]po[ left side bar component
-            var sideBarWidth = sideBar.getSize().width;
-            if (sideBarWidth > 100) {
-                sideBarWidth = 340;						// Determines size when Sidebar visible
-            } else {
-                sideBarWidth = 85;						// Determines size when Sidebar collapsed
-            }
-            me.onResize(sideBarWidth);						// Perform actual resize
+
+	    if (!me.fullScreenP) {
+		var sideBar = Ext.get('sidebar');// ]po[ left side bar component
+		var sideBarWidth = sideBar.getSize().width;
+		if (sideBarWidth > 100) {
+		    sideBarWidth = 340;// Determines size when Sidebar visible
+		} else {
+		    sideBarWidth = 85;// Determines size when Sidebar collapsed
+		}
+		me.onResize(sideBarWidth);
+	    } else {
+		me.onSwitchToFullScreen();
+	    }
+	        
             console.log('PO.controller.gantt_editor.GanttResizeController.onWindowResize: Finished');
         },
-    
+
         /**
-         * Manually changed the size of the ganttButtonPanel
+         * Manually changed the size of the ganttPanelContainer
          */
-        onGanttButtonPanelResize: function () {
+        onGanttPanelContainerResize: function () {
             var me = this;
-            console.log('PO.controller.gantt_editor.GanttResizeController.onGanttButtonPanelResize: Starting');
+            console.log('PO.controller.gantt_editor.GanttResizeController.onGanttPanelContainerResize: Starting');
             me.ganttBarPanel.redraw();						// Perform actual resize
-            console.log('PO.controller.gantt_editor.GanttResizeController.onGanttButtonPanelResize: Finished');
+            console.log('PO.controller.gantt_editor.GanttResizeController.onGanttPanelContainerResize: Finished');
+        },
+
+	onSwitchToFullScreen: function () {
+            var me = this;
+	    this.fullScreenP = true; 
+            console.log('PO.controller.gantt_editor.GanttResizeController.onSwitchToFullScreen: Starting');
+	    me.ganttPanelContainer.setSize(Ext.getBody().getViewSize().width, Ext.getBody().getViewSize().height);
+	    me.ganttBarPanel.setSize(Ext.getBody().getViewSize().width, Ext.getBody().getViewSize().height);
+            me.ganttBarPanel.redraw();
+            console.log('PO.controller.gantt_editor.GanttResizeController.onSwitchToFullScreen: Finished');
+        },
+
+        onSwitchBackFromFullScreen: function () {
+            var me = this;
+	    this.fullScreenP = false; 
+	        
+            console.log('PO.controller.gantt_editor.GanttResizeController.onSwitchBackFromFullScreen: Starting');
+	        
+            var sideBar = Ext.get('sidebar');                                   // ]po[ left side bar component
+            var sideBarWidth = sideBar.getSize().width;
+	        
+            if (undefined === sideBarWidth) {
+                sideBarWidth = Ext.get('sidebar').getSize().width;
+            }
+	        
+            var screenSize = Ext.getBody().getViewSize();
+            var width = screenSize.width - sideBarWidth - 100;
+            var height = screenSize.height - 280;
+	        
+            me.ganttPanelContainer.setSize(width, height);
+
+            console.log('PO.controller.gantt_editor.GanttResizeController.onSwitchBackFromFullScreen: Finished');
         }
     });
 
@@ -1288,7 +1342,7 @@ function launchGanttEditor(){
     });
 
     // Outer Gantt editor jointing the two parts (TreePanel + Draw)
-    var ganttButtonPanel = Ext.create('PO.view.gantt_editor.GanttButtonPanel', {
+    var ganttPanelContainer = Ext.create('PO.view.gantt_editor.GanttPanelContainer', {
         resizable: true,							// Add handles to the panel, so the user can change size
         items: [
             ganttTreePanel,
@@ -1299,7 +1353,7 @@ function launchGanttEditor(){
 
     // Controller that deals with button events.
     var ganttButtonController = Ext.create('PO.controller.gantt_editor.GanttButtonController', {
-        'ganttButtonPanel': ganttButtonPanel,
+        'ganttPanelContainer': ganttPanelContainer,
         'ganttTreePanel': ganttTreePanel,
         'ganttBarPanel': ganttBarPanel,
         'taskTreeStore': taskTreeStore
@@ -1308,7 +1362,7 @@ function launchGanttEditor(){
 
     // Contoller to handle size and resizing related events
     var ganttResizeController = Ext.create('PO.controller.gantt_editor.GanttResizeController', {
-        'ganttButtonPanel': ganttButtonPanel,
+        'ganttPanelContainer': ganttPanelContainer,
         'ganttTreePanel': ganttTreePanel,
         'ganttBarPanel': ganttBarPanel
     });
