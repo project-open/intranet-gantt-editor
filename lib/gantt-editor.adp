@@ -672,6 +672,7 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
 function launchGanttEditor(){
     var taskTreeStore = Ext.StoreManager.get('taskTreeStore');
     var senchaPreferenceStore = Ext.StoreManager.get('senchaPreferenceStore');
+    var oneDayMiliseconds = 24 * 3600 * 1000;
 
     /* ***********************************************************************
      * Help Menu
@@ -1263,18 +1264,23 @@ function launchGanttEditor(){
     });
 
     // Right-hand side Gantt display
+    var reportStartTime = new Date('@report_start_date@').getTime();
+    var reportEndTime = new Date('@report_end_date@').getTime();
     var ganttBarPanel = Ext.create('PO.view.gantt_editor.GanttBarPanel', {
         region: 'center',
         viewBox: false,
-        width: 300,
-        height: 300,
+        width: 600,
+        height: 500,
+
+	axisEndX: 2000,
+        axisStartDate: new Date(reportStartTime - 7 * oneDayMiliseconds),
+        axisEndDate: new Date(reportEndTime + 1.5 * (reportEndTime - reportStartTime) + 7 * oneDayMiliseconds ),
+
         overflowX: 'scroll',							// Allows for horizontal scrolling, but not vertical
         scrollFlags: {x: true},
         objectPanel: ganttTreePanel,
         objectStore: taskTreeStore,
         preferenceStore: senchaPreferenceStore,
-        axisStartDate: new Date('@report_start_date@'),
-        axisEndDate: new Date('@report_end_date@'),
         gradients: [
             {id:'gradientId', angle:66, stops:{0:{color:'#cdf'}, 100:{color:'#ace'}}},
             {id:'gradientId2', angle:0, stops:{0:{color:'#590'}, 20:{color:'#599'}, 100:{color:'#ddd'}}}
