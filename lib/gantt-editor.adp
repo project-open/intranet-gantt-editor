@@ -205,7 +205,7 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
                         var succModel = me.taskModelHash[succId];	// Dependencies are stored as succModel.predecessors
 
                         var predecessors = succModel.get('predecessors');
-			var orgPredecessorsLen = predecessors.length
+                	var orgPredecessorsLen = predecessors.length
                         for (i = 0; i < predecessors.length; i++) {
                             var el = predecessors[i];
                             if (el.pred_id == predId) {
@@ -213,9 +213,9 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
                             }
                         }
                         succModel.set('predecessors',predecessors);
-			if (predecessors.length != orgPredecessorsLen) {
-			    me.redraw();
-			}
+                	if (predecessors.length != orgPredecessorsLen) {
+                	    me.redraw();
+                	}
                     }
                 }]
             });
@@ -245,11 +245,14 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
         var projectId = projectModel.get('id');
         console.log('PO.view.gantt_editor.GanttBarPanel.onProjectMove: Starting');
 
-        var bBox = me.dndBaseSprite.getBBox();
-        var diffTime = Math.floor(1.0 * xDiff * (me.axisEndDate.getTime() - me.axisStartDate.getTime()) / (me.axisEndX - me.axisStartX));
+        var bBox = me.dndBaseSprite.getBBox();					// Get the current coordinates of the moved Gantt bar
+        var diffTime = xDiff * (me.axisEndDate.getTime() - me.axisStartDate.getTime()) / (me.axisEndX - me.axisStartX);
+	var diffDays = Math.round(diffTime / 24.0 / 3600.0 / 1000.0);
 
-        var startTime = new Date(projectModel.get('start_date')).getTime();
-        var endTime = new Date(projectModel.get('end_date')).getTime();
+        var startDate = Date.fromPg(projectModel.get('start_date'));
+        var endDate = Date.fromPg(projectModel.get('end_date'));
+        var startTime = startDate.getTime();
+        var endTime = endDate.getTime();
 
         // Save original start- and end time in non-model variables
         if (!projectModel.orgStartTime) {
@@ -257,14 +260,14 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
             projectModel.orgEndTime = endTime;
         }
 
-        startTime = startTime + diffTime;
-        endTime = endTime + diffTime;
+        startTime = startTime + diffDays * 24.0 * 3600 * 1000;
+        endTime = endTime + diffDays * 24.0 * 3600 * 1000;
 
-        var startDate = new Date(startTime);
-        var endDate = new Date(endTime);
+        var newStartDate = new Date(startTime);
+        var newEndDate = new Date(endTime);
 
-        projectModel.set('start_date', startDate.toISOString().substring(0, 10));
-        projectModel.set('end_date', endDate.toISOString().substring(0, 10));
+        projectModel.set('start_date', newStartDate.toPg());
+        projectModel.set('end_date', newEndDate.toPg());
 
         me.redraw();
         console.log('PO.view.gantt_editor.GanttBarPanel.onProjectMove: Finished');
@@ -292,7 +295,7 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
         }
         endTime = endTime + diffTime;
         var endDate = new Date(endTime);
-        projectModel.set('end_date', endDate.toISOString().substring(0, 10));
+        projectModel.set('end_date', endDate.toPg());
 
         me.redraw();
         console.log('PO.view.gantt_editor.GanttBarPanel.onProjectResize: Finished');
@@ -344,16 +347,16 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
         // Create a new dependency object
         console.log('PO.view.gantt.GanttBarPanel.createDependency: '+fromTaskId+' -> '+toTaskId);
         var dependency = {
-	    pred_id: parseInt(fromTaskId),
-	    succ_id: parseInt(toTaskId),
-	    type_id: 9650,							// "Depend", please see im_categories.category_id
-	    diff: 0.0
+            pred_id: parseInt(fromTaskId),
+            succ_id: parseInt(toTaskId),
+            type_id: 9650,							// "Depend", please see im_categories.category_id
+            diff: 0.0
         };
-	var dependencies = toTaskModel.get('predecessors');
-	dependencies.push(dependency);
-	toTaskModel.set('predecessors', dependencies);
+        var dependencies = toTaskModel.get('predecessors');
+        dependencies.push(dependency);
+        toTaskModel.set('predecessors', dependencies);
 
-	me.redraw();
+        me.redraw();
 
         console.log('PO.view.portfolio_planner.PortfolioPlannerProjectPanel.onCreateDependency: Finished');
     },
@@ -393,17 +396,15 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
      */
     drawProjectBar: function(project) {
         var me = this;
+        if (me.debug) { console.log('PO.view.gantt_editor.GanttBarPanel.drawProjectBar'); }
+
         var surface = me.surface;
         var project_name = project.get('project_name');
-        var start_date = project.get('start_date').substring(0, 10);		// ISO format without timestamp "2015-07-31"
-        var end_date = project.get('end_date').substring(0, 10);		// ISO format without timestamp
         var percentCompleted = parseFloat(project.get('percent_completed'));
         var predecessors = project.get('predecessors');
         var assignees = project.get('assignees');				// Array of {id, percent, name, email, initials}
-        var startTime = new Date(start_date).getTime();				// milliseconds after 1970-01-01
-        var endTime = new Date(end_date).getTime() + 1000.0 * 3600 * 24;	// end_date means 23:59:59 of that day
-
-        if (me.debug) { console.log('PO.view.gantt_editor.GanttBarPanel.drawProjectBar: project_name='+project_name+', start_date='+start_date+", end_date="+end_date); }
+        var startTime = new Date(project.get('start_date')).getTime();				// milliseconds after 1970-01-01
+        var endTime = new Date(project.get('end_date')).getTime();	// end_date means 23:59:59 of that day
 
         var x = me.date2x(startTime);						// X position based on time scale
         var y = me.calcGanttBarYPosition(project);				// Y position based on TreePanel y position of task.
@@ -1198,12 +1199,14 @@ function launchGanttEditor(){
             console.log('PO.controller.gantt_editor.GanttSchedulingController.onStartDateChanged: Starting');
             var parent = model.parentNode;					// 
             if (!parent) return;
-            var parentStartDate = new Date(parent.get('start_date').substring(0, 10));
+	    var parent_start_date = parent.get('start_date');
+	    if ("" == parent_start_date) return;
+            var parentStartDate = Date.fromPg(parent_start_date);
 
             // Calculate the minimum start date of all siblings
             var minStartDate = new Date('2099-12-31');
             parent.eachChild(function(sibling) {
-                var siblingStartDate = new Date(sibling.get('start_date').substring(0, 10));
+                var siblingStartDate = Date.fromPg(sibling.get('start_date'));
                 if (siblingStartDate.getTime() < minStartDate.getTime()) {
                     minStartDate = siblingStartDate;
                 }
@@ -1213,7 +1216,7 @@ function launchGanttEditor(){
             if (parentStartDate.getTime() != minStartDate.getTime()) {
                 // The siblings start different than the parent - update the parent.
                 console.log('PO.controller.gantt_editor.GanttSchedulingController.onStartDateChanged: Updating parent at level='+parent.getDepth());
-                parent.set('start_date', Ext.Date.format(minStartDate, 'Y-m-d'));	// This will call this event recursively
+                parent.set('start_date', minStartDate.toPg());					// This will call this event recursively
             }
             console.log('PO.controller.gantt_editor.GanttSchedulingController.onStartDateChanged: Finished');
         },
@@ -1229,12 +1232,14 @@ function launchGanttEditor(){
 
             var parent = model.parentNode;
             if (!parent) return;
-            var parentEndDate = new Date(parent.get('end_date').substring(0, 10));
+            var parent_end_date = parent.get('end_date');
+	    if ("" == parent_end_date) return;
+            var parentEndDate = Date.fromPg(parent_end_date);
 
             // Calculate the maximum end date of all siblings
             var maxEndDate = new Date('2000-01-01');
             parent.eachChild(function(sibling) {
-                var siblingEndDate = new Date(sibling.get('end_date').substring(0, 10));
+                var siblingEndDate = Date.fromPg(sibling.get('end_date'));
                 if (siblingEndDate.getTime() > maxEndDate.getTime()) {
                     maxEndDate = siblingEndDate;
                 }
@@ -1244,9 +1249,8 @@ function launchGanttEditor(){
             if (parentEndDate.getTime() != maxEndDate.getTime()) {
                 // The siblings end different than the parent - update the parent.
                 console.log('PO.controller.gantt_editor.GanttSchedulingController.onEndDateChanged: Updating parent at level='+parent.getDepth());
-                parent.set('end_date', Ext.Date.format(maxEndDate, 'Y-m-d'));	// This will call this event recursively
+                parent.set('end_date', maxEndDate.toPg());					// This will call this event recursively
             }
-
             console.log('PO.controller.gantt_editor.GanttSchedulingController.onEndDateChanged: Finished');
         },
     });
@@ -1339,6 +1343,38 @@ Ext.onReady(function() {
     Ext.QuickTips.init();							// No idea why this is necessary, but it is...
     // Ext.getDoc().on('contextmenu', function(ev) { ev.preventDefault(); });  // Disable Right-click context menu on browser background
     Ext.get("@gantt_editor_id@").on('contextmenu', function(ev) { ev.preventDefault(); });  // Disable Right-click context menu on browser background
+
+    Date.prototype.toPg = function(){ 
+        var YYYY,YY,MM,M,DD,D,hh,h,mm,m,ss,s,dMod,th,tzSign,tzo,tzAbs,tz;
+        YY = ((YYYY = this.getFullYear())+"").substr(2,2);
+        MM = (M = this.getMonth()+1) < 10 ? ('0'+M) : M;
+        DD = (D = this.getDate()) < 10 ? ('0'+D) : D;
+        th = (D >= 10&&D <= 20) ? 'th' : ((dMod = D%10) == 1) ? 'st' : (dMod == 2) ? 'nd' : (dMod == 3) ? 'rd' : 'th';
+
+        hh = (h = this.getHours()) < 10 ? ('0'+h) : h;
+        mm = (m = this.getMinutes()) < 10 ? ('0'+m) : m;
+        ss = (s = this.getSeconds()) < 10 ? ('0'+s) : s;
+
+        tzSign = (tzo = this.getTimezoneOffset()/-60) < 0 ? '-' : '+';
+        tz = (tzAbs = Math.abs(tzo)) < 10 ? ('0'+tzAbs) : ''+tzAbs;
+
+        return YYYY+'-'+MM+'-'+DD+' '+hh+':'+mm+':'+ss+tzSign+tz;
+    };
+
+    Date.fromPg = (function(s){
+        var day, tz,
+        rx = /^(\d{4}\-\d\d\-\d\d \d\d:\d\d:\d\d)([\+\-]\d\d)$/,
+        p = rx.exec(s) || [];
+        if(p[1]){
+	    var date = new Date(p[1]);
+	    var time = new Date(p[1]).getTime();
+	    var tzo = parseInt(p[2]) * 60 * 60 * 1000;
+	    var localTzo = date.getTimezoneOffset() * -1 * 60 * 1000;
+	    return new Date(time - tzo + localTzo);
+        }
+        return NaN;
+    });
+
 
     var taskTreeStore = Ext.create('PO.store.timesheet.TaskTreeStore');
     var senchaPreferenceStore = Ext.create('PO.store.user.SenchaPreferenceStore');
