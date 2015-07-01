@@ -167,21 +167,19 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
         var me = this;
         console.log('PO.view.gantt_editor.GanttBarPanel.onSpriteRightClick: Starting: '+ sprite);
         if (null == sprite) { return; }     				    	// Something went completely wrong...
-        alert('rightclick');
 
-        var projectModel = sprite.dndConfig.model;
-        var className = projectModel.$className;
-        switch(className) {
-        case 'PO.model.timesheet.TimesheetTaskDependency': 
-            this.onDependencyRightClick(event, sprite);
-            break;
-        case 'PO.model.project.Project':
+        var dndConfig = sprite.dndConfig;
+        if (!!dndConfig) {
             this.onProjectRightClick(event, sprite);
-            break;
-        default:
-            alert('Undefined model class: '+className);
+            return;
         }
-        console.log('PO.view.gantt_editor.GanttBarPanel.onSpriteRightClick: Finished');
+
+        var dependencyModel = sprite.dependencyModel;
+        if (!!dependencyModel) {
+            this.onDependencyRightClick(event, sprite);
+            return;
+        }
+        console.log('PO.view.gantt_editor.GanttBarPanel.onSpriteRightClick: Unknown sprite:'); console.log(sprite);
     },
 
     /**
@@ -191,7 +189,7 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
         var me = this;
         console.log('PO.view.gantt_editor.GanttBarPanel.onDependencyRightClick: Starting: '+ sprite);
         if (null == sprite) { return; }     					// Something went completely wrong...
-        var dependencyModel = sprite.dndConfig.model;
+        var dependencyModel = sprite.dependencyModel;
 
         // Menu for right-clicking a dependency arrow.
         if (!me.dependencyContextMenu) {
@@ -202,17 +200,22 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
                     text: 'Delete Dependency',
                     handler: function() {
                         console.log('dependencyContextMenu.deleteDependency: ');
+                        var predId = dependencyModel.pred_id;
+                        var succId = dependencyModel.succ_id;
+                        var succModel = me.taskModelHash[succId];	// Dependencies are stored as succModel.predecessors
 
-                        me.taskDependencyStore.remove(dependencyModel);	     	// Remove from store
-                        dependencyModel.destroy({
-                            success: function() {
-                                console.log('Dependency destroyed');
-                                me.redraw();
-                            },
-                            failure: function(model, operation) {
-                                console.log('Error destroying dependency: '+operation.request.proxy.reader.rawData.message);
+                        var predecessors = succModel.get('predecessors');
+			var orgPredecessorsLen = predecessors.length
+                        for (i = 0; i < predecessors.length; i++) {
+                            var el = predecessors[i];
+                            if (el.pred_id == predId) {
+                        	predecessors.splice(i,1);
                             }
-                        });
+                        }
+                        succModel.set('predecessors',predecessors);
+			if (predecessors.length != orgPredecessorsLen) {
+			    me.redraw();
+			}
                     }
                 }]
             });
@@ -311,8 +314,8 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
         var projectWidth = projectBBox.width;
         if (0 == projectWidth) projectWidth = projectWidth + 1;			// Avoid division by zero.
         var percent = Math.floor(100.0 * percentBBox.width / projectWidth);
-	if (percent > 100.0) percent = 100;
-	if (percent < 0) percent = 0;
+        if (percent > 100.0) percent = 100;
+        if (percent < 0) percent = 0;
         projectModel.set('percent_completed', ""+percent);			// Write to project model and update tree via events
 
         me.redraw();			      					// redraw the entire Gantt editor surface. ToDo: optimize
@@ -340,26 +343,18 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
 
         // Create a new dependency object
         console.log('PO.view.gantt.GanttBarPanel.createDependency: '+fromTaskId+' -> '+toTaskId);
-        var dependency = new Ext.create('PO.model.timesheet.TimesheetTaskDependency', {
-            task_id_one: fromTaskId,
-            task_id_two: toTaskId
-        });
-        dependency.save({
-            success: function(depModel, operation) {
-                console.log('PO.view.gantt.GanttBarPanel.createDependency: successfully created dependency');
-                // Reload the store, because the store gets extra information from the data-source
-                me.taskDependencyStore.reload({
-                    callback: function(records, operation, result) {
-                        console.log('taskDependencyStore.reload');
-                        me.redraw();
-                    }
-                });
-            },
-            failure: function(depModel, operation) {
-                var message = operation.request.scope.reader.jsonData.message;
-                Ext.Msg.alert('Error creating dependency', message);
-            }
-        });
+        var dependency = {
+	    pred_id: parseInt(fromTaskId),
+	    succ_id: parseInt(toTaskId),
+	    type_id: 9650,							// "Depend", please see im_categories.category_id
+	    diff: 0.0
+        };
+	var dependencies = toTaskModel.get('predecessors');
+	dependencies.push(dependency);
+	toTaskModel.set('predecessors', dependencies);
+
+	me.redraw();
+
         console.log('PO.view.portfolio_planner.PortfolioPlannerProjectPanel.onCreateDependency: Finished');
     },
 
@@ -383,8 +378,8 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
             if (viewNode == null) { return; }					// Hidden nodes have no viewNode -> no bar
             me.drawProjectBar(model);
         });
-	
-	// Iterate through all children and draw dependencies
+        
+        // Iterate through all children and draw dependencies
         rootNode.cascadeBy(function(model) {
             var viewNode = ganttTreeView.getNode(model);
             if (viewNode == null) { return; }					// Hidden nodes have no viewNode -> no bar
@@ -549,7 +544,7 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
                 }
             }).show(true);
         }
-	
+        
         // Convert assignment information into a string
         // and write behind the Gantt bar
         var projectMemberStore = Ext.StoreManager.get('projectMemberStore');
@@ -565,7 +560,7 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
                 }
             });
             var axisText = surface.add({type:'text', text:text, x:x+w+2, y:y+d, fill:'#000', font:"10px Arial"}).show(true);
-	}
+        }
     },
 
     /**
@@ -575,12 +570,12 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
     drawProjectDependencies: function(project) {
         var me = this;
 
-	var successorTasks = project.get('successors');
-	if (!successorTasks instanceof Array) return;
+        var predecessors = project.get('predecessors');
+        if (!predecessors instanceof Array) return;
         if (!me.preferenceStore.getPreferenceBoolean('show_project_dependencies', true)) return;
 
-        for (var i = 0, len = successorTasks.length; i < len; i++) {
-	    var dependencyModel = successorTasks[i];
+        for (var i = 0, len = predecessors.length; i < len; i++) {
+            var dependencyModel = predecessors[i];
             me.drawDependency(dependencyModel);
         }
     },
@@ -596,9 +591,9 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
         var s = me.arrowheadSize;
 
         var fromBBox = me.taskBBoxHash[fromId];					// We start drawing with the end of the first bar...
-	var fromModel = me.taskModelHash[fromId]
+        var fromModel = me.taskModelHash[fromId]
         var toBBox = me.taskBBoxHash[toId];			        		// .. and draw towards the start of the 2nd bar.
-	var toModel = me.taskModelHash[toId]
+        var toModel = me.taskModelHash[toId]
         if (!fromBBox || !toBBox) { return; }
 
         // Assuming end-to-start dependencies from a earlier task to a later task
@@ -637,7 +632,7 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
                 + 'L '+ (endX+s) + ', ' + (endY + sDirected)
                 + 'L '+ (endX)   + ', ' + (endY)
         }).show(true);
-	arrowHead.dependenyModel = dependencyModel;
+        arrowHead.dependencyModel = dependencyModel;
 
         // Draw the main connection line between start and end.
         var arrowLine = me.surface.add({
@@ -651,14 +646,14 @@ Ext.define('PO.view.gantt_editor.GanttBarPanel', {
                 + 'L '+ (endX)   + ', ' + (endY + sDirected * 2)
                 + 'L '+ (endX)   + ', ' + (endY + sDirected)
         }).show(true);
-	arrowHead.dependenyModel = dependencyModel;
+        arrowHead.dependencyModel = dependencyModel;
 
         // Add a tool tip to the dependency
         var html = "<b>Task dependency</b>:<br>" +
             "From <a href='/intranet/projects/view?project_id=" + fromId + "' target='_blank'>" + fromModel.get('project_name') + "</a> " +
             "to <a href='/intranet/projects/view?project_id=" + toId + "' target='_blank'>" + toModel.get('project_name') + "</a>";
 
-	// Give 1 second to click on project link
+        // Give 1 second to click on project link
         var tip1 = Ext.create("Ext.tip.ToolTip", { target: arrowHead.el, width: 250, html: html, hideDelay: 1000 });
         var tip2 = Ext.create("Ext.tip.ToolTip", { target: arrowLine.el, width: 250, html: html, hideDelay: 1000 });
         console.log('PO.view.portfolio_planner.PortfolioPlannerProjectPanel.drawTaskDependency: Finished');
@@ -890,7 +885,7 @@ function launchGanttEditor(){
             var me = this;
             if (me.debug) { console.log('PO.controller.gantt_editor.GanttButtonController: init'); }
 
-	    // Listen to button press events
+            // Listen to button press events
             this.control({
                 '#buttonReload': { click: this.onButtonReload },
                 '#buttonSave': { click: this.onButtonSave },
@@ -954,7 +949,7 @@ function launchGanttEditor(){
             var buttonSave = Ext.getCmp('buttonSave');
             buttonSave.setDisabled(false);					// Allow to "save" changes
 
-	    me.ganttBarPanel.redraw();
+            me.ganttBarPanel.redraw();
         },
 
         onButtonMaximize: function() {
@@ -1119,9 +1114,9 @@ function launchGanttEditor(){
             console.log('PO.controller.gantt_editor.GanttResizeController.onSidebarResize: Finished');
         },
 
-	/**
-	 * The user changed the size of the browser window
-	 */
+        /**
+         * The user changed the size of the browser window
+         */
         onWindowResize: function () {
             var me = this;
             console.log('PO.controller.gantt_editor.GanttResizeController.onWindowResize: Starting');
@@ -1342,6 +1337,8 @@ function launchGanttEditor(){
  */
 Ext.onReady(function() {
     Ext.QuickTips.init();							// No idea why this is necessary, but it is...
+    // Ext.getDoc().on('contextmenu', function(ev) { ev.preventDefault(); });  // Disable Right-click context menu on browser background
+    Ext.get("@gantt_editor_id@").on('contextmenu', function(ev) { ev.preventDefault(); });  // Disable Right-click context menu on browser background
 
     var taskTreeStore = Ext.create('PO.store.timesheet.TaskTreeStore');
     var senchaPreferenceStore = Ext.create('PO.store.user.SenchaPreferenceStore');
