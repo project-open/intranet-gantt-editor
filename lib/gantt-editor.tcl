@@ -25,8 +25,8 @@ set gantt_editor_id "gantt_editor_$gantt_editor_rand"
 
 
 db_1row project_info "
-select	max(end_date) + '7 days'::interval as report_end_date,
-	min(start_date) - '7 days'::interval as report_start_date
+select	max(end_date) as report_end_date,
+	min(start_date) as report_start_date
 from	(
 	select	sub_p.start_date,
 		sub_p.end_date
