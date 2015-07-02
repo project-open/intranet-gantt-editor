@@ -633,12 +633,12 @@ function launchGanttEditor(debug){
             if (!parent) return;
 	    var parent_start_date = parent.get('start_date');
 	    if ("" == parent_start_date) return;
-            var parentStartDate = PO.Utilities.dateFromPg(parent_start_date);
+            var parentStartDate = PO.Utilities.pgToDate(parent_start_date);
 
             // Calculate the minimum start date of all siblings
             var minStartDate = PO.Utilities.pgToDate('2099-12-31');
             parent.eachChild(function(sibling) {
-                var siblingStartDate = PO.Utilities.dateFromPg(sibling.get('start_date'));
+                var siblingStartDate = PO.Utilities.pgToDate(sibling.get('start_date'));
                 if (siblingStartDate.getTime() < minStartDate.getTime()) {
                     minStartDate = siblingStartDate;
                 }
@@ -666,12 +666,12 @@ function launchGanttEditor(debug){
             if (!parent) return;
             var parent_end_date = parent.get('end_date');
 	    if ("" == parent_end_date) return;
-            var parentEndDate = PO.Utilities.dateFromPg(parent_end_date);
+            var parentEndDate = PO.Utilities.pgToDate(parent_end_date);
 
             // Calculate the maximum end date of all siblings
             var maxEndDate = PO.Utilities.pgToDate('2000-01-01');
             parent.eachChild(function(sibling) {
-                var siblingEndDate = PO.Utilities.dateFromPg(sibling.get('end_date'));
+                var siblingEndDate = PO.Utilities.pgToDate(sibling.get('end_date'));
                 if (siblingEndDate.getTime() > maxEndDate.getTime()) {
                     maxEndDate = siblingEndDate;
                 }
@@ -786,8 +786,8 @@ function launchGanttEditor(debug){
  */
 Ext.onReady(function() {
     Ext.QuickTips.init();							// No idea why this is necessary, but it is...
-    // Ext.getDoc().on('contextmenu', function(ev) { ev.preventDefault(); });  // Disable Right-click context menu on browser background
-    Ext.get("@gantt_editor_id@").on('contextmenu', function(ev) { ev.preventDefault(); });  // Disable Right-click context menu on browser background
+    Ext.getDoc().on('contextmenu', function(ev) { ev.preventDefault(); });  // Disable Right-click context menu on browser background
+    // Ext.get("@gantt_editor_id@").on('contextmenu', function(ev) { ev.preventDefault(); });  // Disable Right-click context menu on browser background
     var debug = true;
 
     var taskTreeStore = Ext.create('PO.store.timesheet.TaskTreeStore');
