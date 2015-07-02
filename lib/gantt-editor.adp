@@ -3,6 +3,7 @@
 
 // Ext.Loader.setConfig({enabled: true});
 Ext.Loader.setPath('Ext.ux', '/sencha-v411/examples/ux');
+Ext.Loader.setPath('PO', '/sencha-core');
 Ext.Loader.setPath('PO.model', '/sencha-core/model');
 Ext.Loader.setPath('PO.store', '/sencha-core/store');
 Ext.Loader.setPath('PO.class', '/sencha-core/class');
@@ -14,6 +15,7 @@ Ext.require([
     'Ext.grid.*',
     'Ext.tree.*',
     'Ext.ux.CheckColumn',
+    'PO.Utilities',
     'PO.class.CategoryStore',
     'PO.controller.StoreLoadCoordinator',
     'PO.store.timesheet.TaskTreeStore',
@@ -328,6 +330,7 @@ function launchGanttEditor(debug){
         },
 
         onButtonMaximize: function() {
+	    var me = this;
             if (me.debug) console.log('GanttButtonController.onButtonMaximize');
             var buttonMaximize = Ext.getCmp('buttonMaximize');
             var buttonMinimize = Ext.getCmp('buttonMinimize');
@@ -348,6 +351,7 @@ function launchGanttEditor(debug){
         },
 
         onButtonMinimize: function() {
+	    var me = this;
             if (me.debug) console.log('GanttButtonController.onButtonMinimize');
             var buttonMaximize = Ext.getCmp('buttonMaximize');
             var buttonMinimize = Ext.getCmp('buttonMinimize');
@@ -629,12 +633,12 @@ function launchGanttEditor(debug){
             if (!parent) return;
 	    var parent_start_date = parent.get('start_date');
 	    if ("" == parent_start_date) return;
-            var parentStartDate = Date.fromPg(parent_start_date);
+            var parentStartDate = PO.Utilities.dateFromPg(parent_start_date);
 
             // Calculate the minimum start date of all siblings
-            var minStartDate = new Date('2099-12-31');
+            var minStartDate = PO.Utilities.pgToDate('2099-12-31');
             parent.eachChild(function(sibling) {
-                var siblingStartDate = Date.fromPg(sibling.get('start_date'));
+                var siblingStartDate = PO.Utilities.dateFromPg(sibling.get('start_date'));
                 if (siblingStartDate.getTime() < minStartDate.getTime()) {
                     minStartDate = siblingStartDate;
                 }
@@ -644,7 +648,7 @@ function launchGanttEditor(debug){
             if (parentStartDate.getTime() != minStartDate.getTime()) {
                 // The siblings start different than the parent - update the parent.
                 if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.onStartDateChanged: Updating parent at level='+parent.getDepth());
-                parent.set('start_date', minStartDate.toPg());					// This will call this event recursively
+                parent.set('start_date', PO.Utilities.dateToPg(minStartDate));				// This will call this event recursively
             }
             if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.onStartDateChanged: Finished');
         },
@@ -662,12 +666,12 @@ function launchGanttEditor(debug){
             if (!parent) return;
             var parent_end_date = parent.get('end_date');
 	    if ("" == parent_end_date) return;
-            var parentEndDate = Date.fromPg(parent_end_date);
+            var parentEndDate = PO.Utilities.dateFromPg(parent_end_date);
 
             // Calculate the maximum end date of all siblings
-            var maxEndDate = new Date('2000-01-01');
+            var maxEndDate = PO.Utilities.pgToDate('2000-01-01');
             parent.eachChild(function(sibling) {
-                var siblingEndDate = Date.fromPg(sibling.get('end_date'));
+                var siblingEndDate = PO.Utilities.dateFromPg(sibling.get('end_date'));
                 if (siblingEndDate.getTime() > maxEndDate.getTime()) {
                     maxEndDate = siblingEndDate;
                 }
@@ -677,7 +681,7 @@ function launchGanttEditor(debug){
             if (parentEndDate.getTime() != maxEndDate.getTime()) {
                 // The siblings end different than the parent - update the parent.
                 if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.onEndDateChanged: Updating parent at level='+parent.getDepth());
-                parent.set('end_date', maxEndDate.toPg());					// This will call this event recursively
+                parent.set('end_date', PO.Utilities.dateToPg(maxEndDate));					// This will call this event recursively
             }
             if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.onEndDateChanged: Finished');
         },
@@ -692,8 +696,8 @@ function launchGanttEditor(debug){
     });
 
     // Right-hand side Gantt display
-    var reportStartTime = new Date('@report_start_date@').getTime();
-    var reportEndTime = new Date('@report_end_date@').getTime();
+    var reportStartTime = PO.Utilities.pgToDate('@report_start_date@').getTime();
+    var reportEndTime = PO.Utilities.pgToDate('@report_end_date@').getTime();
     var ganttBarPanel = Ext.create('PO.view.gantt.GanttBarPanel', {
         region: 'center',
         viewBox: false,
@@ -785,38 +789,6 @@ Ext.onReady(function() {
     // Ext.getDoc().on('contextmenu', function(ev) { ev.preventDefault(); });  // Disable Right-click context menu on browser background
     Ext.get("@gantt_editor_id@").on('contextmenu', function(ev) { ev.preventDefault(); });  // Disable Right-click context menu on browser background
     var debug = true;
-
-    Date.prototype.toPg = function(){ 
-        var YYYY,YY,MM,M,DD,D,hh,h,mm,m,ss,s,dMod,th,tzSign,tzo,tzAbs,tz;
-        YY = ((YYYY = this.getFullYear())+"").substr(2,2);
-        MM = (M = this.getMonth()+1) < 10 ? ('0'+M) : M;
-        DD = (D = this.getDate()) < 10 ? ('0'+D) : D;
-        th = (D >= 10&&D <= 20) ? 'th' : ((dMod = D%10) == 1) ? 'st' : (dMod == 2) ? 'nd' : (dMod == 3) ? 'rd' : 'th';
-
-        hh = (h = this.getHours()) < 10 ? ('0'+h) : h;
-        mm = (m = this.getMinutes()) < 10 ? ('0'+m) : m;
-        ss = (s = this.getSeconds()) < 10 ? ('0'+s) : s;
-
-        tzSign = (tzo = this.getTimezoneOffset()/-60) < 0 ? '-' : '+';
-        tz = (tzAbs = Math.abs(tzo)) < 10 ? ('0'+tzAbs) : ''+tzAbs;
-
-        return YYYY+'-'+MM+'-'+DD+' '+hh+':'+mm+':'+ss+tzSign+tz;
-    };
-
-    Date.fromPg = (function(s){
-        var day, tz,
-        rx = /^(\d{4}\-\d\d\-\d\d \d\d:\d\d:\d\d)([\+\-]\d\d)$/,
-        p = rx.exec(s) || [];
-        if(p[1]){
-	    var date = new Date(p[1]);
-	    var time = new Date(p[1]).getTime();
-	    var tzo = parseInt(p[2]) * 60 * 60 * 1000;
-	    var localTzo = date.getTimezoneOffset() * -1 * 60 * 1000;
-	    return new Date(time - tzo + localTzo);
-        }
-        return NaN;
-    });
-
 
     var taskTreeStore = Ext.create('PO.store.timesheet.TaskTreeStore');
     var senchaPreferenceStore = Ext.create('PO.store.user.SenchaPreferenceStore');
