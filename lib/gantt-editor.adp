@@ -2,13 +2,7 @@
 <script type='text/javascript'>
 
 // Ext.Loader.setConfig({enabled: true});
-Ext.Loader.setPath('Ext.ux', '/sencha-v411/examples/ux');
 Ext.Loader.setPath('PO', '/sencha-core');
-Ext.Loader.setPath('PO.model', '/sencha-core/model');
-Ext.Loader.setPath('PO.store', '/sencha-core/store');
-Ext.Loader.setPath('PO.class', '/sencha-core/class');
-Ext.Loader.setPath('PO.view', '/sencha-core/view');
-Ext.Loader.setPath('PO.controller', '/sencha-core/controller');
 
 Ext.require([
     'Ext.data.*',
