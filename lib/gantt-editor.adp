@@ -383,7 +383,8 @@ function launchGanttEditor(debug){
          * Control the enabled/disabled status of the (-) (Delete) button
          */
         onTreePanelSelectionChange: function(view, records) {
-            if (this.debug) { if (me.debug) console.log('GanttButtonController.onTreePanelSelectionChange'); }
+	    var me = this;
+            if (me.debug) console.log('GanttButtonController.onTreePanelSelectionChange');
             var buttonDelete = Ext.getCmp('buttonDelete');
 
             if (1 == records.length) {						// Exactly one record enabled
@@ -398,9 +399,10 @@ function launchGanttEditor(debug){
          * Disable default tree key actions
          */
         onBeforeCellKeyDown: function(me, htmlTd, cellIndex, record, htmlTr, rowIndex, e, eOpts ) {
+	    var me = this;
             var keyCode = e.getKey();
             var keyCtrl = e.ctrlKey;
-            if (this.debug) { if (me.debug) console.log('GanttButtonController.onBeforeCellKeyDown: code='+keyCode+', ctrl='+keyCtrl); }
+            if (me.debug) console.log('GanttButtonController.onBeforeCellKeyDown: code='+keyCode+', ctrl='+keyCtrl);
             var panel = this;
             switch (keyCode) {
             case 8:								// Backspace 8
@@ -544,7 +546,7 @@ function launchGanttEditor(debug){
 
 	onSwitchToFullScreen: function () {
             var me = this;
-	    this.fullScreenP = true; 
+	    me.fullScreenP = true; 
             if (me.debug) console.log('PO.controller.gantt_editor.GanttResizeController.onSwitchToFullScreen: Starting');
 	    me.ganttPanelContainer.setSize(Ext.getBody().getViewSize().width, Ext.getBody().getViewSize().height);
 	    me.ganttBarPanel.setSize(Ext.getBody().getViewSize().width, Ext.getBody().getViewSize().height);
@@ -554,7 +556,7 @@ function launchGanttEditor(debug){
 
         onSwitchBackFromFullScreen: function () {
             var me = this;
-	    this.fullScreenP = false; 
+	    me.fullScreenP = false; 
 	        
             if (me.debug) console.log('PO.controller.gantt_editor.GanttResizeController.onSwitchBackFromFullScreen: Starting');
 	        
