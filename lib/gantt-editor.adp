@@ -822,12 +822,16 @@ Ext.onReady(function() {
     // Load stores that need parameters
     taskTreeStore.getProxy().extraParams = { project_id: @project_id@ };
     taskTreeStore.load({
-        callback: function() { if (debug) console.log('PO.store.timesheet.TaskTreeStore: loaded'); }
+        callback: function() {
+	    if (debug) console.log('PO.store.timesheet.TaskTreeStore: loaded');
+	}
     });
 
     // User preferences
     senchaPreferenceStore.load({						// Preferences for the GanttEditor
-        callback: function() { if (debug) console.log('PO.store.user.SenchaPreferenceStore: loaded'); }
+        callback: function() {
+	    if (debug) console.log('PO.store.user.SenchaPreferenceStore: loaded');
+	}
     });
 
     // User store - load last, because this can take some while. Load only Employees.
