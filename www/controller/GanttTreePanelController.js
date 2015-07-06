@@ -13,11 +13,7 @@
  */
 Ext.define('GanttEditor.controller.GanttTreePanelController', {
     extend: 'Ext.app.Controller',
-    requires: [
-	'Ext.app.Controller',
-	'PO.view.gantt.GanttTreePanel',
-	'PO.view.gantt.GanttBarPanel'
-    ],
+    requires: ['Ext.app.Controller'],
     refs: [
 	{ref: 'ganttBarPanel', selector: '#ganttBarPanel'},
 	{ref: 'ganttTreePanel', selector: '#ganttTreePanel'}

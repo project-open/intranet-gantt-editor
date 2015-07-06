@@ -12,7 +12,7 @@ Ext.require([
     'Ext.ux.CheckColumn',
     'PO.Utilities',
     'PO.class.CategoryStore',
-    'PO.controller.gantt.GanttTreePanelController',
+    'GanttEditor.controller.GanttTreePanelController',
     'PO.controller.StoreLoadCoordinator',
     'PO.store.timesheet.TaskTreeStore',
     'PO.store.timesheet.TaskStatusStore',
@@ -23,7 +23,7 @@ Ext.require([
     'PO.view.field.PODateField',						// Custom ]po[ Date editor field
     'PO.view.field.POTaskAssignment',
     'PO.view.gantt.AbstractGanttPanel',
-    'PO.view.gantt.GanttBarPanel',
+    'GanttEditor.view.GanttBarPanel',
     'PO.view.gantt.GanttTaskPropertyPanel',
     'PO.view.gantt.GanttTreePanel',
     'PO.view.menu.AlphaMenu',
@@ -693,7 +693,7 @@ function launchGanttEditor(debug){
         region: 'west',
         store: taskTreeStore
     });
-    var ganttTreePanelController = Ext.create('PO.controller.gantt.GanttTreePanelController', {
+    var ganttTreePanelController = Ext.create('GanttEditor.controller.GanttTreePanelController', {
 	debug: debug
     });
     ganttTreePanelController.init(this);
@@ -703,7 +703,7 @@ function launchGanttEditor(debug){
     // Right-hand side Gantt display
     var reportStartTime = PO.Utilities.pgToDate('@report_start_date@').getTime();
     var reportEndTime = PO.Utilities.pgToDate('@report_end_date@').getTime();
-    var ganttBarPanel = Ext.create('PO.view.gantt.GanttBarPanel', {
+    var ganttBarPanel = Ext.create('GanttEditor.view.GanttBarPanel', {
 	id: 'ganttBarPanel',
         region: 'center',
         viewBox: false,
