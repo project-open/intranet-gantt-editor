@@ -25,7 +25,6 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
 		'itemcollapse': this.onItemCollapse,
 		'itemexpand': this.onItemExpand
 	    },
-	    '#buttonZoomIn': { click: this.redrawGanttBarPanel },
 	    '#buttonReduceIndent': { click: this.onButtonReduceIndent},
             '#buttonIncreaseIndent': { click: this.onButtonIncreaseIndent},
             '#buttonAdd': { click: this.onButtonAdd},

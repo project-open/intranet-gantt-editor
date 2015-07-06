@@ -25,7 +25,8 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
     taskBBoxHash: {},								// Hash array from object_ids -> Start/end point
     taskModelHash: {},								// Start and end date of tasks
     preferenceStore: null,
-
+    arrowheadSize: 5,
+    
     /**
      * Starts the main editor panel as the right-hand side
      * of a project grid and a cost center grid for the departments
@@ -35,9 +36,6 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
         var me = this;
         if (me.debug) console.log('PO.view.gantt.GanttBarPanel.initComponent: Starting');
         this.callParent(arguments);
-
-        me.barHeight = 15;
-        me.arrowheadSize = 5;
 
         // Catch the moment when the "view" of the Project grid
         // is ready in order to draw the GanttBars for the first time.
@@ -302,7 +300,7 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
         if (undefined === me.surface) { return; }
 
         me.surface.removeAll();
-        me.surface.setSize(me.ganttSurfaceWidth, me.surface.height);		// Set the size of the drawing area
+        me.surface.setSize(me.axisEndX, me.surface.height);		// Set the size of the drawing area
         me.drawAxis();								// Draw the top axis
 
         // Iterate through all children of the root node and check if they are visible
@@ -320,6 +318,15 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
             if (viewNode == null) { return; }					// Hidden nodes have no viewNode -> no bar
             me.drawProjectDependencies(model);
         });
+
+	var normBar = me.surface.add({
+	    type: 'rect', x: 100, y: 100, width: 200, height: 200, radius: 3,
+	    fill: 'url(#gradientId)',
+	    stroke: 'blue',
+	    'stroke-width': 0.3
+	}).show(true);
+	
+	
         if (me.debug) console.log('PO.class.GanttDrawComponent.redraw: Finished');
     },
 
@@ -341,7 +348,7 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
 
         var x = me.date2x(startTime);						// X position based on time scale
         var y = me.calcGanttBarYPosition(project);				// Y position based on TreePanel y position of task.
-        var w = Math.floor(me.ganttSurfaceWidth * (endTime - startTime) / (me.axisEndDate.getTime() - me.axisStartDate.getTime()));
+        var w = Math.floor(me.axisEndX * (endTime - startTime) / (me.axisEndDate.getTime() - me.axisStartDate.getTime()));
         var h = me.ganttBarHeight;						// Constant determines height of the bar
         var d = Math.floor(h / 2.0) + 1;					// Size of the indent of the super-project bar
 

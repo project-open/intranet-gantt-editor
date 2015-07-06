@@ -10,20 +10,23 @@ Ext.require([
     'Ext.grid.*',
     'Ext.tree.*',
     'Ext.ux.CheckColumn',
+    'GanttEditor.controller.GanttTreePanelController',
+    'GanttEditor.controller.GanttBarPanelController',
+    'GanttEditor.controller.GanttSchedulingController',
+    'GanttEditor.view.GanttBarPanel',
     'PO.Utilities',
     'PO.class.CategoryStore',
-    'GanttEditor.controller.GanttTreePanelController',
     'PO.controller.StoreLoadCoordinator',
+    'PO.controller.ResizeController',
+    'PO.model.timesheet.TimesheetTask',
     'PO.store.timesheet.TaskTreeStore',
     'PO.store.timesheet.TaskStatusStore',
-    'PO.model.timesheet.TimesheetTask',
     'PO.store.user.SenchaPreferenceStore',
     'PO.store.user.UserStore',
     'PO.view.field.POComboGrid',
     'PO.view.field.PODateField',						// Custom ]po[ Date editor field
     'PO.view.field.POTaskAssignment',
     'PO.view.gantt.AbstractGanttPanel',
-    'GanttEditor.view.GanttBarPanel',
     'PO.view.gantt.GanttTaskPropertyPanel',
     'PO.view.gantt.GanttTreePanel',
     'PO.view.menu.AlphaMenu',
@@ -218,15 +221,19 @@ function launchGanttEditor(debug){
                 icon: '/intranet/images/navbar_default/link_break.png',
                 tooltip: 'Break dependency',
                 id: 'buttonBreakDependency'
-            }, '->' , {
+            }, '->', {
                 icon: '/intranet/images/navbar_default/zoom_in.png',
                 tooltip: 'Zoom in time axis',
                 id: 'buttonZoomIn'
             }, {
+                icon: '/intranet/images/navbar_default/zoom.png',
+                tooltip: 'Center',
+                id: 'buttonZoomCenter'
+            }, {
                 icon: '/intranet/images/navbar_default/zoom_out.png',
                 tooltip: 'Zoom out of time axis',
                 id: 'buttonZoomOut'
-            }, {
+            }, '->', {
                 text: 'Configuration',
                 icon: '/intranet/images/navbar_default/wrench.png',
                 menu: configMenu
@@ -341,7 +348,7 @@ function launchGanttEditor(debug){
 		'top': '0'
 	    });
 	        
-	    ganttResizeController.onSwitchToFullScreen();
+	    resizeController.onSwitchToFullScreen();
         },
 
         onButtonMinimize: function() {
@@ -360,7 +367,7 @@ function launchGanttEditor(debug){
                 'z-index': '0',
             });
 
-            ganttResizeController.onSwitchBackFromFullScreen();
+            resizeController.onSwitchBackFromFullScreen();
         },
 
         onZoomIn: function() {
@@ -436,254 +443,6 @@ function launchGanttEditor(debug){
         }
     });
 
-    /*
-     * GanttResizeController
-     * This controller is responsible for editor geometry and resizing:
-     * <ul>
-     * <li>The boundaries of the outer window
-     * <li>The separator between the treePanel and the ganttPanel
-     * </ul>
-     */
-    Ext.define('PO.controller.gantt_editor.GanttResizeController', {
-        extend: 'Ext.app.Controller',
-        debug: false,
-        'ganttPanelContainer': null,						// Defined during initialization
-        'ganttTreePanel': null,							// Defined during initialization
-        'ganttBarPanel': null,							// Defined during initialization
-
-        refs: [
-            { ref: 'ganttTreePanel', selector: '#ganttTreePanel' }
-        ],
-
-        init: function() {
-            var me = this;
-            if (me.debug) { if (me.debug) console.log('PO.controller.gantt_editor.GanttResizeController: init'); }
-
-            var sideBarTab = Ext.get('sideBarTab');	    			// ]po[ side-bar collapses the left-hand menu
-            sideBarTab.on('click', me.onSideBarResize, me);			// Handle collapsable side menu
-            Ext.EventManager.onWindowResize(me.onWindowResize, me);		// Deal with resizing the main window
-            me.ganttPanelContainer.on('resize', me.onGanttPanelContainerResize, me);	// Deal with resizing the outer boundaries
-            return this;
-        },
-
-        /**
-         * Adapt the size of the ganttPanelContainer (the outer Gantt panel)
-         * to the available drawing area.
-         * Takes the size of the browser and subtracts the sideBar at the
-         * left and the size of the menu on top.
-         */
-        onResize: function (sideBarWidth) {
-            var me = this;
-            if (me.debug) console.log('PO.controller.gantt_editor.GanttResizeController.onResize: Starting');
-            var sideBar = Ext.get('sidebar');					// ]po[ left side bar component
-
-            if (undefined === sideBarWidth) {
-                sideBarWidth = sideBar.getSize().width;
-            }
-
-            var screenSize = Ext.getBody().getViewSize();			// Total browser size
-            var width = screenSize.width - sideBarWidth - 100;			// What's left after ]po[ side borders
-            var height = screenSize.height - 280;	  			// What's left after ]po[ menu bar on top
-            me.ganttPanelContainer.setSize(width, height);
-            if (me.debug) console.log('PO.controller.gantt_editor.GanttResizeController.onResize: Finished');
-        },
-
-        /**
-         * Clicked on the ]po[ "side menu" bar for showing/hiding the left-menu
-         */
-        onSideBarResize: function () {
-            var me = this;
-            if (me.debug) console.log('PO.controller.gantt_editor.GanttResizeController.onSidebarResize: Starting');
-            var sideBar = Ext.get('sidebar');					// ]po[ left side bar component
-            var sideBarWidth = sideBar.getSize().width;
-            // We get the event _before_ the sideBar has changed it's size.
-            // So we actually need to the the oposite of the sidebar size:
-            if (sideBarWidth > 100) {
-                sideBarWidth = 2;						// Determines size when Sidebar collapsed
-            } else {
-                sideBarWidth = 245;						// Determines size when Sidebar visible
-            }
-            me.onResize(sideBarWidth);						// Perform actual resize
-            if (me.debug) console.log('PO.controller.gantt_editor.GanttResizeController.onSidebarResize: Finished');
-        },
-
-        /**
-         * The user changed the size of the browser window
-         */
-        onWindowResize: function () {
-            var me = this;
-            if (me.debug) console.log('PO.controller.gantt_editor.GanttResizeController.onWindowResize: Starting');
-
-	    if (!me.fullScreenP) {
-		var sideBar = Ext.get('sidebar');// ]po[ left side bar component
-		var sideBarWidth = sideBar.getSize().width;
-		if (sideBarWidth > 100) {
-		    sideBarWidth = 340;// Determines size when Sidebar visible
-		} else {
-		    sideBarWidth = 85;// Determines size when Sidebar collapsed
-		}
-		me.onResize(sideBarWidth);
-	    } else {
-		me.onSwitchToFullScreen();
-	    }
-	        
-            if (me.debug) console.log('PO.controller.gantt_editor.GanttResizeController.onWindowResize: Finished');
-        },
-
-        /**
-         * Manually changed the size of the ganttPanelContainer
-         */
-        onGanttPanelContainerResize: function () {
-            var me = this;
-            if (me.debug) console.log('PO.controller.gantt_editor.GanttResizeController.onGanttPanelContainerResize: Starting');
-            me.ganttBarPanel.redraw();						// Perform actual resize
-            if (me.debug) console.log('PO.controller.gantt_editor.GanttResizeController.onGanttPanelContainerResize: Finished');
-        },
-
-	onSwitchToFullScreen: function () {
-            var me = this;
-	    me.fullScreenP = true; 
-            if (me.debug) console.log('PO.controller.gantt_editor.GanttResizeController.onSwitchToFullScreen: Starting');
-	    me.ganttPanelContainer.setSize(Ext.getBody().getViewSize().width, Ext.getBody().getViewSize().height);
-	    me.ganttBarPanel.setSize(Ext.getBody().getViewSize().width, Ext.getBody().getViewSize().height);
-            me.ganttBarPanel.redraw();
-            if (me.debug) console.log('PO.controller.gantt_editor.GanttResizeController.onSwitchToFullScreen: Finished');
-        },
-
-        onSwitchBackFromFullScreen: function () {
-            var me = this;
-	    me.fullScreenP = false; 
-	        
-            if (me.debug) console.log('PO.controller.gantt_editor.GanttResizeController.onSwitchBackFromFullScreen: Starting');
-	        
-            var sideBar = Ext.get('sidebar');                                   // ]po[ left side bar component
-            var sideBarWidth = sideBar.getSize().width;
-	        
-            if (undefined === sideBarWidth) {
-                sideBarWidth = Ext.get('sidebar').getSize().width;
-            }
-	        
-            var screenSize = Ext.getBody().getViewSize();
-            var width = screenSize.width - sideBarWidth - 100;
-            var height = screenSize.height - 280;
-	        
-            me.ganttPanelContainer.setSize(width, height);
-
-            if (me.debug) console.log('PO.controller.gantt_editor.GanttResizeController.onSwitchBackFromFullScreen: Finished');
-        }
-    });
-
-    /*
-     * GanttSchedulingController
-     * Reacts to changes of start_date, end_date, work, assignments and possibly other 
-     * task fields and modifies other tasks according to the specified scheduling type:
-     * <ul>
-     * <li>No scheduling
-     * <li>Manually scheduled tasks
-     * <li>Single project scheduling
-     * <li>Multiproject scheduling
-     * </ul>
-     */
-    Ext.define('PO.controller.gantt_editor.GanttSchedulingController', {
-        extend: 'Ext.app.Controller',
-        debug: false,
-        'ganttTreePanel': null,							// Defined during initialization
-        'taskTreeStore': null,							// Defined during initialization
-        init: function() {
-            var me = this;
-            if (me.debug) { if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.init: Starting'); }
-
-            me.taskTreeStore.on({
-                'update': me.onTreeStoreUpdate,					// Listen to any changes in store records
-                'scope': this
-            });
-
-            if (me.debug) { if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.init: Finished'); }
-            return this;
-        },
-
-        onTreeStoreUpdate: function(treeStore, model, operation, fieldsChanged, event) {
-            var me = this;
-            if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.onTreeStoreUpdate: Starting');
-            fieldsChanged.forEach(function(fieldName) {
-                if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.onTreeStoreUpdate: Field changed='+fieldName);
-                switch (fieldName) {
-                case "start_date":
-                    me.onStartDateChanged(treeStore, model, operation, event);
-                    break;
-                case "end_date":
-                    me.onEndDateChanged(treeStore, model, operation, event);
-                    break;
-                }
-            });
-            if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.onTreeStoreUpdate: Finished');
-        },
-
-        /**
-         * The start_date of a task has changed.
-         * Check if this new date is before the start_date of it's parent.
-         * In this case we need to adjust the parent.
-         */
-        onStartDateChanged: function(treeStore, model, operation, event) {
-            var me = this;
-            if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.onStartDateChanged: Starting');
-            var parent = model.parentNode;					// 
-            if (!parent) return;
-	    var parent_start_date = parent.get('start_date');
-	    if ("" == parent_start_date) return;
-            var parentStartDate = PO.Utilities.pgToDate(parent_start_date);
-
-            // Calculate the minimum start date of all siblings
-            var minStartDate = PO.Utilities.pgToDate('2099-12-31');
-            parent.eachChild(function(sibling) {
-                var siblingStartDate = PO.Utilities.pgToDate(sibling.get('start_date'));
-                if (siblingStartDate.getTime() < minStartDate.getTime()) {
-                    minStartDate = siblingStartDate;
-                }
-            });
-
-            // Check if we have to update the parent
-            if (parentStartDate.getTime() != minStartDate.getTime()) {
-                // The siblings start different than the parent - update the parent.
-                if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.onStartDateChanged: Updating parent at level='+parent.getDepth());
-                parent.set('start_date', PO.Utilities.dateToPg(minStartDate));				// This will call this event recursively
-            }
-            if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.onStartDateChanged: Finished');
-        },
-
-        /**
-         * The end_date of a task has changed.
-         * Check if this new date is after the end_date of it's parent.
-         * In this case we need to adjust the parent.
-         */
-        onEndDateChanged: function(treeStore, model, operation, event) {
-            var me = this;
-            if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.onEndDateChanged: Starting');
-
-            var parent = model.parentNode;
-            if (!parent) return;
-            var parent_end_date = parent.get('end_date');
-	    if ("" == parent_end_date) return;
-            var parentEndDate = PO.Utilities.pgToDate(parent_end_date);
-
-            // Calculate the maximum end date of all siblings
-            var maxEndDate = PO.Utilities.pgToDate('2000-01-01');
-            parent.eachChild(function(sibling) {
-                var siblingEndDate = PO.Utilities.pgToDate(sibling.get('end_date'));
-                if (siblingEndDate.getTime() > maxEndDate.getTime()) {
-                    maxEndDate = siblingEndDate;
-                }
-            });
-
-            // Check if we have to update the parent
-            if (parentEndDate.getTime() != maxEndDate.getTime()) {
-                // The siblings end different than the parent - update the parent.
-                if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.onEndDateChanged: Updating parent at level='+parent.getDepth());
-                parent.set('end_date', PO.Utilities.dateToPg(maxEndDate));					// This will call this event recursively
-            }
-            if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.onEndDateChanged: Finished');
-        },
-    });
 
     // Left-hand side task tree
     var ganttTreePanel = Ext.create('PO.view.gantt.GanttTreePanel', {
@@ -706,17 +465,15 @@ function launchGanttEditor(debug){
     var ganttBarPanel = Ext.create('GanttEditor.view.GanttBarPanel', {
 	id: 'ganttBarPanel',
         region: 'center',
-        viewBox: false,
-        width: 600,
-        height: 500,
-
 	debug: false,
-	axisEndX: 2000,
+
+	axisEndX: 5000,								// Size of the time axis. Always starts with 0.
         axisStartDate: new Date(reportStartTime - 7 * oneDayMiliseconds),
         axisEndDate: new Date(reportEndTime + 1.5 * (reportEndTime - reportStartTime) + 7 * oneDayMiliseconds ),
 
         overflowX: 'scroll',							// Allows for horizontal scrolling, but not vertical
         scrollFlags: {x: true},
+
         objectPanel: ganttTreePanel,
         objectStore: taskTreeStore,
         preferenceStore: senchaPreferenceStore,
@@ -725,6 +482,10 @@ function launchGanttEditor(debug){
             {id:'gradientId2', angle:0, stops:{0:{color:'#590'}, 20:{color:'#599'}, 100:{color:'#ddd'}}}
         ]
     });
+    var ganttBarPanelController = Ext.create('GanttEditor.controller.GanttBarPanelController', {
+	debug: debug
+    });
+    ganttBarPanelController.init(this);
 
     // Outer Gantt editor jointing the two parts (TreePanel + Draw)
     var ganttPanelContainer = Ext.create('PO.view.gantt_editor.GanttPanelContainer', {
@@ -748,14 +509,14 @@ function launchGanttEditor(debug){
     ganttButtonController.init(this).onLaunch(this);
 
     // Contoller to handle size and resizing related events
-    var ganttResizeController = Ext.create('PO.controller.gantt_editor.GanttResizeController', {
+    var resizeController = Ext.create('PO.controller.ResizeController', {
 	debug: debug,
         'ganttPanelContainer': ganttPanelContainer,
         'ganttTreePanel': ganttTreePanel,
         'ganttBarPanel': ganttBarPanel
     });
-    ganttResizeController.init(this).onLaunch(this);
-    ganttResizeController.onResize();						// Set the size of the outer GanttButton Panel
+    resizeController.init(this).onLaunch(this);
+    resizeController.onResize();						// Set the size of the outer GanttButton Panel
 
     // Create the panel showing properties of a task,
     // but don't show it yet.
@@ -765,7 +526,7 @@ function launchGanttEditor(debug){
     taskPropertyPanel.hide();
 
     // Deal with changes of Gantt data and perform scheduling
-    var ganttSchedulingController = Ext.create('PO.controller.gantt_editor.GanttSchedulingController', {
+    var ganttSchedulingController = Ext.create('GanttEditor.controller.GanttSchedulingController', {
 	debug: debug,
         'taskTreeStore': taskTreeStore,
         'ganttTreePanel': ganttTreePanel
