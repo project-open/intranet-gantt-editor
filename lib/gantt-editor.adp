@@ -3,6 +3,7 @@
 
 // Ext.Loader.setConfig({enabled: true});
 Ext.Loader.setPath('PO', '/sencha-core');
+Ext.Loader.setPath('GanttEditor', '/intranet-gantt-editor');
 
 Ext.require([
     'Ext.data.*',
@@ -11,6 +12,7 @@ Ext.require([
     'Ext.ux.CheckColumn',
     'PO.Utilities',
     'PO.class.CategoryStore',
+    'PO.controller.gantt.GanttTreePanelController',
     'PO.controller.StoreLoadCoordinator',
     'PO.store.timesheet.TaskTreeStore',
     'PO.store.timesheet.TaskStatusStore',
@@ -197,10 +199,12 @@ function launchGanttEditor(debug){
             }, {
                 xtype: 'tbseparator' 
             }, {
+		// Event captured and handled by GanttTreePanelController
                 icon: '/intranet/images/navbar_default/arrow_left.png',
                 tooltip: 'Reduce Indent',
                 id: 'buttonReduceIndent'
             }, {
+		// Event captured and handled by GanttTreePanelController
                 icon: '/intranet/images/navbar_default/arrow_right.png',
                 tooltip: 'Increase Indent',
                 id: 'buttonIncreaseIndent'
@@ -261,14 +265,10 @@ function launchGanttEditor(debug){
                 '#buttonSave': { click: this.onButtonSave },
                 '#buttonMaximize': { click: this.onButtonMaximize },
                 '#buttonMinimize': { click: this.onButtonMinimize },
-                '#buttonAdd': { click: { fn: me.ganttTreePanel.onButtonAdd, scope: me.ganttTreePanel }},
-                '#buttonDelete': { click: { fn: me.ganttTreePanel.onButtonDelete, scope: me.ganttTreePanel }},
-                '#buttonReduceIndent': { click: { fn: me.ganttTreePanel.onButtonReduceIndent, scope: me.ganttTreePanel }},
-                '#buttonIncreaseIndent': { click: { fn: me.ganttTreePanel.onButtonIncreaseIndent, scope: me.ganttTreePanel }},
                 '#buttonAddDependency': { click: this.onButton },
                 '#buttonBreakDependency': { click: this.onButton },
-                '#buttonZoomIn': { click: this.onZoomIn },
-                '#buttonZoomOut': { click: this.onZoomOut },
+//                '#buttonZoomIn': { click: this.onZoomIn },
+//                '#buttonZoomOut': { click: this.onZoomOut },
                 '#buttonSettings': { click: this.onButton },
                 scope: me.ganttTreePanel
             });
@@ -404,12 +404,14 @@ function launchGanttEditor(debug){
                 break;
             case 37:								// Cursor left
                 if (keyCtrl) {
+		    // ToDo: moved to GanttTreePanelController
                     panel.onButtonReduceIndent();
                     return false;						// Disable default action (fold tree)
                 }
                 break;
             case 39:								// Cursor right
                 if (keyCtrl) {
+		    // ToDo: moved to GanttTreePanelController
                     panel.onButtonIncreaseIndent();
                     return false;						// Disable default action (unfold tree)
                 }
@@ -685,22 +687,30 @@ function launchGanttEditor(debug){
 
     // Left-hand side task tree
     var ganttTreePanel = Ext.create('PO.view.gantt.GanttTreePanel', {
+	id: 'ganttTreePanel',
 	debug: debug,
-        width:		500,
-        region:		'west',
-        store:		taskTreeStore
+        width: 500,
+        region: 'west',
+        store: taskTreeStore
     });
+    var ganttTreePanelController = Ext.create('PO.controller.gantt.GanttTreePanelController', {
+	debug: debug
+    });
+    ganttTreePanelController.init(this);
+
+    
 
     // Right-hand side Gantt display
     var reportStartTime = PO.Utilities.pgToDate('@report_start_date@').getTime();
     var reportEndTime = PO.Utilities.pgToDate('@report_end_date@').getTime();
     var ganttBarPanel = Ext.create('PO.view.gantt.GanttBarPanel', {
+	id: 'ganttBarPanel',
         region: 'center',
         viewBox: false,
         width: 600,
         height: 500,
 
-	debug: debug,
+	debug: false,
 	axisEndX: 2000,
         axisStartDate: new Date(reportStartTime - 7 * oneDayMiliseconds),
         axisEndDate: new Date(reportEndTime + 1.5 * (reportEndTime - reportStartTime) + 7 * oneDayMiliseconds ),
