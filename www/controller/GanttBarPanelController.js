@@ -12,18 +12,23 @@
  */
 Ext.define('GanttEditor.controller.GanttBarPanelController', {
     extend: 'Ext.app.Controller',
-    zoomFactor: 5.0,                                     // Fast or slow zooming? 2.0 is fast, 10.0 is very slow
     refs: [
 	{ref: 'ganttBarPanel', selector: '#ganttBarPanel'},
 	{ref: 'ganttTreePanel', selector: '#ganttTreePanel'}
     ],
+    
+    debug: false,
+    zoomFactor: 5.0,                                     // Fast or slow zooming? 2.0 is fast, 10.0 is very slow
 
     init: function() {
+	var me = this;
+	if (me.debug) console.log('GanttEditor.controller.GanttBarPanelController.init: Starting');
 	this.control({
 	    '#buttonZoomIn': { click: this.onButtonZoomIn },
 	    '#buttonZoomOut': { click: this.onButtonZoomOut },
 	    '#buttonZoomCenter': { click: this.onButtonZoomCenter }
 	});
+	if (me.debug) console.log('GanttEditor.controller.GanttBarPanelController.init: Finished');
     },
 
     /**
@@ -31,19 +36,40 @@ Ext.define('GanttEditor.controller.GanttBarPanelController', {
      */
     onButtonZoomIn: function() {
         var me = this;
+	if (me.debug) console.log('GanttEditor.controller.GanttBarPanelController.onButtonZoomIn: Starting');
 	var ganttBarPanel = this.getGanttBarPanel();
+	var scrollableEl = ganttBarPanel.getEl();                       // Ext.dom.Element that enables scrolling
 	var zoomFactor = me.zoomFactor;
 
 	var axisStartTime = ganttBarPanel.axisStartDate.getTime();
 	var axisEndTime = ganttBarPanel.axisEndDate.getTime();
 	var axisEndX = ganttBarPanel.axisEndX;
-	var diff = ((axisEndTime - axisStartTime) / (1 + 2 / zoomFactor)) / zoomFactor;	     // Reverse the the effect of ZoomOut
+	var scrollX = scrollableEl.getScrollLeft();
+	var surfaceWidth = ganttBarPanel.getSize().width;
 	
+	// Calculate the current "central time" in the middle of the view area
+	var centralX = scrollX + Math.round(surfaceWidth / 2);                     // X position of the center of the visible area
+	var oldCentralTime = ganttBarPanel.x2time(centralX);
+	
+	// Calculate the diff for the axis start- and end time.
+	var diff = ((axisEndTime - axisStartTime) / (1 + 2 / zoomFactor)) / zoomFactor;	     // Reverse the the effect of ZoomOut
 	ganttBarPanel.axisStartDate = new Date(axisStartTime + diff);
 	ganttBarPanel.axisEndDate = new Date(axisEndTime - diff);
 	// ganttBarPanel.axisEndX = Math.round(axisEndX * zoomFactor);
 
-        me.getGanttBarPanel().redraw();
+	// Calculate the new "central time" in the middle of the view area
+	var newCentralTime = ganttBarPanel.x2time(centralX);
+
+	// Calculate the new scroll, so that new = old central time.
+	var centralDiffTime = newCentralTime - oldCentralTime;
+	var centralDiffX = centralDiffTime * axisEndX / (axisEndTime - axisStartTime);
+	var newScrollX = scrollX - centralDiffX;
+
+	scrollableEl.setScrollLeft(newScrollX);
+
+	me.getGanttBarPanel().redraw();
+
+	if (me.debug) console.log('GanttEditor.controller.GanttBarPanelController.onButtonZoomIn: Finished');
     },
 
     /**
@@ -51,6 +77,7 @@ Ext.define('GanttEditor.controller.GanttBarPanelController', {
      */
     onButtonZoomOut: function() {
         var me = this;
+	if (me.debug) console.log('GanttEditor.controller.GanttBarPanelController.onButtonZoomOut: Starting');
 	var ganttBarPanel = this.getGanttBarPanel();
 	var zoomFactor = me.zoomFactor;
 
@@ -63,7 +90,8 @@ Ext.define('GanttEditor.controller.GanttBarPanelController', {
 	ganttBarPanel.axisEndDate = new Date(axisEndTime + diff);
 	// ganttBarPanel.axisEndX = Math.round(axisEndX / zoomFactor);
 
-        me.getGanttBarPanel().redraw();
+	me.onButtonZoomCenter();					// Center the project
+	if (me.debug) console.log('GanttEditor.controller.GanttBarPanelController.onButtonZoomOut: Finished');
     },
 
     /**
@@ -74,10 +102,50 @@ Ext.define('GanttEditor.controller.GanttBarPanelController', {
      */
     onButtonZoomCenter: function() {
         var me = this;
+	if (me.debug) console.log('GanttEditor.controller.GanttBarPanelController.onButtonZoomCenter: Starting');
 	var ganttBarPanel = this.getGanttBarPanel();
+        var ganttTreePanel = this.getGanttTreePanel();
+	var taskTreeStore = ganttTreePanel.getStore();
+	
+	var selectionModel = ganttTreePanel.getSelectionModel();
+	var lastSelected = selectionModel.getLastSelected();
 
+	if (!lastSelected) {					// Nothing selected - take the main project
+	    var rootNode = taskTreeStore.getRootNode();
+	    lastSelected = rootNode.childNodes[0];
+	}
+
+	// Calculate the "midX" X-coordinate of the middle of the current task
+	var startDate = PO.Utilities.pgToDate(lastSelected.get('start_date'));
+	var endDate = PO.Utilities.pgToDate(lastSelected.get('end_date'));
+	var startTime = startDate.getTime();
+	var endTime = endDate.getTime();
+	var startX = ganttBarPanel.date2x(startTime);
+	var endX = ganttBarPanel.date2x(endTime);
+
+	// Check if the bar got outside the drawing area when zooming in
+	if (startX < 0) {
+	    
+
+	}
+	
+
+
+	
+	// Compare the middle of the Gantt bar with the middle of the screen
+	var midX = Math.round((startX + endX) / 2);
+	var ganttSize = ganttBarPanel.getSize();
+	var ganttMidX = Math.round(ganttSize.width / 2);
+
+	var scrollX = midX - ganttMidX;
+	if (scrollX < 0) scrollX = 0;
+	if (scrollX > (ganttBarPanel.axisEndX - 100)) scrollX = ganttBarPanel.axisEndX - 100;
+	
+	var scrollableEl = ganttBarPanel.getEl();                       // Ext.dom.Element that enables scrolling
+	scrollableEl.setScrollLeft(scrollX);
 
         me.getGanttBarPanel().redraw();
+	if (me.debug) console.log('GanttEditor.controller.GanttBarPanelController.onButtonZoomCenter: Finished');
     }
 
 });

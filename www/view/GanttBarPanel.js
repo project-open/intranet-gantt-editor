@@ -319,14 +319,6 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
             me.drawProjectDependencies(model);
         });
 
-	var normBar = me.surface.add({
-	    type: 'rect', x: 100, y: 100, width: 200, height: 200, radius: 3,
-	    fill: 'url(#gradientId)',
-	    stroke: 'blue',
-	    'stroke-width': 0.3
-	}).show(true);
-	
-	
         if (me.debug) console.log('PO.class.GanttDrawComponent.redraw: Finished');
     },
 
