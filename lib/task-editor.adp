@@ -13,7 +13,7 @@ Ext.require([
     'Ext.grid.*',
     'Ext.tree.*',
     'Ext.ux.CheckColumn',
-    'PO.class.CategoryStore',
+    'PO.store.CategoryStore',
     'PO.model.timesheet.TimesheetTask',
     'PO.controller.StoreLoadCoordinator',
     'PO.store.timesheet.TaskStatusStore',

@@ -26,14 +26,14 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
     'taskTreeStore': null,							// Defined during initialization
     init: function() {
         var me = this;
-        if (me.debug) { if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.init: Starting'); }
+        if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.init: Starting');
 
         me.taskTreeStore.on({
             'update': me.onTreeStoreUpdate,					// Listen to any changes in store records
             'scope': this
         });
 
-        if (me.debug) { if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.init: Finished'); }
+        if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.init: Finished');
         return this;
     },
 

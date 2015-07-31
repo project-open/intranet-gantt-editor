@@ -196,10 +196,14 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
         var newStartDate = new Date(startTime);
         var newEndDate = new Date(endTime);
 
-        projectModel.set('start_date', PO.Utilities.dateToPg(newStartDate));
-        projectModel.set('end_date', PO.Utilities.dateToPg(newEndDate));
-
+        // projectModel.set('start_date', PO.Utilities.dateToPg(newStartDate));
+        // projectModel.set('end_date', PO.Utilities.dateToPg(newEndDate));
+	projectModel.set({
+            'start_date': PO.Utilities.dateToPg(newStartDate),
+	    'end_date': PO.Utilities.dateToPg(newEndDate)
+	});
         me.redraw();
+
         if (me.debug) console.log('PO.view.gantt.GanttBarPanel.onProjectMove: Finished');
     },
 
@@ -518,12 +522,20 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
      */
     drawDependency: function(dependencyModel) {
         var me = this;
-	if (me.debug) if (me.debug) console.log('PO.view.portfolio_planner.PortfolioPlannerProjectPanel.drawTaskDependency: Starting');
+	if (me.debug) console.log('PO.view.portfolio_planner.PortfolioPlannerProjectPanel.drawTaskDependency: Starting');
 
         var fromId = dependencyModel.pred_id;
         var fromModel = me.taskModelHash[fromId]
         var toId = dependencyModel.succ_id;
         var toModel = me.taskModelHash[toId]
+
+	// We can get dependencies from other projects.
+	// These are not in the taskModelHash, so just skip these
+	// ToDo: Show dependencies from other projects
+        if (undefined === fromModel || undefined === toModel) { 
+	    if (me.debug) console.log('PO.view.portfolio_planner.PortfolioPlannerProjectPanel.drawTaskDependency: Dependency from other project: Skipping');
+	    return; 
+	}
 
         // Text for dependency tool tip
         var html = "<b>Task dependency</b>:<br>" +
@@ -532,7 +544,7 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
 
 	me.drawDependencyMsp(dependencyModel,html);
 
-	if (me.debug) if (me.debug) console.log('PO.view.portfolio_planner.PortfolioPlannerProjectPanel.drawTaskDependency: Finished');
+	if (me.debug) console.log('PO.view.portfolio_planner.PortfolioPlannerProjectPanel.drawTaskDependency: Finished');
     },
 
     /**

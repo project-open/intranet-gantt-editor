@@ -15,10 +15,11 @@ Ext.require([
     'GanttEditor.controller.GanttSchedulingController',
     'GanttEditor.view.GanttBarPanel',
     'PO.Utilities',
-    'PO.class.CategoryStore',
+    'PO.class.PreferenceStateProvider',
     'PO.controller.StoreLoadCoordinator',
     'PO.controller.ResizeController',
     'PO.model.timesheet.TimesheetTask',
+    'PO.store.CategoryStore',
     'PO.store.timesheet.TaskTreeStore',
     'PO.store.timesheet.TaskStatusStore',
     'PO.store.user.SenchaPreferenceStore',
@@ -43,6 +44,14 @@ function launchGanttEditor(debug){
     var taskTreeStore = Ext.StoreManager.get('taskTreeStore');
     var senchaPreferenceStore = Ext.StoreManager.get('senchaPreferenceStore');
     var oneDayMiliseconds = 24 * 3600 * 1000;
+
+
+    /* ***********************************************************************
+     * State
+     *********************************************************************** */
+    Ext.state.Manager.setProvider(new PO.class.PreferenceStateProvider({
+	url: '/intranet-gantt-editor/lib/gantt-editor'
+    }));
 
     /* ***********************************************************************
      * Help Menu
@@ -157,9 +166,9 @@ function launchGanttEditor(debug){
 
 
     /**
-     * GanttPanelContainer
+     * GanttButtonPanel
      */
-    Ext.define('PO.view.gantt_editor.GanttPanelContainer', {
+    Ext.define('PO.view.gantt_editor.GanttButtonPanel', {
         extend: 'Ext.panel.Panel',
         alias: 'ganttPanelContainer',
         width: 900,
@@ -255,7 +264,7 @@ function launchGanttEditor(debug){
      */
     Ext.define('PO.controller.gantt_editor.GanttButtonController', {
         extend: 'Ext.app.Controller',
-        debug: true,
+        debug: debug,
         'ganttTreePanel': null,						// Set during init: left-hand task tree panel
         'ganttBarPanel': null,						// Set during init: right-hand surface with Gantt sprites
         'taskTreeStore': null,						// Set during init: treeStore with task data
@@ -322,12 +331,14 @@ function launchGanttEditor(debug){
          */
         onTaskTreeStoreUpdate: function() {
 	    var me = this;
-            if (me.debug) console.log('GanttButtonController.onTaskTreeStoreUpdate');
+            // if (me.debug) console.log('GanttButtonController.onTaskTreeStoreUpdate');
             var me = this;
             var buttonSave = Ext.getCmp('buttonSave');
             buttonSave.setDisabled(false);					// Allow to "save" changes
 
-            me.ganttBarPanel.redraw();
+	    // fraber 150730: Disabled. This will probably cause trouble
+	    // However, we need to add the redraws() at the topmost level.
+            // me.ganttBarPanel.redraw();
         },
 
         onButtonMaximize: function() {
@@ -465,7 +476,7 @@ function launchGanttEditor(debug){
     var ganttBarPanel = Ext.create('GanttEditor.view.GanttBarPanel', {
 	id: 'ganttBarPanel',
         region: 'center',
-	debug: false,
+	debug: debug,
 
 	axisEndX: 5000,								// Size of the time axis. Always starts with 0.
         axisStartDate: new Date(reportStartTime - 7 * oneDayMiliseconds),
@@ -488,7 +499,7 @@ function launchGanttEditor(debug){
     ganttBarPanelController.init(this);
 
     // Outer Gantt editor jointing the two parts (TreePanel + Draw)
-    var ganttPanelContainer = Ext.create('PO.view.gantt_editor.GanttPanelContainer', {
+    var ganttPanelContainer = Ext.create('PO.view.gantt_editor.GanttButtonPanel', {
 	debug: debug,
         resizable: true,							// Add handles to the panel, so the user can change size
         items: [
