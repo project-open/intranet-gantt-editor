@@ -76,7 +76,8 @@ function launchGanttEditor(debug){
         id: 'alphaMenu',
 	debug: debug,
         style: {overflow: 'visible'},						// For the Combo popup
-        slaId: 1478943					                	// ID of the ]po[ "PD Gantt Editor" project
+        slaId: 1478943,					                	// ID of the ]po[ "PD Gantt Editor" project
+	ticketStatusId: 30000				                	// "Open" and sub-states
     });
 
     /* ***********************************************************************
