@@ -366,6 +366,10 @@ function launchGanttEditor(debug){
             // me.ganttBarPanel.redraw();
         },
 
+	/**
+	 * Maximize Button: Expand the editor DIV, so that
+	 * it fills the entire browser screen.
+	 */
         onButtonMaximize: function() {
 	    var me = this;
             if (me.debug) console.log('GanttButtonController.onButtonMaximize');
@@ -383,7 +387,12 @@ function launchGanttEditor(debug){
 		'left': '0',
 		'top': '0'
 	    });
-	        
+	  
+
+	    // Disable scrolling in the browser
+	    document.documentElement.style.overflow = 'hidden';			// firefox, chrome
+	    document.body.scroll = "no";	      				// ie only
+      
 	    resizeController.onSwitchToFullScreen();
         },
 
@@ -402,6 +411,10 @@ function launchGanttEditor(debug){
                 'position':'relative',
                 'z-index': '0',
             });
+
+	    // Disable scrolling in the browser
+	    document.documentElement.style.overflow = 'auto';			// firefox, chrome
+	    document.body.scroll = "yes";	      				// ie only
 
             resizeController.onSwitchBackFromFullScreen();
         },
