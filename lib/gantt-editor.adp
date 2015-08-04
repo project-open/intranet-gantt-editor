@@ -334,12 +334,14 @@ function launchGanttEditor(debug){
          * "Save" button now.
          */
         onButtonReload: function() {
+	    var me = this;
             if (me.debug) console.log('GanttButtonController.ButtonReload');
             var buttonSave = Ext.getCmp('buttonSave');
             buttonSave.setDisabled(true);
         },
 
         onButtonSave: function() {
+	    var me = this;
             if (me.debug) console.log('GanttButtonController.ButtonSave');
             var me = this;
             me.taskTreeStore.save();
