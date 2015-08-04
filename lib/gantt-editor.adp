@@ -300,11 +300,35 @@ function launchGanttEditor(debug){
             me.ganttTreePanel.on('cellkeydown', this.onCellKeyDown, me.ganttTreePanel);
             me.ganttTreePanel.on('beforecellkeydown', this.onBeforeCellKeyDown, me.ganttTreePanel);
 
+
+
+	    // Listen to vertical scroll events 
+	    var view = me.ganttTreePanel.getView();
+	    view.on('bodyscroll',this.onTreePanelScroll, me);
+
             // Listen to any changes in store records
             me.taskTreeStore.on({'update': me.onTaskTreeStoreUpdate, 'scope': this});
 
             return this;
         },
+
+	/**
+	 * The user moves the scroll bar of the treePanel.
+	 * Now scroll the ganttBarPanel in the same way.
+	 */
+	onTreePanelScroll: function(event, treeview) {
+	    var me = this;
+	    var ganttTreePanel = me.ganttTreePanel;
+	    var ganttBarPanel = me.ganttBarPanel;
+	    var view = ganttTreePanel.getView();
+	    var scroll = view.getEl().getScroll();
+            if (me.debug) console.log('GanttButtonController.onTreePanelScroll: Starting: '+scroll.top);
+
+	    var scrollableEl = ganttBarPanel.getEl();                       // Ext.dom.Element that enables scrolling
+	    scrollableEl.setScrollTop(scroll.top);
+
+            if (me.debug) console.log('GanttButtonController.onTreePanelScroll: Finished');
+	},
 
         /**
          * The user has reloaded the project data and therefore
