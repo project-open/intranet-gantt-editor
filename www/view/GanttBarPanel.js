@@ -54,8 +54,9 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
         });
 
         // Iterate through all children of the root node and check if they are visible
+
         me.objectStore.on({
-            'datachanged': me.redraw,
+            'datachanged': me.onObjectStoreDataChanged,
             'scope': this
         });
 
@@ -68,6 +69,31 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
         this.addEvents('move');
 
         if (me.debug) console.log('PO.view.gantt.GanttBarPanel.initComponent: Finished');
+    },
+
+    /**
+     * Some data in the object store have changed.
+     * Normally we need to redraw here.
+     */
+    onObjectStoreDataChanged: function(event, eOpts) {
+	var me = this;
+        if (me.debug) console.log('PO.view.gantt.GanttBarPanel.onObjectStoreDataChanged: Starting');
+
+	var modRec = event.getModifiedRecords();
+	var remRec = event.getRemovedRecords();
+	var newRec = event.getNewRecords();
+
+	// Redraw for collapse/expand is handled explicitly
+	// in onItemCollapse/onItemExpand.
+	// Optimization: Don't redraw in these cases.
+	if (0 == remRec.length + newRec.length + modRec.length) { return; }
+	if (0 == remRec.length + newRec.length && 1 == modRec.length) {
+	    var mod = modRec[0].modified;
+	    if ('expanded' in mod) { return; }
+	}
+
+	me.redraw();
+        if (me.debug) console.log('PO.view.gantt.GanttBarPanel.onObjectStoreDataChanged: Finished');
     },
 
     /**
@@ -292,7 +318,23 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
 
         me.redraw();
 
-        if (me.debug) console.log('PO.view.portfolio_planner.PortfolioPlannerProjectPanel.onCreateDependency: Finished');
+        if (me.debug) console.log('GanttEditor.view.GanttBarPanel.onCreateDependency: Finished');
+    },
+
+    nodesInTree: function(node) {
+	var me = this;
+	var count = 1;
+        // if (me.debug) console.log('PO.view.gantt.GanttBarPanel.nodesInTree: Starting');
+
+	if (node.isExpanded() || node.isRoot()) {
+	    var children = node.childNodes;
+	    children.forEach(function(child) {
+		count = count + me.nodesInTree(child);
+	    });
+	}
+
+        // if (me.debug) console.log('PO.view.gantt.GanttBarPanel.nodesInTree: Finished');
+	return count;
     },
 
     /**
@@ -302,14 +344,19 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
         var me = this;
         if (me.debug) console.log('PO.class.GanttDrawComponent.redraw: Starting');
         if (undefined === me.surface) { return; }
+	
+	// Get the root of the ganttTree
+        var ganttTreeView = me.objectPanel.getView();
+        var rootNode = me.objectStore.getRootNode();
+	var numNodes = me.nodesInTree(rootNode);
+	var surfaceYSize = numNodes * 20;
+        if (me.debug) console.log('PO.class.GanttDrawComponent.redraw: numNodes='+numNodes);
 
         me.surface.removeAll();
-        me.surface.setSize(me.axisEndX, me.surface.height);		// Set the size of the drawing area
+        me.surface.setSize(me.axisEndX, surfaceYSize);		// Set the size of the drawing area
         me.drawAxis();								// Draw the top axis
 
         // Iterate through all children of the root node and check if they are visible
-        var ganttTreeView = me.objectPanel.getView();
-        var rootNode = me.objectStore.getRootNode();
         rootNode.cascadeBy(function(model) {
             var viewNode = ganttTreeView.getNode(model);
             if (viewNode == null) { return; }					// Hidden nodes have no viewNode -> no bar
@@ -331,7 +378,7 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
      */
     drawProjectBar: function(project) {
         var me = this;
-        if (me.debug) { if (me.debug) console.log('PO.view.gantt.GanttBarPanel.drawProjectBar'); }
+        // if (me.debug) { if (me.debug) console.log('PO.view.gantt.GanttBarPanel.drawProjectBar: Starting'); }
 
         var surface = me.surface;
         var project_name = project.get('project_name');
@@ -498,6 +545,8 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
             });
             var axisText = surface.add({type:'text', text:text, x:x+w+2, y:y+d, fill:'#000', font:"10px Arial"}).show(true);
         }
+
+        // if (me.debug) { if (me.debug) console.log('PO.view.gantt.GanttBarPanel.drawProjectBar: Finished'); }
     },
 
     /**
@@ -522,7 +571,7 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
      */
     drawDependency: function(dependencyModel) {
         var me = this;
-	if (me.debug) console.log('PO.view.portfolio_planner.PortfolioPlannerProjectPanel.drawTaskDependency: Starting');
+	// if (me.debug) console.log('GanttEditor.view.GanttBarPanel.drawTaskDependency: Starting');
 
         var fromId = dependencyModel.pred_id;
         var fromModel = me.taskModelHash[fromId]
@@ -533,7 +582,7 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
 	// These are not in the taskModelHash, so just skip these
 	// ToDo: Show dependencies from other projects
         if (undefined === fromModel || undefined === toModel) { 
-	    if (me.debug) console.log('PO.view.portfolio_planner.PortfolioPlannerProjectPanel.drawTaskDependency: Dependency from other project: Skipping');
+	    if (me.debug) console.log('GanttEditor.view.GanttBarPanel.drawTaskDependency: Dependency from other project: Skipping');
 	    return; 
 	}
 
@@ -544,7 +593,7 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
 
 	me.drawDependencyMsp(dependencyModel,html);
 
-	if (me.debug) console.log('PO.view.portfolio_planner.PortfolioPlannerProjectPanel.drawTaskDependency: Finished');
+	// if (me.debug) console.log('GanttEditor.view.GanttBarPanel.drawTaskDependency: Finished');
     },
 
     /**
@@ -602,7 +651,7 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
         arrowHead.dependencyModel = dependencyModel;
         Ext.create("Ext.tip.ToolTip", { target: arrowHead.el, width: 250, html: tooltipHtml, hideDelay: 1000 });
 
-        if (me.debug) console.log('PO.view.portfolio_planner.PortfolioPlannerProjectPanel.drawTaskDependency: Finished');
+        if (me.debug) console.log('GanttEditor.view.GanttBarPanel.drawTaskDependency: Finished');
         return;
     }
 });

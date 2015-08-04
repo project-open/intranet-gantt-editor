@@ -322,12 +322,10 @@ function launchGanttEditor(debug){
 	    var ganttBarPanel = me.ganttBarPanel;
 	    var view = ganttTreePanel.getView();
 	    var scroll = view.getEl().getScroll();
-            if (me.debug) console.log('GanttButtonController.onTreePanelScroll: Starting: '+scroll.top);
-
-	    var scrollableEl = ganttBarPanel.getEl();                       // Ext.dom.Element that enables scrolling
-	    scrollableEl.setScrollTop(scroll.top);
-
-            if (me.debug) console.log('GanttButtonController.onTreePanelScroll: Finished');
+            // if (me.debug) console.log('GanttButtonController.onTreePanelScroll: Starting: '+scroll.top);
+	    var ganttBarScrollableEl = ganttBarPanel.getEl();                       // Ext.dom.Element that enables scrolling
+	    ganttBarScrollableEl.setScrollTop(scroll.top);
+            // if (me.debug) console.log('GanttButtonController.onTreePanelScroll: Finished');
 	},
 
         /**
