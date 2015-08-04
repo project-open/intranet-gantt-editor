@@ -400,6 +400,27 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
         me.taskBBoxHash[id] = {x: x, y: y, width: w, height: h};		// Remember the outer dimensions of the box for dependency drawing
         me.taskModelHash[id] = project;						// Remember the models per ID
 
+	// Draw a milestone if the task has zero length
+	if (0 == w) {
+	    var m = h/2;							// Half the size of the bar height
+            var spriteBar = surface.add({
+                type: 'path',
+                stroke: 'black',
+                'stroke-width': 0.3,
+                fill: 'black',
+                zIndex: 0,
+                path: 'M '+ (x-m) + ', ' + (y+m)
+                    + 'L '+ (x) + ', ' + (y)
+                    + 'L '+ (x+m) + ', ' + (y+m)
+                    + 'L '+ (x) + ', ' + (y+h)
+                    + 'L '+ (x-m) + ', ' + (y+m),
+                listeners: {							// Highlight the sprite on mouse-over
+                    mouseover: function() { this.animate({duration: 500, to: {'stroke-width': 2.0}}); },
+                    mouseout: function()  { this.animate({duration: 500, to: {'stroke-width': 0.3}}); }
+                }
+            }).show(true);
+	}
+
         if (!project.hasChildNodes()) {						// Parent tasks don't have DnD and look different
             // The main Gantt bar with Drag-and-Drop configuration
             var spriteBar = surface.add({
