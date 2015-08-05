@@ -72,9 +72,9 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
         var minStartDate = PO.Utilities.pgToDate('2099-12-31');
         parent.eachChild(function(sibling) {
             var siblingStartDate = PO.Utilities.pgToDate(sibling.get('start_date'));
-            if (siblingStartDate.getTime() < minStartDate.getTime()) {
-                minStartDate = siblingStartDate;
-            }
+	    if (!isNaN(siblingStartDate) && siblingStartDate.getTime() < minStartDate.getTime()) {
+		minStartDate = siblingStartDate;
+	    }
         });
 
         // Check if we have to update the parent
@@ -105,7 +105,7 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
         var maxEndDate = PO.Utilities.pgToDate('2000-01-01');
         parent.eachChild(function(sibling) {
             var siblingEndDate = PO.Utilities.pgToDate(sibling.get('end_date'));
-            if (siblingEndDate.getTime() > maxEndDate.getTime()) {
+            if (!isNaN(siblingEndDate) && siblingEndDate.getTime() > maxEndDate.getTime()) {
                 maxEndDate = siblingEndDate;
             }
         });
