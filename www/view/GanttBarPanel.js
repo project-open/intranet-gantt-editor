@@ -385,9 +385,17 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
         var percentCompleted = parseFloat(project.get('percent_completed'));
         var predecessors = project.get('predecessors');
         var assignees = project.get('assignees');				// Array of {id, percent, name, email, initials}
+	var start_date, end_date;
 
-	var startTime = PO.Utilities.pgToDate(project.get('start_date')).getTime()
-	var endTime = PO.Utilities.pgToDate(project.get('end_date')).getTime()
+	// Get start- and end date (look at parents if necessary...)
+	var p = project;
+	while ("" == (start_date = p.get('start_date')) && !!p.parentNode) { p = p.parentNode;}
+	var p = project;
+	while ("" == (end_date = p.get('end_date')) && !!p.parentNode) { p = p.parentNode; }
+	if ("" == start_date || "" == end_date) { return; }
+
+	var startTime = PO.Utilities.pgToDate(start_date).getTime();
+	var endTime = PO.Utilities.pgToDate(end_date).getTime();
 
         var x = me.date2x(startTime);						// X position based on time scale
         var y = me.calcGanttBarYPosition(project);				// Y position based on TreePanel y position of task.
