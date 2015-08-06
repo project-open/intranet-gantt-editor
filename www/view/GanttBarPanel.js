@@ -400,6 +400,7 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
         var x = me.date2x(startTime);						// X position based on time scale
         var y = me.calcGanttBarYPosition(project);				// Y position based on TreePanel y position of task.
         var w = Math.floor(me.axisEndX * (endTime - startTime) / (me.axisEndDate.getTime() - me.axisStartDate.getTime()));
+	if (w < 0) { w = 10; }	       	 	    	       	 		// Skip if start/end are completely wrong (probably end < start..)
         var h = me.ganttBarHeight;						// Constant determines height of the bar
         var d = Math.floor(h / 2.0) + 1;					// Size of the indent of the super-project bar
 
@@ -408,8 +409,11 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
         me.taskBBoxHash[id] = {x: x, y: y, width: w, height: h};		// Remember the outer dimensions of the box for dependency drawing
         me.taskModelHash[id] = project;						// Remember the models per ID
 
-	// Draw a milestone if the task has zero length
-	if (0 == w) {
+	var drawn = false;
+	
+	// Task with zero length: Draw a milestone
+	if (!drawn && 0 == w) {
+	    drawn = true;
 	    var m = h/2;							// Half the size of the bar height
             var spriteBar = surface.add({
                 type: 'path',
@@ -429,7 +433,9 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
             }).show(true);
 	}
 
-        if (!project.hasChildNodes()) {						// Parent tasks don't have DnD and look different
+	// Draw a standard Gantt bar if the task is a leaf (has no children)
+        if (!drawn && !project.hasChildNodes()) {						// Parent tasks don't have DnD and look different
+	    drawn = true;
             // The main Gantt bar with Drag-and-Drop configuration
             var spriteBar = surface.add({
                 type: 'rect', x: x, y: y, width: w, height: h, radius: 3,
@@ -536,8 +542,11 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
                     me.onProjectPercentResize(dndConfig.projectSprite, shadow);	// Changing end-date to match x coo
                 }
             };
+        }
 
-        } else {
+	// Draw a Gantt container task if the task has children
+        if (!drawn && project.hasChildNodes()) {				// Parent tasks don't have DnD and look different
+	    drawn = true;
             var spriteBar = surface.add({
                 type: 'path',
                 stroke: 'blue',
