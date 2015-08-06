@@ -269,6 +269,7 @@ function launchGanttEditor(debug){
         'ganttTreePanel': null,						// Set during init: left-hand task tree panel
         'ganttBarPanel': null,						// Set during init: right-hand surface with Gantt sprites
         'taskTreeStore': null,						// Set during init: treeStore with task data
+	'ganttPanelContainer': null,
         refs: [
             { ref: 'ganttTreePanel', selector: '#ganttTreePanel' }
         ],
@@ -388,6 +389,8 @@ function launchGanttEditor(debug){
 		'top': '0'
 	    });
 	  
+	    // Disable the "resizable" properties of the outer panel
+	    me.ganttPanelContainer.resizer.resizeTracker.disable();
 
 	    // Disable scrolling in the browser
 	    document.documentElement.style.overflow = 'hidden';			// firefox, chrome
@@ -411,6 +414,9 @@ function launchGanttEditor(debug){
                 'position':'relative',
                 'z-index': '0',
             });
+
+	    // Re-enable the "resizable" properties of the outer panel
+	    me.ganttPanelContainer.resizer.resizeTracker.enable();
 
 	    // Disable scrolling in the browser
 	    document.documentElement.style.overflow = 'auto';			// firefox, chrome
@@ -553,7 +559,8 @@ function launchGanttEditor(debug){
         'ganttPanelContainer': ganttPanelContainer,
         'ganttTreePanel': ganttTreePanel,
         'ganttBarPanel': ganttBarPanel,
-        'taskTreeStore': taskTreeStore
+        'taskTreeStore': taskTreeStore,
+        'ganttPanelContainer': ganttPanelContainer
     });
     ganttButtonController.init(this).onLaunch(this);
 
