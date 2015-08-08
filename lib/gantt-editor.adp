@@ -61,7 +61,7 @@ function launchGanttEditor(debug){
 	debug: debug,
         style: {overflow: 'visible'},						// For the Combo popup
         store: Ext.create('Ext.data.Store', { fields: ['text', 'url'], data: [
-            {text: 'Gantt Editor Home', url: 'http://www.project-open.com/en/page_intranet_gantt_editor_index'},
+            {text: 'Gantt Editor Home', url: 'http://www.project-open.com/en/page-intranet-gantt-editor-index'},
             {text: '-'},
             {text: 'Only Text'},
             {text: 'Google', url: 'http://www.google.com'}
