@@ -158,14 +158,10 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
 	// Create a model instance and decorate with NodeInterface
         var r = Ext.create('PO.model.timesheet.TimesheetTask', {
             project_name: "New Task",
-            project_nr: "task_0018",
             parent_id: lastSelected.get('parent_id'),
             company_id: lastSelected.get('company_id'),
             start_date: new Date().toISOString().substring(0,10),
             end_date: new Date().toISOString().substring(0,10),
-            percent_completed: '0',
-            project_status_id: '76',
-            project_type_id: '100',
 	    assignees: []
         });
         var rNode = root.createNode(r);

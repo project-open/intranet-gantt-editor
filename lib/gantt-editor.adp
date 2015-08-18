@@ -50,7 +50,7 @@ function launchGanttEditor(debug){
      * State
      *********************************************************************** */
     Ext.state.Manager.setProvider(new PO.class.PreferenceStateProvider({
-	url: '/intranet-gantt-editor/lib/gantt-editor'
+        url: '/intranet-gantt-editor/lib/gantt-editor'
     }));
 
     /* ***********************************************************************
@@ -58,7 +58,7 @@ function launchGanttEditor(debug){
      *********************************************************************** */
     var helpMenu = Ext.create('PO.view.menu.HelpMenu', {
         id: 'helpMenu',
-	debug: debug,
+        debug: debug,
         style: {overflow: 'visible'},						// For the Combo popup
         store: Ext.create('Ext.data.Store', { fields: ['text', 'url'], data: [
             {text: 'Gantt Editor Home', url: 'http://www.project-open.com/en/page-intranet-gantt-editor-index'},
@@ -74,10 +74,10 @@ function launchGanttEditor(debug){
 
     var alphaMenu = Ext.create('PO.view.menu.AlphaMenu', {
         id: 'alphaMenu',
-	debug: debug,
+        debug: debug,
         style: {overflow: 'visible'},						// For the Combo popup
         slaId: 1478943,					                	// ID of the ]po[ "PD Gantt Editor" project
-	ticketStatusId: 30000				                	// "Open" and sub-states
+        ticketStatusId: 30000				                	// "Open" and sub-states
     });
 
     /* ***********************************************************************
@@ -93,45 +93,18 @@ function launchGanttEditor(debug){
 
     var configMenu = Ext.create('Ext.menu.Menu', {
         id: 'configMenu',
-	debug: debug,
+        debug: debug,
         style: {overflow: 'visible'},						// For the Combo popup
         items: [{
                 text: 'Reset Configuration',
                 handler: function() {
-                    if (me.debug) console.log('configMenuOnResetConfiguration');
+                    var me = this;
+                    var menu = me.ownerCt;
+                    if (menu.debug) console.log('configMenu.OnResetConfiguration');
                     senchaPreferenceStore.each(function(model) {
                         var url = model.get('preference_url');
                         if (url != '@page_url@') { return; }
                         model.destroy();
-                    });
-                    // Reset column configuration
-                    projectGridColumnConfig.each(function(model) { 
-                        model.destroy({
-                            success: function(model) {
-                                if (me.debug) console.log('configMenuOnResetConfiguration: Successfully destroyed a CC config');
-                                var count = projectGridColumnConfig.count() + costCenterGridColumnConfig.count();
-                                if (0 == count) {
-                                    // Reload the page. 
-                                    var params = Ext.urlDecode(location.search.substring(1));
-                                    var url = window.location.pathname + '?' + Ext.Object.toQueryString(params);
-                                    window.location = url;
-                                }
-                            }
-                        }); 
-                    });
-                    costCenterGridColumnConfig.each(function(model) { 
-                        model.destroy({
-                            success: function(model) {
-                                if (me.debug) console.log('configMenuOnResetConfiguration: Successfully destroyed a CC config');
-                                var count = projectGridColumnConfig.count() + costCenterGridColumnConfig.count();
-                                if (0 == count) {
-                                    // Reload the page. 
-                                    var params = Ext.urlDecode(location.search.substring(1));
-                                    var url = window.location.pathname + '?' + Ext.Object.toQueryString(params);
-                                    window.location = url;
-                                }
-                            }
-                        }); 
                     });
                 }
         }, '-']
@@ -212,12 +185,12 @@ function launchGanttEditor(debug){
             }, {
                 xtype: 'tbseparator' 
             }, {
-		// Event captured and handled by GanttTreePanelController
+                // Event captured and handled by GanttTreePanelController
                 icon: '/intranet/images/navbar_default/arrow_left.png',
                 tooltip: 'Reduce Indent',
                 id: 'buttonReduceIndent'
             }, {
-		// Event captured and handled by GanttTreePanelController
+                // Event captured and handled by GanttTreePanelController
                 icon: '/intranet/images/navbar_default/arrow_right.png',
                 tooltip: 'Increase Indent',
                 id: 'buttonIncreaseIndent'
@@ -269,7 +242,7 @@ function launchGanttEditor(debug){
         'ganttTreePanel': null,						// Set during init: left-hand task tree panel
         'ganttBarPanel': null,						// Set during init: right-hand surface with Gantt sprites
         'taskTreeStore': null,						// Set during init: treeStore with task data
-	'ganttPanelContainer': null,
+        'ganttPanelContainer': null,
         refs: [
             { ref: 'ganttTreePanel', selector: '#ganttTreePanel' }
         ],
@@ -303,9 +276,9 @@ function launchGanttEditor(debug){
 
 
 
-	    // Listen to vertical scroll events 
-	    var view = me.ganttTreePanel.getView();
-	    view.on('bodyscroll',this.onTreePanelScroll, me);
+            // Listen to vertical scroll events 
+            var view = me.ganttTreePanel.getView();
+            view.on('bodyscroll',this.onTreePanelScroll, me);
 
             // Listen to any changes in store records
             me.taskTreeStore.on({'update': me.onTaskTreeStoreUpdate, 'scope': this});
@@ -313,21 +286,21 @@ function launchGanttEditor(debug){
             return this;
         },
 
-	/**
-	 * The user moves the scroll bar of the treePanel.
-	 * Now scroll the ganttBarPanel in the same way.
-	 */
-	onTreePanelScroll: function(event, treeview) {
-	    var me = this;
-	    var ganttTreePanel = me.ganttTreePanel;
-	    var ganttBarPanel = me.ganttBarPanel;
-	    var view = ganttTreePanel.getView();
-	    var scroll = view.getEl().getScroll();
+        /**
+         * The user moves the scroll bar of the treePanel.
+         * Now scroll the ganttBarPanel in the same way.
+         */
+        onTreePanelScroll: function(event, treeview) {
+            var me = this;
+            var ganttTreePanel = me.ganttTreePanel;
+            var ganttBarPanel = me.ganttBarPanel;
+            var view = ganttTreePanel.getView();
+            var scroll = view.getEl().getScroll();
             // if (me.debug) console.log('GanttButtonController.onTreePanelScroll: Starting: '+scroll.top);
-	    var ganttBarScrollableEl = ganttBarPanel.getEl();                       // Ext.dom.Element that enables scrolling
-	    ganttBarScrollableEl.setScrollTop(scroll.top);
+            var ganttBarScrollableEl = ganttBarPanel.getEl();                       // Ext.dom.Element that enables scrolling
+            ganttBarScrollableEl.setScrollTop(scroll.top);
             // if (me.debug) console.log('GanttButtonController.onTreePanelScroll: Finished');
-	},
+        },
 
         /**
          * The user has reloaded the project data and therefore
@@ -335,14 +308,14 @@ function launchGanttEditor(debug){
          * "Save" button now.
          */
         onButtonReload: function() {
-	    var me = this;
+            var me = this;
             if (me.debug) console.log('GanttButtonController.ButtonReload');
             var buttonSave = Ext.getCmp('buttonSave');
             buttonSave.setDisabled(true);
         },
 
         onButtonSave: function() {
-	    var me = this;
+            var me = this;
             if (me.debug) console.log('GanttButtonController.ButtonSave');
             var me = this;
             me.taskTreeStore.save();
@@ -356,23 +329,23 @@ function launchGanttEditor(debug){
          * Enable the "Save" button to save these changes.
          */
         onTaskTreeStoreUpdate: function() {
-	    var me = this;
+            var me = this;
             // if (me.debug) console.log('GanttButtonController.onTaskTreeStoreUpdate');
             var me = this;
             var buttonSave = Ext.getCmp('buttonSave');
             buttonSave.setDisabled(false);					// Allow to "save" changes
 
-	    // fraber 150730: Disabled. This will probably cause trouble
-	    // However, we need to add the redraws() at the topmost level.
+            // fraber 150730: Disabled. This will probably cause trouble
+            // However, we need to add the redraws() at the topmost level.
             // me.ganttBarPanel.redraw();
         },
 
-	/**
-	 * Maximize Button: Expand the editor DIV, so that
-	 * it fills the entire browser screen.
-	 */
+        /**
+         * Maximize Button: Expand the editor DIV, so that
+         * it fills the entire browser screen.
+         */
         onButtonMaximize: function() {
-	    var me = this;
+            var me = this;
             if (me.debug) console.log('GanttButtonController.onButtonMaximize');
             var buttonMaximize = Ext.getCmp('buttonMaximize');
             var buttonMinimize = Ext.getCmp('buttonMinimize');
@@ -382,25 +355,25 @@ function launchGanttEditor(debug){
             var renderDiv = Ext.get("@gantt_editor_id@");
             renderDiv.setWidth('100%');
             renderDiv.setHeight('100%');
-	    renderDiv.applyStyles({ 
-		'position':'absolute',
-		'z-index': '2000',
-		'left': '0',
-		'top': '0'
-	    });
-	  
-	    // Disable the "resizable" properties of the outer panel
-	    me.ganttPanelContainer.resizer.resizeTracker.disable();
+            renderDiv.applyStyles({ 
+                'position':'absolute',
+                'z-index': '2000',
+                'left': '0',
+                'top': '0'
+            });
+          
+            // Disable the "resizable" properties of the outer panel
+            me.ganttPanelContainer.resizer.resizeTracker.disable();
 
-	    // Disable scrolling in the browser
-	    document.documentElement.style.overflow = 'hidden';			// firefox, chrome
-	    document.body.scroll = "no";	      				// ie only
+            // Disable scrolling in the browser
+            document.documentElement.style.overflow = 'hidden';			// firefox, chrome
+            document.body.scroll = "no";	      				// ie only
       
-	    resizeController.onSwitchToFullScreen();
+            resizeController.onSwitchToFullScreen();
         },
 
         onButtonMinimize: function() {
-	    var me = this;
+            var me = this;
             if (me.debug) console.log('GanttButtonController.onButtonMinimize');
             var buttonMaximize = Ext.getCmp('buttonMaximize');
             var buttonMinimize = Ext.getCmp('buttonMinimize');
@@ -415,12 +388,12 @@ function launchGanttEditor(debug){
                 'z-index': '0',
             });
 
-	    // Re-enable the "resizable" properties of the outer panel
-	    me.ganttPanelContainer.resizer.resizeTracker.enable();
+            // Re-enable the "resizable" properties of the outer panel
+            me.ganttPanelContainer.resizer.resizeTracker.enable();
 
-	    // Disable scrolling in the browser
-	    document.documentElement.style.overflow = 'auto';			// firefox, chrome
-	    document.body.scroll = "yes";	      				// ie only
+            // Disable scrolling in the browser
+            document.documentElement.style.overflow = 'auto';			// firefox, chrome
+            document.body.scroll = "yes";	      				// ie only
 
             resizeController.onSwitchBackFromFullScreen();
         },
@@ -439,7 +412,7 @@ function launchGanttEditor(debug){
          * Control the enabled/disabled status of the (-) (Delete) button
          */
         onTreePanelSelectionChange: function(view, records) {
-	    var me = this;
+            var me = this;
             if (me.debug) console.log('GanttButtonController.onTreePanelSelectionChange');
             var buttonDelete = Ext.getCmp('buttonDelete');
 
@@ -455,7 +428,7 @@ function launchGanttEditor(debug){
          * Disable default tree key actions
          */
         onBeforeCellKeyDown: function(me, htmlTd, cellIndex, record, htmlTr, rowIndex, e, eOpts ) {
-	    var me = this;
+            var me = this;
             var keyCode = e.getKey();
             var keyCtrl = e.ctrlKey;
             if (me.debug) console.log('GanttButtonController.onBeforeCellKeyDown: code='+keyCode+', ctrl='+keyCtrl);
@@ -466,14 +439,14 @@ function launchGanttEditor(debug){
                 break;
             case 37:								// Cursor left
                 if (keyCtrl) {
-		    // ToDo: moved to GanttTreePanelController
+                    // ToDo: moved to GanttTreePanelController
                     panel.onButtonReduceIndent();
                     return false;						// Disable default action (fold tree)
                 }
                 break;
             case 39:								// Cursor right
                 if (keyCtrl) {
-		    // ToDo: moved to GanttTreePanelController
+                    // ToDo: moved to GanttTreePanelController
                     panel.onButtonIncreaseIndent();
                     return false;						// Disable default action (unfold tree)
                 }
@@ -501,14 +474,14 @@ function launchGanttEditor(debug){
 
     // Left-hand side task tree
     var ganttTreePanel = Ext.create('PO.view.gantt.GanttTreePanel', {
-	id: 'ganttTreePanel',
-	debug: debug,
+        id: 'ganttTreePanel',
+        debug: debug,
         width: 500,
         region: 'west',
         store: taskTreeStore
     });
     var ganttTreePanelController = Ext.create('GanttEditor.controller.GanttTreePanelController', {
-	debug: debug
+        debug: debug
     });
     ganttTreePanelController.init(this);
 
@@ -518,11 +491,11 @@ function launchGanttEditor(debug){
     var reportStartTime = PO.Utilities.pgToDate('@report_start_date@').getTime();
     var reportEndTime = PO.Utilities.pgToDate('@report_end_date@').getTime();
     var ganttBarPanel = Ext.create('GanttEditor.view.GanttBarPanel', {
-	id: 'ganttBarPanel',
+        id: 'ganttBarPanel',
         region: 'center',
-	debug: debug,
+        debug: debug,
 
-	axisEndX: 5000,								// Size of the time axis. Always starts with 0.
+        axisEndX: 5000,								// Size of the time axis. Always starts with 0.
         axisStartDate: new Date(reportStartTime - 7 * oneDayMiliseconds),
         axisEndDate: new Date(reportEndTime + 1.5 * (reportEndTime - reportStartTime) + 7 * oneDayMiliseconds ),
 
@@ -538,13 +511,13 @@ function launchGanttEditor(debug){
         ]
     });
     var ganttBarPanelController = Ext.create('GanttEditor.controller.GanttBarPanelController', {
-	debug: debug
+        debug: debug
     });
     ganttBarPanelController.init(this);
 
     // Outer Gantt editor jointing the two parts (TreePanel + Draw)
     var ganttPanelContainer = Ext.create('PO.view.gantt_editor.GanttButtonPanel', {
-	debug: debug,
+        debug: debug,
         resizable: true,							// Add handles to the panel, so the user can change size
         items: [
             ganttTreePanel,
@@ -555,7 +528,7 @@ function launchGanttEditor(debug){
 
     // Controller that deals with button events.
     var ganttButtonController = Ext.create('PO.controller.gantt_editor.GanttButtonController', {
-	debug: debug,
+        debug: debug,
         'ganttPanelContainer': ganttPanelContainer,
         'ganttTreePanel': ganttTreePanel,
         'ganttBarPanel': ganttBarPanel,
@@ -566,7 +539,7 @@ function launchGanttEditor(debug){
 
     // Contoller to handle size and resizing related events
     var resizeController = Ext.create('PO.controller.ResizeController', {
-	debug: debug,
+        debug: debug,
         'ganttPanelContainer': ganttPanelContainer,
         'ganttTreePanel': ganttTreePanel,
         'ganttBarPanel': ganttBarPanel
@@ -577,13 +550,13 @@ function launchGanttEditor(debug){
     // Create the panel showing properties of a task,
     // but don't show it yet.
     var taskPropertyPanel = Ext.create("PO.view.gantt.GanttTaskPropertyPanel", {
-	debug: debug
+        debug: debug
     });
     taskPropertyPanel.hide();
 
     // Deal with changes of Gantt data and perform scheduling
     var ganttSchedulingController = Ext.create('GanttEditor.controller.GanttSchedulingController', {
-	debug: debug,
+        debug: debug,
         'taskTreeStore': taskTreeStore,
         'ganttTreePanel': ganttTreePanel
     });
@@ -621,7 +594,7 @@ Ext.onReady(function() {
 
     // Store Coodinator starts app after all stores have been loaded:
     var coordinator = Ext.create('PO.controller.StoreLoadCoordinator', {
-	debug: debug,
+        debug: debug,
         stores: [
             'taskTreeStore',
             'taskStatusStore',
@@ -650,15 +623,15 @@ Ext.onReady(function() {
     taskTreeStore.getProxy().extraParams = { project_id: @project_id@ };
     taskTreeStore.load({
         callback: function() {
-	    if (debug) console.log('PO.store.timesheet.TaskTreeStore: loaded');
-	}
+            if (debug) console.log('PO.store.timesheet.TaskTreeStore: loaded');
+        }
     });
 
     // User preferences
     senchaPreferenceStore.load({						// Preferences for the GanttEditor
         callback: function() {
-	    if (debug) console.log('PO.store.user.SenchaPreferenceStore: loaded');
-	}
+            if (debug) console.log('PO.store.user.SenchaPreferenceStore: loaded');
+        }
     });
 
     // User store - load last, because this can take some while. Load only Employees.
