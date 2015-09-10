@@ -71,7 +71,6 @@ function launchGanttEditor(debug){
     /* ***********************************************************************
      * Alpha Menu
      *********************************************************************** */
-
     var alphaMenu = Ext.create('PO.view.menu.AlphaMenu', {
         id: 'alphaMenu',
         debug: debug,
@@ -83,7 +82,6 @@ function launchGanttEditor(debug){
     /* ***********************************************************************
      * Config Menu
      *********************************************************************** */
-
     var configMenuOnItemCheck = function(item, checked){
         if (me.debug) console.log('configMenuOnItemCheck: item.id='+item.id);
         senchaPreferenceStore.setPreference('@page_url@', item.id, checked);
@@ -136,6 +134,47 @@ function launchGanttEditor(debug){
             checkHandler: configMenuOnItemCheck
         });
         configMenu.add(item);
+    });
+
+
+
+
+
+    /* ***********************************************************************
+     * Scheduling Menu
+     *********************************************************************** */
+    var schedulingMenuOnItemCheck = function(item, checked){
+        if (me.debug) console.log('schedulingMenuOnItemCheck: item.id='+item.id);
+        senchaPreferenceStore.setPreference('@page_url@', item.id, checked);
+        portfolioPlannerProjectPanel.redraw();
+        portfolioPlannerCostCenterPanel.redraw();
+    }
+
+    var schedulingMenu = Ext.create('Ext.menu.Menu', {
+        id: 'schedulingMenu',
+        debug: debug,
+        style: {overflow: 'visible'},						// For the Combo popup
+        items: [{
+	    xtype: 'menucheckitem',
+            text: 'Manual Scheduling',
+	    checked: true,
+            handler: function(a,b,c) {
+		if (this.checked) { return; }
+		this.setChecked(true);
+	    }
+        }, {
+	    xtype: 'menucheckitem',
+            text: 'Single-Project Scheduling',
+	    disabled: true,
+	    checked: false,
+            handler: function() { }
+        }, {
+	    xtype: 'menucheckitem',
+            text: 'Multi-Project Scheduling',
+	    disabled: true,
+	    checked: false,
+            handler: function() { }
+	}]
     });
 
 
@@ -217,6 +256,10 @@ function launchGanttEditor(debug){
                 tooltip: 'Zoom out of time axis',
                 id: 'buttonZoomOut'
             }, '->', {
+                text: 'Scheduling',
+                icon: '/intranet/images/navbar_default/clock.png',
+                menu: schedulingMenu
+            }, {
                 text: 'Configuration',
                 icon: '/intranet/images/navbar_default/wrench.png',
                 menu: configMenu
