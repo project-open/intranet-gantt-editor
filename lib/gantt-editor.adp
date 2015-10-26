@@ -238,11 +238,13 @@ function launchGanttEditor(debug){
             }, {
                 icon: '/intranet/images/navbar_default/link_add.png',
                 tooltip: 'Add dependency',
-                id: 'buttonAddDependency'
+                id: 'buttonAddDependency',
+		hidden: true
             }, {
                 icon: '/intranet/images/navbar_default/link_break.png',
                 tooltip: 'Break dependency',
-                id: 'buttonBreakDependency'
+                id: 'buttonBreakDependency',
+		hidden: true
             }, '->', {
                 icon: '/intranet/images/navbar_default/zoom_in.png',
                 tooltip: 'Zoom in time axis',
