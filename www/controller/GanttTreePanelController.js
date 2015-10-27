@@ -352,10 +352,18 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
         var taskTreeStore = ganttTreePanel.getStore();
         var rootNode = taskTreeStore.getRootNode();					// Get the absolute root
         var sortOrder = 0;
+	var duplicateHash = {};
 
         // Iterate through all children of the root node and check if they are visible
         rootNode.cascadeBy(function(model) {
             
+	    // Check for duplicates
+	    var name = "" + (model.get('project_name').replace(/\([0-9]+\)/, '')).trim();
+	    var id = model.get('id');
+	    var list = duplicateHash[name] || [];
+	    list.push(model);
+	    duplicateHash[name] = list;
+
             // Fix the sort_order sequence of tasks
             var modelSortOrder = model.get('sort_order');
             if (""+modelSortOrder != ""+sortOrder && 0 != sortOrder) {
@@ -374,6 +382,19 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
 
             sortOrder++;
         });
+
+	// Rename duplicates
+	if (me.debug) console.log(duplicateHash);
+	Object.keys(duplicateHash).forEach(function(key) {
+	    var modelList = duplicateHash[key];
+	    if (modelList.length > 1) {
+		// Rename the items
+		for (var i = 0; i < modelList.length; i++) {
+		    modelList[i].set('project_name', key+" ("+ (i+1) +")");
+		}
+	    }
+	});
+
 
         if (me.debug) console.log('PO.controller.GanttTreePanelController.treeRenumber: Finished');
     }
