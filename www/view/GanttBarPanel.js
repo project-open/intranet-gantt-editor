@@ -26,6 +26,8 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
     taskModelHash: {},								// Start and end date of tasks
     preferenceStore: null,
     arrowheadSize: 5,
+
+    needsRedraw: false,								// Set this instead of initiating a redraw()
     
     /**
      * Starts the main editor panel as the right-hand side
@@ -92,7 +94,9 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
 	    if ('expanded' in mod) { return; }
 	}
 
-	me.redraw();
+	// me.redraw();
+        me.needsRedraw = true;
+
         if (me.debug) console.log('PO.view.gantt.GanttBarPanel.onObjectStoreDataChanged: Finished');
     },
 
@@ -112,7 +116,10 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
     onProjectGridSortChange: function(headerContainer, column, direction, eOpts) {
         var me = this;
         if (me.debug) console.log('PO.view.gantt.GanttBarPanel.onProjectGridSortChange: Starting');
-        me.redraw();
+
+        // me.redraw();
+        me.needsRedraw = true;
+
         if (me.debug) console.log('PO.view.gantt.GanttBarPanel.onProjectGridSortChange: Finished');
     },
 
@@ -170,7 +177,9 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
                         }
                         succModel.set('predecessors',predecessors);
                 	if (predecessors.length != orgPredecessorsLen) {
-                	    me.redraw();
+                	    // me.redraw();
+			    me.needsRedraw = true;
+
                 	}
                     }
                 }]
@@ -228,7 +237,9 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
             'start_date': PO.Utilities.dateToPg(newStartDate),
 	    'end_date': PO.Utilities.dateToPg(newEndDate)
 	});
-        me.redraw();
+
+        // me.redraw();
+        me.needsRedraw = true;
 
         if (me.debug) console.log('PO.view.gantt.GanttBarPanel.onProjectMove: Finished');
     },
@@ -257,7 +268,9 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
         var endDate = new Date(endTime);
         projectModel.set('end_date', PO.Utilities.dateToPg(endDate));
 
-        me.redraw();
+        // me.redraw();
+        me.needsRedraw = true;
+
         if (me.debug) console.log('PO.view.gantt.GanttBarPanel.onProjectResize: Finished');
     },
 
@@ -281,7 +294,9 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
         if (percent < 0) percent = 0;
         projectModel.set('percent_completed', ""+percent);			// Write to project model and update tree via events
 
-        me.redraw();			      					// redraw the entire Gantt editor surface. ToDo: optimize
+        // me.redraw();			      					// redraw the entire Gantt editor surface. ToDo: optimize
+        me.needsRedraw = true;
+
         if (me.debug) console.log('PO.view.gantt.GanttBarPanel.onProjectPercentResize: Finished');
     },
 
@@ -316,7 +331,8 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
         dependencies.push(dependency);
         toTaskModel.set('predecessors', dependencies);
 
-        me.redraw();
+        // me.redraw();
+        me.needsRedraw = true;
 
         if (me.debug) console.log('GanttEditor.view.GanttBarPanel.onCreateDependency: Finished');
     },
@@ -343,6 +359,7 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
     redraw: function(a, b, c, d, e) {
         var me = this;
         if (me.debug) console.log('PO.class.GanttDrawComponent.redraw: Starting');
+	me.needsRedraw = false;								// mark the "dirty" flat as cleaned
         if (undefined === me.surface) { return; }
 	
 	// Get the root of the ganttTree

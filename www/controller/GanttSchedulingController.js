@@ -40,6 +40,7 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
     onTreeStoreUpdate: function(treeStore, model, operation, fieldsChanged, event) {
         var me = this;
         if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.onTreeStoreUpdate: Starting');
+	var buttonSave = Ext.getCmp('buttonSave');
         fieldsChanged.forEach(function(fieldName) {
             if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.onTreeStoreUpdate: Field changed='+fieldName);
             switch (fieldName) {
@@ -51,6 +52,10 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
                 break;
             }
         });
+
+	me.ganttBarPanel.needsRedraw = true;	                                   // Force a redraw
+	buttonSave.setDisabled(false);	                                           // Enable "Save" button
+
         if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.onTreeStoreUpdate: Finished');
     },
 
@@ -64,17 +69,17 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
         if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.onStartDateChanged: Starting');
         var parent = model.parentNode;					// 
         if (!parent) return;
-	var parent_start_date = parent.get('start_date');
-	if ("" == parent_start_date) return;
+        var parent_start_date = parent.get('start_date');
+        if ("" == parent_start_date) return;
         var parentStartDate = PO.Utilities.pgToDate(parent_start_date);
 
         // Calculate the minimum start date of all siblings
         var minStartDate = PO.Utilities.pgToDate('2099-12-31');
         parent.eachChild(function(sibling) {
             var siblingStartDate = PO.Utilities.pgToDate(sibling.get('start_date'));
-	    if (!isNaN(siblingStartDate) && siblingStartDate.getTime() < minStartDate.getTime()) {
-		minStartDate = siblingStartDate;
-	    }
+            if (!isNaN(siblingStartDate) && siblingStartDate.getTime() < minStartDate.getTime()) {
+        	minStartDate = siblingStartDate;
+            }
         });
 
         // Check if we have to update the parent
@@ -98,7 +103,7 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
         var parent = model.parentNode;
         if (!parent) return;
         var parent_end_date = parent.get('end_date');
-	if ("" == parent_end_date) return;
+        if ("" == parent_end_date) return;
         var parentEndDate = PO.Utilities.pgToDate(parent_end_date);
 
         // Calculate the maximum end date of all siblings

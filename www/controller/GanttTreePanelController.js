@@ -15,27 +15,43 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
     extend: 'Ext.app.Controller',
     requires: ['Ext.app.Controller'],
     refs: [
-	{ref: 'ganttBarPanel', selector: '#ganttBarPanel'},
-	{ref: 'ganttTreePanel', selector: '#ganttTreePanel'}
+        {ref: 'ganttBarPanel', selector: '#ganttBarPanel'},
+        {ref: 'ganttTreePanel', selector: '#ganttTreePanel'}
     ],
 
+    ganttTreePanel: null,
+
     init: function() {
-	this.control({
-	    '#ganttTreePanel': {
-		'itemcollapse': this.onItemCollapse,
-		'itemexpand': this.onItemExpand
-	    },
-	    '#buttonReduceIndent': { click: this.onButtonReduceIndent},
+	var me = this;
+        this.control({
+            '#ganttTreePanel': {
+                'itemcollapse': this.onItemCollapse,
+                'itemexpand': this.onItemExpand
+            },
+            '#buttonReduceIndent': { click: this.onButtonReduceIndent},
             '#buttonIncreaseIndent': { click: this.onButtonIncreaseIndent},
             '#buttonAdd': { click: this.onButtonAdd},
             '#buttonDelete': { click: this.onButtonDelete}
-	});
+        });
+
+	// Listen to drop events from tree drag-and-drop
+	if (null != me.ganttTreePanel) {
+	    var ganttTreeView = me.ganttTreePanel.getView();
+	    ganttTreeView.on({
+		'drop': me.onGanttTreePanelDrop,
+		'scope': this
+	    });;
+	}
     },
 
+    /**
+     * Request a redraw of the Gantt bars
+     */
     redrawGanttBarPanel: function() {
-	console.log('PO.controller.GanttTreePanelController.redrawGanttBarPanel');
-	var ganttBarPanel = this.getGanttBarPanel();
-	ganttBarPanel.redraw();
+	var me = this;
+        console.log('PO.controller.GanttTreePanelController.redrawGanttBarPanel');
+        var ganttBarPanel = me.getGanttBarPanel();
+        ganttBarPanel.needsRedraw = true;
     },
 
     /**
@@ -51,7 +67,8 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
             params: { 'object_id': object_id, 'open_p': 'c' }
         });
 
-        me.getGanttBarPanel().redraw();
+        // me.getGanttBarPanel().redraw();
+        me.getGanttBarPanel().needsRedraw = true;
     },
 
     /**
@@ -68,7 +85,8 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
             url: '/intranet/biz-object-tree-open-close.tcl',
             params: { 'object_id': object_id, 'open_p': 'o' }
         });
-        me.getGanttBarPanel().redraw();
+
+	me.getGanttBarPanel().needsRedraw = true;                                  // Force delayed redraw
     },
 
     /**
@@ -78,9 +96,9 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
      * make this node a child of it.
      */
     onButtonIncreaseIndent: function() {
-	var me = this;
+        var me = this;
         if (me.debug) console.log('GanttTreePanel.onButtonIncreaseIndent');
-	var ganttTreePanel = this.getGanttTreePanel();
+        var ganttTreePanel = this.getGanttTreePanel();
         var selectionModel = ganttTreePanel.getSelectionModel();
         var lastSelected = selectionModel.getLastSelected();
         var lastSelectedParent = lastSelected.parentNode;
@@ -99,6 +117,9 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
 
         ganttTreePanel.getView().focusNode(lastSelected);        // Focus back on the task, so that it will accept the next keyboard commands
 
+	me.treeRenumber();                                                         // Update the tree's task numbering
+	me.getGanttBarPanel().needsRedraw = true;                                  // Force delayed redraw
+
         // ToDo: It seems the TreePanel looses focus here
         // selectionModel.select(lastSelected);
         // selectionModel.setLastFocused(lastSelected);
@@ -108,10 +129,10 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
      * Move the task more to the left if possible.
      */
     onButtonReduceIndent: function() {
-	var me = this;
+        var me = this;
         if (me.debug) console.log('GanttTreePanel.onButtonReduceIndent');
 
-	var ganttTreePanel = this.getGanttTreePanel();
+        var ganttTreePanel = this.getGanttTreePanel();
         var selectionModel = ganttTreePanel.getSelectionModel();
         var lastSelected = selectionModel.getLastSelected();
         var lastSelectedParent = lastSelected.parentNode;
@@ -128,6 +149,10 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
         }
 
         ganttTreePanel.getView().focusNode(lastSelected);        // Focus back on the task, so that it will accept the next keyboard commands
+
+	me.treeRenumber();                                                         // Update the tree's task numbering
+	me.getGanttBarPanel().needsRedraw = true;                                  // Force delayed redraw
+
     },
     
     /**
@@ -137,7 +162,7 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
     onButtonAdd: function() {
         var me = this;
         if (me.debug) console.log('PO.view.gantt.GanttTreePanel.onButtonAdd: ');
-	var ganttTreePanel = me.getGanttTreePanel();
+        var ganttTreePanel = me.getGanttTreePanel();
         var rowEditing = ganttTreePanel.plugins[0];
         var taskTreeStore = ganttTreePanel.getStore();
         var root = taskTreeStore.getRootNode();
@@ -149,19 +174,20 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
         var lastSelectedParent = null;
 
         if (null == lastSelected) {
-            lastSelected = root;	 			// Use the root as the last selected node
-            lastSelectedParent = root;
+            lastSelected = root.childNodes[0];	 			// This should be the main project
+            lastSelectedParent = root;	 			// This is the "virtual" and invisible root of the tree
         } else {
             lastSelectedParent = lastSelected.parentNode;
         }
 
-	// Create a model instance and decorate with NodeInterface
+        // Create a model instance and decorate with NodeInterface
+	var parent_id = lastSelected.get('parent_id');
+	if ("" == parent_id) { parent_id = lastSelected.get('id'); }
         var r = Ext.create('PO.model.timesheet.TimesheetTask', {
-            project_name: "New Task",
-            parent_id: lastSelected.get('parent_id'),
+            parent_id: parent_id,
             company_id: lastSelected.get('company_id'),
-            start_date: new Date().toISOString().substring(0,10),
-            end_date: new Date().toISOString().substring(0,10),
+	    project_status_id: 76,					// Status: Open
+	    project_type_id: 100,					// Type: Timesheet Task
 	    assignees: []
         });
         var rNode = root.createNode(r);
@@ -177,6 +203,14 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
             lastSelectedParent.insertBefore(rNode, lastSelected);	    // Insert into tree
         }
 
+	r.set('parent_id', parent_id);
+	r.set('percent_completed', 0);
+	r.set('planned_units', 0);
+	r.set('project_name', 'New Task');
+	r.set('start_date', new Date().toISOString().substring(0,10));
+        r.set('end_date', new Date().toISOString().substring(0,10));
+        r.set('assignees', "");
+
         // Start the column editor
         selectionModel.deselectAll();
         selectionModel.select([rNode]);
@@ -191,7 +225,7 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
         var me = this;
         if (me.debug) console.log('PO.view.gantt.GanttTreePanel.onButtonDelete: ');
 
-	var ganttTreePanel = me.getGanttTreePanel();
+        var ganttTreePanel = me.getGanttTreePanel();
         var rowEditing = ganttTreePanel.plugins[0];
         var taskTreeStore = ganttTreePanel.getStore();
         var selectionModel = ganttTreePanel.getSelectionModel();
@@ -219,7 +253,9 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
             newNode = lastSelectedParent.getChildAt(lastSelectedIndex);
             selectionModel.select(newNode);
         }
-        
+
+	me.treeRenumber();                                                         // Update the tree's task numbering
+	me.getGanttBarPanel().needsRedraw = true;                                  // Force delayed redraw
     },
 
     /**
@@ -231,11 +267,77 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
         if (me.debug) console.log('PO.view.gantt.GanttTreePanel.onContainerClick: ');
 
         // Clear the selection in order to force adding the task at the bottom
-	var ganttTreePanel = me.getGanttTreePanel();
+        var ganttTreePanel = me.getGanttTreePanel();
         var selectionModel = ganttTreePanel.getSelectionModel();
         selectionModel.deselectAll();
 
         me.onButtonAdd();
-    }
+    },
 
+    /**
+     * Drop events inside the task tree.
+     * We need to update the parent_id and sort_order of the task.
+     */
+    onGanttTreePanelDrop: function(node, data, overModel, dropPosition, eOpts) {
+	var me = this;
+        if (me.debug) console.log('PO.controller.GanttTreePanelController.onGanttTreePanelDrop: Starting');
+
+	var records = data.records;                             // tasks dropped into new position
+	var parent = null;
+
+	// Update the parent_id of the task
+	switch (dropPosition) {
+	case "before":
+	    parent = overModel.parentNode;
+	    break;
+	case "after":
+	    parent = overModel.parentNode;
+	    break;
+	case "append":
+	    parent = overModel;
+	    break;
+	default:
+	    alert("GanttTreePanelController.onGanttTreePanelDrop: Unknown dropPosition="+dropPosition);
+	    break;
+	}
+	var parent_id = parent.get('id');
+	if (null != parent_id && "" != parent_id) {
+	    records.forEach(function(record) {
+		record.set('parent_id', parent_id);
+	    });
+	}
+
+	me.treeRenumber();                                                         // Update the tree's task numbering
+	me.getGanttBarPanel().needsRedraw = true;                                  // Force delayed redraw
+
+        if (me.debug) console.log('PO.controller.GanttTreePanelController.onGanttTreePanelDrop: Finished');
+    },
+
+
+    /**
+     * Update the numbering of the Gantt tasks after a 
+     * change that affects the ordering including 
+     * drag-and-drop events.
+     */
+    treeRenumber: function() {
+	var me = this;
+        if (me.debug) console.log('PO.controller.GanttTreePanelController.treeRenumber: Starting');
+
+	var ganttBarPanel = me.getGanttBarPanel();
+        var ganttTreePanel = me.getGanttTreePanel();
+	var taskTreeStore = ganttTreePanel.getStore();
+        var rootNode = taskTreeStore.getRootNode();                                 // Get the absolute root
+	var sortOrder = 0;
+
+        // Iterate through all children of the root node and check if they are visible
+        rootNode.cascadeBy(function(model) {
+	    var modelSortOrder = model.get('sort_order');
+	    if (""+modelSortOrder != ""+sortOrder && 0 != sortOrder) {
+		model.set('sort_order', ""+sortOrder);
+	    }
+	    sortOrder++;
+        });
+
+        if (me.debug) console.log('PO.controller.GanttTreePanelController.treeRenumber: Finished');
+    }
 });

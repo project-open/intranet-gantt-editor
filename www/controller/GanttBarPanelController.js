@@ -23,12 +23,28 @@ Ext.define('GanttEditor.controller.GanttBarPanelController', {
     init: function() {
 	var me = this;
 	if (me.debug) console.log('GanttEditor.controller.GanttBarPanelController.init: Starting');
-	this.control({
-	    '#buttonZoomIn': { click: this.onButtonZoomIn },
-	    '#buttonZoomOut': { click: this.onButtonZoomOut },
-	    '#buttonZoomCenter': { click: this.onButtonZoomCenter }
+	me.control({
+	    '#buttonZoomIn': { click: me.onButtonZoomIn },
+	    '#buttonZoomOut': { click: me.onButtonZoomOut },
+	    '#buttonZoomCenter': { click: me.onButtonZoomCenter }
 	});
+	
+	// Redraw GanttBars when all events are handled
+	Ext.globalEvents.on("idle", this.onIdle, me)
+
 	if (me.debug) console.log('GanttEditor.controller.GanttBarPanelController.init: Finished');
+    },
+
+    /**
+     * Called before passing control back to the Browser.
+     * No logging, because this routine is called so frequently.
+     */
+    onIdle: function() {
+	var me = this;
+	var ganttBarPanel = me.getGanttBarPanel();
+	if (ganttBarPanel.needsRedraw) {
+	    ganttBarPanel.redraw();
+	}
     },
 
     /**
@@ -37,7 +53,7 @@ Ext.define('GanttEditor.controller.GanttBarPanelController', {
     onButtonZoomIn: function() {
         var me = this;
 	if (me.debug) console.log('GanttEditor.controller.GanttBarPanelController.onButtonZoomIn: Starting');
-	var ganttBarPanel = this.getGanttBarPanel();
+	var ganttBarPanel = me.getGanttBarPanel();
 	var scrollableEl = ganttBarPanel.getEl();                       // Ext.dom.Element that enables scrolling
 	var zoomFactor = me.zoomFactor;
 
@@ -67,7 +83,8 @@ Ext.define('GanttEditor.controller.GanttBarPanelController', {
 
 	scrollableEl.setScrollLeft(newScrollX);
 
-	me.getGanttBarPanel().redraw();
+	// Redraw before passing control back to the browser
+	me.getGanttBarPanel().needsRedraw = true;
 
 	if (me.debug) console.log('GanttEditor.controller.GanttBarPanelController.onButtonZoomIn: Finished');
     },
@@ -78,7 +95,7 @@ Ext.define('GanttEditor.controller.GanttBarPanelController', {
     onButtonZoomOut: function() {
         var me = this;
 	if (me.debug) console.log('GanttEditor.controller.GanttBarPanelController.onButtonZoomOut: Starting');
-	var ganttBarPanel = this.getGanttBarPanel();
+	var ganttBarPanel = me.getGanttBarPanel();
 	var zoomFactor = me.zoomFactor;
 
 	var axisStartTime = ganttBarPanel.axisStartDate.getTime();
@@ -91,6 +108,10 @@ Ext.define('GanttEditor.controller.GanttBarPanelController', {
 	// ganttBarPanel.axisEndX = Math.round(axisEndX / zoomFactor);
 
 	me.onButtonZoomCenter();					// Center the project
+
+	// Redraw before passing control back to the browser
+	me.getGanttBarPanel().needsRedraw = true;
+
 	if (me.debug) console.log('GanttEditor.controller.GanttBarPanelController.onButtonZoomOut: Finished');
     },
 
@@ -103,8 +124,8 @@ Ext.define('GanttEditor.controller.GanttBarPanelController', {
     onButtonZoomCenter: function() {
         var me = this;
 	if (me.debug) console.log('GanttEditor.controller.GanttBarPanelController.onButtonZoomCenter: Starting');
-	var ganttBarPanel = this.getGanttBarPanel();
-        var ganttTreePanel = this.getGanttTreePanel();
+	var ganttBarPanel = me.getGanttBarPanel();
+        var ganttTreePanel = me.getGanttTreePanel();
 	var taskTreeStore = ganttTreePanel.getStore();
 	
 	var selectionModel = ganttTreePanel.getSelectionModel();
@@ -125,13 +146,9 @@ Ext.define('GanttEditor.controller.GanttBarPanelController', {
 
 	// Check if the bar got outside the drawing area when zooming in
 	if (startX < 0) {
-	    
-
+	    // !!! ???
 	}
-	
 
-
-	
 	// Compare the middle of the Gantt bar with the middle of the screen
 	var midX = Math.round((startX + endX) / 2);
 	var ganttSize = ganttBarPanel.getSize();
@@ -144,7 +161,9 @@ Ext.define('GanttEditor.controller.GanttBarPanelController', {
 	var scrollableEl = ganttBarPanel.getEl();                       // Ext.dom.Element that enables scrolling
 	scrollableEl.setScrollLeft(scrollX);
 
-        me.getGanttBarPanel().redraw();
+	// Redraw before passing control back to the browser
+	me.getGanttBarPanel().needsRedraw = true;
+
 	if (me.debug) console.log('GanttEditor.controller.GanttBarPanelController.onButtonZoomCenter: Finished');
     }
 

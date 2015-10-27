@@ -49,9 +49,14 @@ function launchGanttEditor(debug){
     /* ***********************************************************************
      * State
      *********************************************************************** */
+    // Deal with state
+    Ext.state.Manager.setProvider(new Ext.state.CookieProvider());
+/*  
+    // PreferenceStateProvider does not work yet
     Ext.state.Manager.setProvider(new PO.class.PreferenceStateProvider({
         url: '/intranet-gantt-editor/lib/gantt-editor'
     }));
+*/
 
     /* ***********************************************************************
      * Help Menu
@@ -61,10 +66,10 @@ function launchGanttEditor(debug){
         debug: debug,
         style: {overflow: 'visible'},						// For the Combo popup
         store: Ext.create('Ext.data.Store', { fields: ['text', 'url'], data: [
-            {text: 'Gantt Editor Home', url: 'http://www.project-open.com/en/page-intranet-gantt-editor-index'},
-            {text: '-'},
-            {text: 'Only Text'},
-            {text: 'Google', url: 'http://www.google.com'}
+            {text: 'Gantt Editor Home', url: 'http://www.project-open.com/en/package-intranet-gantt-editor'}
+//            {text: '-'},
+//            {text: 'Only Text'},
+//            {text: 'Google', url: 'http://www.google.com'}
         ]})
     });
 
@@ -85,6 +90,8 @@ function launchGanttEditor(debug){
     var configMenuOnItemCheck = function(item, checked){
         if (me.debug) console.log('configMenuOnItemCheck: item.id='+item.id);
         senchaPreferenceStore.setPreference('@page_url@', item.id, checked);
+
+	// !!! Why portfolio planner???
         portfolioPlannerProjectPanel.redraw();
         portfolioPlannerCostCenterPanel.redraw();
     }
@@ -146,6 +153,8 @@ function launchGanttEditor(debug){
     var schedulingMenuOnItemCheck = function(item, checked){
         if (me.debug) console.log('schedulingMenuOnItemCheck: item.id='+item.id);
         senchaPreferenceStore.setPreference('@page_url@', item.id, checked);
+
+	// !!! Why portfolio planner???
         portfolioPlannerProjectPanel.redraw();
         portfolioPlannerCostCenterPanel.redraw();
     }
@@ -382,7 +391,9 @@ function launchGanttEditor(debug){
 
             // fraber 150730: Disabled. This will probably cause trouble
             // However, we need to add the redraws() at the topmost level.
-            // me.ganttBarPanel.redraw();
+	    // fraber 151027: Replaced by a needsRedraw flag handled by 
+	    // onIdle event
+            me.ganttBarPanel.needsRedraw = true;
         },
 
         /**
@@ -526,6 +537,7 @@ function launchGanttEditor(debug){
         store: taskTreeStore
     });
     var ganttTreePanelController = Ext.create('GanttEditor.controller.GanttTreePanelController', {
+	ganttTreePanel: ganttTreePanel,
         debug: debug
     });
     ganttTreePanelController.init(this);
@@ -603,6 +615,7 @@ function launchGanttEditor(debug){
     var ganttSchedulingController = Ext.create('GanttEditor.controller.GanttSchedulingController', {
         debug: debug,
         'taskTreeStore': taskTreeStore,
+	'ganttBarPanel': ganttBarPanel,
         'ganttTreePanel': ganttTreePanel
     });
     ganttSchedulingController.init(this).onLaunch(this);
