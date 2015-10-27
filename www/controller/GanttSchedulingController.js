@@ -40,21 +40,23 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
     onTreeStoreUpdate: function(treeStore, model, operation, fieldsChanged, event) {
         var me = this;
         if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.onTreeStoreUpdate: Starting');
-	var buttonSave = Ext.getCmp('buttonSave');
-        fieldsChanged.forEach(function(fieldName) {
-            if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.onTreeStoreUpdate: Field changed='+fieldName);
-            switch (fieldName) {
-            case "start_date":
-                me.onStartDateChanged(treeStore, model, operation, event);
-                break;
-            case "end_date":
-                me.onEndDateChanged(treeStore, model, operation, event);
-                break;
-            }
-        });
+        var buttonSave = Ext.getCmp('buttonSave');
+        if (null != fieldsChanged) {
+            fieldsChanged.forEach(function(fieldName) {
+                if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.onTreeStoreUpdate: Field changed='+fieldName);
+                switch (fieldName) {
+                case "start_date":
+                    me.onStartDateChanged(treeStore, model, operation, event);
+                    break;
+                case "end_date":
+                    me.onEndDateChanged(treeStore, model, operation, event);
+                    break;
+                }
+            });
+        }
 
-	me.ganttBarPanel.needsRedraw = true;	                                   // Force a redraw
-	buttonSave.setDisabled(false);	                                           // Enable "Save" button
+        me.ganttBarPanel.needsRedraw = true;					// Force a redraw
+        buttonSave.setDisabled(false);						// Enable "Save" button
 
         if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.onTreeStoreUpdate: Finished');
     },
@@ -67,7 +69,7 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
     onStartDateChanged: function(treeStore, model, operation, event) {
         var me = this;
         if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.onStartDateChanged: Starting');
-        var parent = model.parentNode;					// 
+        var parent = model.parentNode;						// 
         if (!parent) return;
         var parent_start_date = parent.get('start_date');
         if ("" == parent_start_date) return;
@@ -78,7 +80,7 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
         parent.eachChild(function(sibling) {
             var siblingStartDate = PO.Utilities.pgToDate(sibling.get('start_date'));
             if (!isNaN(siblingStartDate) && siblingStartDate.getTime() < minStartDate.getTime()) {
-        	minStartDate = siblingStartDate;
+                minStartDate = siblingStartDate;
             }
         });
 

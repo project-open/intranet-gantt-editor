@@ -22,7 +22,7 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
     ganttTreePanel: null,
 
     init: function() {
-	var me = this;
+        var me = this;
         this.control({
             '#ganttTreePanel': {
                 'itemcollapse': this.onItemCollapse,
@@ -34,21 +34,21 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
             '#buttonDelete': { click: this.onButtonDelete}
         });
 
-	// Listen to drop events from tree drag-and-drop
-	if (null != me.ganttTreePanel) {
-	    var ganttTreeView = me.ganttTreePanel.getView();
-	    ganttTreeView.on({
-		'drop': me.onGanttTreePanelDrop,
-		'scope': this
-	    });;
-	}
+        // Listen to drop events from tree drag-and-drop
+        if (null != me.ganttTreePanel) {
+            var ganttTreeView = me.ganttTreePanel.getView();
+            ganttTreeView.on({
+                'drop': me.onGanttTreePanelDrop,
+                'scope': this
+            });;
+        }
     },
 
     /**
      * Request a redraw of the Gantt bars
      */
     redrawGanttBarPanel: function() {
-	var me = this;
+        var me = this;
         console.log('PO.controller.GanttTreePanelController.redrawGanttBarPanel');
         var ganttBarPanel = me.getGanttBarPanel();
         ganttBarPanel.needsRedraw = true;
@@ -86,7 +86,7 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
             params: { 'object_id': object_id, 'open_p': 'o' }
         });
 
-	me.getGanttBarPanel().needsRedraw = true;                                  // Force delayed redraw
+        me.getGanttBarPanel().needsRedraw = true;					// Force delayed redraw
     },
 
     /**
@@ -112,13 +112,15 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
 
         // Remove the item from the tree
         prevNode.set('leaf', false);
-        prevNode.appendChild(lastSelected);			// Add to the previous node as a child
+        prevNode.appendChild(lastSelected);						// Add to the previous node as a child
         prevNode.expand();
 
-        ganttTreePanel.getView().focusNode(lastSelected);        // Focus back on the task, so that it will accept the next keyboard commands
+        ganttTreePanel.getView().focusNode(lastSelected);				// Focus back on the task for keyboard commands
 
-	me.treeRenumber();                                                         // Update the tree's task numbering
-	me.getGanttBarPanel().needsRedraw = true;                                  // Force delayed redraw
+//	lastSelected.set('parent_id', prevNode.get('id'));				// Set the parent_id of the indented task
+
+        me.treeRenumber(); 								// Update the tree's task numbering
+        me.getGanttBarPanel().needsRedraw = true;					// Force delayed redraw
 
         // ToDo: It seems the TreePanel looses focus here
         // selectionModel.select(lastSelected);
@@ -148,11 +150,10 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
             lastSelectedParent.set('leaf', true);
         }
 
-        ganttTreePanel.getView().focusNode(lastSelected);        // Focus back on the task, so that it will accept the next keyboard commands
+        ganttTreePanel.getView().focusNode(lastSelected);				// Focus back on the task for keyboard commands
 
-	me.treeRenumber();                                                         // Update the tree's task numbering
-	me.getGanttBarPanel().needsRedraw = true;                                  // Force delayed redraw
-
+        me.treeRenumber(); 								// Update the tree's task numbering
+        me.getGanttBarPanel().needsRedraw = true;					// Force delayed redraw
     },
     
     /**
@@ -174,47 +175,70 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
         var lastSelectedParent = null;
 
         if (null == lastSelected) {
-            lastSelected = root.childNodes[0];	 			// This should be the main project
-            lastSelectedParent = root;	 			// This is the "virtual" and invisible root of the tree
+            lastSelected = root;						// This should be the main project
+            lastSelectedParent = root;	 						// This is the "virtual" and invisible root of the tree
         } else {
             lastSelectedParent = lastSelected.parentNode;
         }
 
         // Create a model instance and decorate with NodeInterface
-	var parent_id = lastSelected.get('parent_id');
-	if ("" == parent_id) { parent_id = lastSelected.get('id'); }
+        var parent_id = lastSelected.get('parent_id');
+        if ("" == parent_id) { parent_id = lastSelected.get('id'); }
         var r = Ext.create('PO.model.timesheet.TimesheetTask', {
             parent_id: parent_id,
             company_id: lastSelected.get('company_id'),
-	    project_status_id: 76,					// Status: Open
-	    project_type_id: 100,					// Type: Timesheet Task
-	    assignees: []
+            project_status_id: 76,							// Status: Open
+            project_type_id: 100,							// Type: Timesheet Task
+            assignees: []
         });
-        var rNode = root.createNode(r);
-        rNode.set('leaf', true);					// Leafs show a different icon than folders
+        var rNode = root.createNode(r);							// Convert model into tree node
+        rNode.set('leaf', true);							// The new task is a leaf (show different icon)
 
         var appendP = false;
         if (!selectionModel.hasSelection()) { appendP = true; }
         if (root == lastSelected) { appendP = true; }
-        if (lastSelected.getDepth() <= 1) { appendP = true; }			// Don't allow to add New Task before the root.
+        if (lastSelected.getDepth() <= 1) { appendP = true; }				// Don't allow to add New Task before the root.
         if (appendP) {
-            root.appendChild(rNode);	 				// Add the task at the end of the root
+            root.appendChild(rNode);							// Add the task at the end of the root
         } else {
-            lastSelectedParent.insertBefore(rNode, lastSelected);	    // Insert into tree
+            lastSelectedParent.insertBefore(rNode, lastSelected);			// Insert into tree
         }
 
-	r.set('parent_id', parent_id);
-	r.set('percent_completed', 0);
-	r.set('planned_units', 0);
-	r.set('project_name', 'New Task');
-	r.set('start_date', new Date().toISOString().substring(0,10));
-        r.set('end_date', new Date().toISOString().substring(0,10));
+        r.set('parent_id', parent_id);
+        r.set('percent_completed', 0);
+        r.set('planned_units', 0);
+        r.set('project_name', 'New Task');
+        r.set('start_date', new Date().toISOString().substring(0,10));
+        r.set('end_date', new Date(new Date().getTime() + 1000 * 3600 * 24).toISOString().substring(0,10));
         r.set('assignees', "");
+
+	// Get a server-side object_id for the task
+	Ext.Ajax.request({
+	    url: '/intranet-rest/data-source/next-object-id',
+	    success: function(response){
+		var json = Ext.JSON.decode(response.responseText);
+		var object_id_string = json.data.object_id;
+		var object_id = parseInt(object_id_string);
+		r.set('id', object_id);
+		r.set('project_id', object_id_string);
+		r.set('task_id', object_id_string);
+	    },
+	    failure: function(response){
+		Ext.Msg.alert('Error retreiving object_id from server', 'This error may lead to data-loss for your project. Error: '+response.responseText);
+	    }
+	});
+
+	// For first task in project: Update the root
+        lastSelectedParent.set('leaf', false);						// Parent is not a leaf anymore (important for first task only)
+	lastSelectedParent.expand();							// Expand parent (important for first task in project)
 
         // Start the column editor
         selectionModel.deselectAll();
         selectionModel.select([rNode]);
         rowEditing.startEdit(rNode, 0);
+
+        me.treeRenumber();								// Update the tree's task numbering
+        me.getGanttBarPanel().needsRedraw = true;					// Force delayed redraw
     },
 
     /**
@@ -254,8 +278,8 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
             selectionModel.select(newNode);
         }
 
-	me.treeRenumber();                                                         // Update the tree's task numbering
-	me.getGanttBarPanel().needsRedraw = true;                                  // Force delayed redraw
+        me.treeRenumber();								// Update the tree's task numbering
+        me.getGanttBarPanel().needsRedraw = true;					// Force delayed redraw
     },
 
     /**
@@ -279,36 +303,36 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
      * We need to update the parent_id and sort_order of the task.
      */
     onGanttTreePanelDrop: function(node, data, overModel, dropPosition, eOpts) {
-	var me = this;
+        var me = this;
         if (me.debug) console.log('PO.controller.GanttTreePanelController.onGanttTreePanelDrop: Starting');
 
-	var records = data.records;                             // tasks dropped into new position
-	var parent = null;
+        var records = data.records; 							// tasks dropped into new position
+        var parent = null;
 
-	// Update the parent_id of the task
-	switch (dropPosition) {
-	case "before":
-	    parent = overModel.parentNode;
-	    break;
-	case "after":
-	    parent = overModel.parentNode;
-	    break;
-	case "append":
-	    parent = overModel;
-	    break;
-	default:
-	    alert("GanttTreePanelController.onGanttTreePanelDrop: Unknown dropPosition="+dropPosition);
-	    break;
-	}
-	var parent_id = parent.get('id');
-	if (null != parent_id && "" != parent_id) {
-	    records.forEach(function(record) {
-		record.set('parent_id', parent_id);
-	    });
-	}
+        // Update the parent_id of the task
+        switch (dropPosition) {
+        case "before":
+            parent = overModel.parentNode;
+            break;
+        case "after":
+            parent = overModel.parentNode;
+            break;
+        case "append":
+            parent = overModel;
+            break;
+        default:
+            alert("GanttTreePanelController.onGanttTreePanelDrop: Unknown dropPosition="+dropPosition);
+            break;
+        }
+        var parent_id = parent.get('id');
+        if (null != parent_id && "" != parent_id) {
+            records.forEach(function(record) {
+                record.set('parent_id', parent_id);
+            });
+        }
 
-	me.treeRenumber();                                                         // Update the tree's task numbering
-	me.getGanttBarPanel().needsRedraw = true;                                  // Force delayed redraw
+        me.treeRenumber();								// Update the tree's task numbering
+        me.getGanttBarPanel().needsRedraw = true;					// Force delayed redraw
 
         if (me.debug) console.log('PO.controller.GanttTreePanelController.onGanttTreePanelDrop: Finished');
     },
@@ -320,22 +344,35 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
      * drag-and-drop events.
      */
     treeRenumber: function() {
-	var me = this;
+        var me = this;
         if (me.debug) console.log('PO.controller.GanttTreePanelController.treeRenumber: Starting');
 
-	var ganttBarPanel = me.getGanttBarPanel();
+        var ganttBarPanel = me.getGanttBarPanel();
         var ganttTreePanel = me.getGanttTreePanel();
-	var taskTreeStore = ganttTreePanel.getStore();
-        var rootNode = taskTreeStore.getRootNode();                                 // Get the absolute root
-	var sortOrder = 0;
+        var taskTreeStore = ganttTreePanel.getStore();
+        var rootNode = taskTreeStore.getRootNode();					// Get the absolute root
+        var sortOrder = 0;
 
         // Iterate through all children of the root node and check if they are visible
         rootNode.cascadeBy(function(model) {
-	    var modelSortOrder = model.get('sort_order');
-	    if (""+modelSortOrder != ""+sortOrder && 0 != sortOrder) {
-		model.set('sort_order', ""+sortOrder);
-	    }
-	    sortOrder++;
+            
+            // Fix the sort_order sequence of tasks
+            var modelSortOrder = model.get('sort_order');
+            if (""+modelSortOrder != ""+sortOrder && 0 != sortOrder) {
+                model.set('sort_order', ""+sortOrder);
+            }
+
+            // Fix the parent_id reference to the tasks's parent node
+            var parent = model.parentNode;
+            if (!!parent) {
+                var parentId = ""+parent.get('id');
+                var parent_id = ""+model.get('parent_id');
+                if (parentId != parent_id && 0 != sortOrder && "root" != parentId) {
+                    model.set('parent_id', parentId);
+                }
+            }
+
+            sortOrder++;
         });
 
         if (me.debug) console.log('PO.controller.GanttTreePanelController.treeRenumber: Finished');

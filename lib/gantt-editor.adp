@@ -47,18 +47,6 @@ function launchGanttEditor(debug){
 
 
     /* ***********************************************************************
-     * State
-     *********************************************************************** */
-    // Deal with state
-    Ext.state.Manager.setProvider(new Ext.state.CookieProvider());
-/*  
-    // PreferenceStateProvider does not work yet
-    Ext.state.Manager.setProvider(new PO.class.PreferenceStateProvider({
-        url: '/intranet-gantt-editor/lib/gantt-editor'
-    }));
-*/
-
-    /* ***********************************************************************
      * Help Menu
      *********************************************************************** */
     var helpMenu = Ext.create('PO.view.menu.HelpMenu', {
@@ -644,6 +632,19 @@ Ext.onReady(function() {
     // Ext.get("@gantt_editor_id@").on('contextmenu', function(ev) { ev.preventDefault(); });  // Disable Right-click context menu on browser background
     var debug = true;
 
+
+    /* ***********************************************************************
+     * State
+     *********************************************************************** */
+    // Deal with state
+    Ext.state.Manager.setProvider(new Ext.state.CookieProvider());
+/*  
+    // PreferenceStateProvider does not work yet
+    Ext.state.Manager.setProvider(new PO.class.PreferenceStateProvider({
+        url: '/intranet-gantt-editor/lib/gantt-editor'
+    }));
+*/
+
     var taskTreeStore = Ext.create('PO.store.timesheet.TaskTreeStore');
     var senchaPreferenceStore = Ext.create('PO.store.user.SenchaPreferenceStore');
     var taskStatusStore = Ext.create('PO.store.timesheet.TaskStatusStore');
@@ -680,8 +681,12 @@ Ext.onReady(function() {
     // Load stores that need parameters
     taskTreeStore.getProxy().extraParams = { project_id: @project_id@ };
     taskTreeStore.load({
-        callback: function() {
+        callback: function(records, operation, success) {
+	    var me = this;
             if (debug) console.log('PO.store.timesheet.TaskTreeStore: loaded');
+
+	    var mainProjectNode = records[0];
+	    me.setRootNode(mainProjectNode);
         }
     });
 
