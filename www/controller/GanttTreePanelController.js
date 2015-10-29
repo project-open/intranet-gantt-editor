@@ -169,7 +169,6 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
         var root = taskTreeStore.getRootNode();
 
         rowEditing.cancelEdit();
-        taskTreeStore.sync();
         var selectionModel = ganttTreePanel.getSelectionModel();
         var lastSelected = selectionModel.getLastSelected();
         var lastSelectedParent = null;
@@ -204,9 +203,11 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
             lastSelectedParent.insertBefore(rNode, lastSelected);			// Insert into tree
         }
 
-        r.set('parent_id', parent_id);
-        r.set('percent_completed', 0);
-        r.set('planned_units', 0);
+        r.set('parent_id', ""+parent_id);
+        r.set('percent_completed', ""+0);
+        r.set('planned_units', ""+0);
+        r.set('material_id', ""+default_material_id);
+        r.set('uom_id', ""+default_uom_id);
         r.set('project_name', 'New Task');
         r.set('start_date', new Date().toISOString().substring(0,10));
         r.set('end_date', new Date(new Date().getTime() + 1000 * 3600 * 24).toISOString().substring(0,10));
@@ -229,7 +230,7 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
 	});
 
 	// For first task in project: Update the root
-        lastSelectedParent.set('leaf', false);						// Parent is not a leaf anymore (important for first task only)
+        lastSelectedParent.set('leaf', false);						// Parent is not a leaf anymore
 	lastSelectedParent.expand();							// Expand parent (important for first task in project)
 
         // Start the column editor
@@ -261,6 +262,13 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
 
         // Remove the selected element
         lastSelected.remove();
+
+	// Check if we deleted the last task of a parent.
+	// This parent then becomes a normal task again.
+	var numChildren = lastSelectedParent.childNodes.length;
+	if (0 == numChildren) {
+            lastSelectedParent.set('leaf', true);					// Parent is not a leaf anymore	    
+	}
 
         // Select the next node
         var newNode = lastSelectedParent.getChildAt(lastSelectedIndex);
@@ -383,7 +391,7 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
             sortOrder++;
         });
 
-	// Rename duplicates
+	// Rename duplicate task names
 	if (me.debug) console.log(duplicateHash);
 	Object.keys(duplicateHash).forEach(function(key) {
 	    var modelList = duplicateHash[key];

@@ -36,3 +36,7 @@ from	(
 		main_p.project_id = :project_id
 	) t
 "
+
+# Default material and Unit of Measure: "Default" and "Hour"
+set default_material_id [im_material_default_material_id]
+set default_uom_id [im_uom_hour]

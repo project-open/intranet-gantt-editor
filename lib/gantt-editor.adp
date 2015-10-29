@@ -34,6 +34,10 @@ Ext.require([
     'PO.view.menu.HelpMenu'
 ]);
 
+// Global parameters from server-side
+var default_material_id = parseInt('@default_material_id@');			// "Default" material
+var default_uom_id = parseInt('@default_uom_id@');				// "Hour" default Unit of Measure
+
 /**
  * Launch the actual editor
  * This function is called from the Store Coordinator
