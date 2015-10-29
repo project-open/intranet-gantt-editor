@@ -24,6 +24,7 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
     debug: false,
     'ganttTreePanel': null,							// Defined during initialization
     'taskTreeStore': null,							// Defined during initialization
+
     init: function() {
         var me = this;
         if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.init: Starting');
@@ -88,7 +89,7 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
         if (parentStartDate.getTime() != minStartDate.getTime()) {
             // The siblings start different than the parent - update the parent.
             if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.onStartDateChanged: Updating parent at level='+parent.getDepth());
-            parent.set('start_date', PO.Utilities.dateToPg(minStartDate));				// This will call this event recursively
+            parent.set('start_date', PO.Utilities.dateToPg(minStartDate));	// This will call this event recursively
         }
         if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.onStartDateChanged: Finished');
     },
@@ -121,7 +122,7 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
         if (parentEndDate.getTime() != maxEndDate.getTime()) {
             // The siblings end different than the parent - update the parent.
             if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.onEndDateChanged: Updating parent at level='+parent.getDepth());
-            parent.set('end_date', PO.Utilities.dateToPg(maxEndDate));					// This will call this event recursively
+            parent.set('end_date', PO.Utilities.dateToPg(maxEndDate));		// This will call this event recursively
         }
         if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.onEndDateChanged: Finished');
     },

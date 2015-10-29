@@ -213,25 +213,26 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
         r.set('end_date', new Date(new Date().getTime() + 1000 * 3600 * 24).toISOString().substring(0,10));
         r.set('assignees', "");
 
-	// Get a server-side object_id for the task
-	Ext.Ajax.request({
-	    url: '/intranet-rest/data-source/next-object-id',
-	    success: function(response){
-		var json = Ext.JSON.decode(response.responseText);
-		var object_id_string = json.data.object_id;
-		var object_id = parseInt(object_id_string);
-		r.set('id', object_id);
-		r.set('project_id', object_id_string);
-		r.set('task_id', object_id_string);
-	    },
-	    failure: function(response){
-		Ext.Msg.alert('Error retreiving object_id from server', 'This error may lead to data-loss for your project. Error: '+response.responseText);
-	    }
-	});
+        // Get a server-side object_id for the task
+        Ext.Ajax.request({
+            url: '/intranet-rest/data-source/next-object-id',
+            success: function(response){
+                var json = Ext.JSON.decode(response.responseText);
+                var object_id_string = json.data.object_id;
+                var object_id = parseInt(object_id_string);
+                r.set('id', object_id);
+                r.set('project_id', object_id_string);
+                r.set('task_id', object_id_string);
+            },
+            failure: function(response){
+                Ext.Msg.alert('Error retreiving object_id from server', 
+                              'This error may lead to data-loss for your project. Error: '+response.responseText);
+            }
+        });
 
-	// For first task in project: Update the root
+        // For first task in project: Update the root
         lastSelectedParent.set('leaf', false);						// Parent is not a leaf anymore
-	lastSelectedParent.expand();							// Expand parent (important for first task in project)
+        lastSelectedParent.expand();							// Expand parent if not yet expanded
 
         // Start the column editor
         selectionModel.deselectAll();
@@ -263,12 +264,12 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
         // Remove the selected element
         lastSelected.remove();
 
-	// Check if we deleted the last task of a parent.
-	// This parent then becomes a normal task again.
-	var numChildren = lastSelectedParent.childNodes.length;
-	if (0 == numChildren) {
+        // Check if we deleted the last task of a parent.
+        // This parent then becomes a normal task again.
+        var numChildren = lastSelectedParent.childNodes.length;
+        if (0 == numChildren) {
             lastSelectedParent.set('leaf', true);					// Parent is not a leaf anymore	    
-	}
+        }
 
         // Select the next node
         var newNode = lastSelectedParent.getChildAt(lastSelectedIndex);
@@ -360,17 +361,17 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
         var taskTreeStore = ganttTreePanel.getStore();
         var rootNode = taskTreeStore.getRootNode();					// Get the absolute root
         var sortOrder = 0;
-	var duplicateHash = {};
+        var duplicateHash = {};
 
         // Iterate through all children of the root node and check if they are visible
         rootNode.cascadeBy(function(model) {
             
-	    // Check for duplicates
-	    var name = "" + (model.get('project_name').replace(/\([0-9]+\)/, '')).trim();
-	    var id = model.get('id');
-	    var list = duplicateHash[name] || [];
-	    list.push(model);
-	    duplicateHash[name] = list;
+            // Check for duplicates
+            var name = "" + (model.get('project_name').replace(/\([0-9]+\)/, '')).trim();
+            var id = model.get('id');
+            var list = duplicateHash[name] || [];
+            list.push(model);
+            duplicateHash[name] = list;
 
             // Fix the sort_order sequence of tasks
             var modelSortOrder = model.get('sort_order');
@@ -391,17 +392,17 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
             sortOrder++;
         });
 
-	// Rename duplicate task names
-	if (me.debug) console.log(duplicateHash);
-	Object.keys(duplicateHash).forEach(function(key) {
-	    var modelList = duplicateHash[key];
-	    if (modelList.length > 1) {
-		// Rename the items
-		for (var i = 0; i < modelList.length; i++) {
-		    modelList[i].set('project_name', key+" ("+ (i+1) +")");
-		}
-	    }
-	});
+        // Rename duplicate task names
+        if (me.debug) console.log(duplicateHash);
+        Object.keys(duplicateHash).forEach(function(key) {
+            var modelList = duplicateHash[key];
+            if (modelList.length > 1) {
+                // Rename the items
+                for (var i = 0; i < modelList.length; i++) {
+                    modelList[i].set('project_name', key+" ("+ (i+1) +")");
+                }
+            }
+        });
 
 
         if (me.debug) console.log('PO.controller.GanttTreePanelController.treeRenumber: Finished');

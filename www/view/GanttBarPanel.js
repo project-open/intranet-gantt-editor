@@ -94,7 +94,6 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
 	    if ('expanded' in mod) { return; }
 	}
 
-	// me.redraw();
         me.needsRedraw = true;
 
         if (me.debug) console.log('PO.view.gantt.GanttBarPanel.onObjectStoreDataChanged: Finished');
@@ -116,10 +115,7 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
     onProjectGridSortChange: function(headerContainer, column, direction, eOpts) {
         var me = this;
         if (me.debug) console.log('PO.view.gantt.GanttBarPanel.onProjectGridSortChange: Starting');
-
-        // me.redraw();
         me.needsRedraw = true;
-
         if (me.debug) console.log('PO.view.gantt.GanttBarPanel.onProjectGridSortChange: Finished');
     },
 
@@ -168,19 +164,17 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
                         var succModel = me.taskModelHash[succId];	// Dependencies are stored as succModel.predecessors
 
                         var predecessors = succModel.get('predecessors');
-                	var orgPredecessorsLen = predecessors.length
+                        var orgPredecessorsLen = predecessors.length
                         for (i = 0; i < predecessors.length; i++) {
                             var el = predecessors[i];
                             if (el.pred_id == predId) {
-                        	predecessors.splice(i,1);
+                                predecessors.splice(i,1);
                             }
                         }
                         succModel.set('predecessors',predecessors);
-                	if (predecessors.length != orgPredecessorsLen) {
-                	    // me.redraw();
+                        if (predecessors.length != orgPredecessorsLen) {
 			    me.needsRedraw = true;
-
-                	}
+                        }
                     }
                 }]
             });
@@ -238,7 +232,6 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
 	    'end_date': PO.Utilities.dateToPg(newEndDate)
 	});
 
-        // me.redraw();
         me.needsRedraw = true;
 
         if (me.debug) console.log('PO.view.gantt.GanttBarPanel.onProjectMove: Finished');
@@ -268,7 +261,6 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
         var endDate = new Date(endTime);
         projectModel.set('end_date', PO.Utilities.dateToPg(endDate));
 
-        // me.redraw();
         me.needsRedraw = true;
 
         if (me.debug) console.log('PO.view.gantt.GanttBarPanel.onProjectResize: Finished');
@@ -293,10 +285,7 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
         if (percent > 100.0) percent = 100;
         if (percent < 0) percent = 0;
         projectModel.set('percent_completed', ""+percent);			// Write to project model and update tree via events
-
-        // me.redraw();			      					// redraw the entire Gantt editor surface. ToDo: optimize
-        me.needsRedraw = true;
-
+        me.needsRedraw = true;		      					// redraw the entire Gantt editor surface.
         if (me.debug) console.log('PO.view.gantt.GanttBarPanel.onProjectPercentResize: Finished');
     },
 
@@ -331,7 +320,6 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
         dependencies.push(dependency);
         toTaskModel.set('predecessors', dependencies);
 
-        // me.redraw();
         me.needsRedraw = true;
 
         if (me.debug) console.log('GanttEditor.view.GanttBarPanel.onCreateDependency: Finished');

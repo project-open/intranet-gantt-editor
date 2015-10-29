@@ -82,10 +82,6 @@ function launchGanttEditor(debug){
     var configMenuOnItemCheck = function(item, checked){
         if (me.debug) console.log('configMenuOnItemCheck: item.id='+item.id);
         senchaPreferenceStore.setPreference('@page_url@', item.id, checked);
-
-	// !!! Why portfolio planner???
-        portfolioPlannerProjectPanel.redraw();
-        portfolioPlannerCostCenterPanel.redraw();
     }
 
     var configMenu = Ext.create('Ext.menu.Menu', {
@@ -137,18 +133,12 @@ function launchGanttEditor(debug){
 
 
 
-
-
     /* ***********************************************************************
      * Scheduling Menu
      *********************************************************************** */
     var schedulingMenuOnItemCheck = function(item, checked){
         if (me.debug) console.log('schedulingMenuOnItemCheck: item.id='+item.id);
         senchaPreferenceStore.setPreference('@page_url@', item.id, checked);
-
-	// !!! Why portfolio planner???
-        portfolioPlannerProjectPanel.redraw();
-        portfolioPlannerCostCenterPanel.redraw();
     }
 
     var schedulingMenu = Ext.create('Ext.menu.Menu', {
@@ -156,26 +146,26 @@ function launchGanttEditor(debug){
         debug: debug,
         style: {overflow: 'visible'},						// For the Combo popup
         items: [{
-	    xtype: 'menucheckitem',
+            xtype: 'menucheckitem',
             text: 'Manual Scheduling',
-	    checked: true,
+            checked: true,
             handler: function(a,b,c) {
-		if (this.checked) { return; }
-		this.setChecked(true);
-	    }
+                if (this.checked) { return; }
+                this.setChecked(true);
+            }
         }, {
-	    xtype: 'menucheckitem',
+            xtype: 'menucheckitem',
             text: 'Single-Project Scheduling',
-	    disabled: true,
-	    checked: false,
+            disabled: true,
+            checked: false,
             handler: function() { }
         }, {
-	    xtype: 'menucheckitem',
+            xtype: 'menucheckitem',
             text: 'Multi-Project Scheduling',
-	    disabled: true,
-	    checked: false,
+            disabled: true,
+            checked: false,
             handler: function() { }
-	}]
+        }]
     });
 
 
@@ -240,12 +230,12 @@ function launchGanttEditor(debug){
                 icon: '/intranet/images/navbar_default/link_add.png',
                 tooltip: 'Add dependency',
                 id: 'buttonAddDependency',
-		hidden: true
+                hidden: true
             }, {
                 icon: '/intranet/images/navbar_default/link_break.png',
                 tooltip: 'Break dependency',
                 id: 'buttonBreakDependency',
-		hidden: true
+                hidden: true
             }, '->', {
                 icon: '/intranet/images/navbar_default/zoom_in.png',
                 tooltip: 'Zoom in time axis',
@@ -304,8 +294,6 @@ function launchGanttEditor(debug){
                 '#buttonMinimize': { click: this.onButtonMinimize },
                 '#buttonAddDependency': { click: this.onButton },
                 '#buttonBreakDependency': { click: this.onButton },
-//                '#buttonZoomIn': { click: this.onZoomIn },
-//                '#buttonZoomOut': { click: this.onZoomOut },
                 '#buttonSettings': { click: this.onButton },
                 scope: me.ganttTreePanel
             });
@@ -319,8 +307,6 @@ function launchGanttEditor(debug){
             // Listen to special keys
             me.ganttTreePanel.on('cellkeydown', this.onCellKeyDown, me.ganttTreePanel);
             me.ganttTreePanel.on('beforecellkeydown', this.onBeforeCellKeyDown, me.ganttTreePanel);
-
-
 
             // Listen to vertical scroll events 
             var view = me.ganttTreePanel.getView();
@@ -383,8 +369,8 @@ function launchGanttEditor(debug){
 
             // fraber 150730: Disabled. This will probably cause trouble
             // However, we need to add the redraws() at the topmost level.
-	    // fraber 151027: Replaced by a needsRedraw flag handled by 
-	    // onIdle event
+            // fraber 151027: Replaced by a needsRedraw flag handled by 
+            // onIdle event
             me.ganttBarPanel.needsRedraw = true;
         },
 
@@ -529,7 +515,7 @@ function launchGanttEditor(debug){
         store: taskTreeStore
     });
     var ganttTreePanelController = Ext.create('GanttEditor.controller.GanttTreePanelController', {
-	ganttTreePanel: ganttTreePanel,
+        ganttTreePanel: ganttTreePanel,
         debug: debug
     });
     ganttTreePanelController.init(this);
@@ -607,7 +593,7 @@ function launchGanttEditor(debug){
     var ganttSchedulingController = Ext.create('GanttEditor.controller.GanttSchedulingController', {
         debug: debug,
         'taskTreeStore': taskTreeStore,
-	'ganttBarPanel': ganttBarPanel,
+        'ganttBarPanel': ganttBarPanel,
         'ganttTreePanel': ganttTreePanel
     });
     ganttSchedulingController.init(this).onLaunch(this);
@@ -686,11 +672,11 @@ Ext.onReady(function() {
     taskTreeStore.getProxy().extraParams = { project_id: @project_id@ };
     taskTreeStore.load({
         callback: function(records, operation, success) {
-	    var me = this;
+            var me = this;
             if (debug) console.log('PO.store.timesheet.TaskTreeStore: loaded');
 
-	    var mainProjectNode = records[0];
-	    me.setRootNode(mainProjectNode);
+            var mainProjectNode = records[0];
+            me.setRootNode(mainProjectNode);
         }
     });
 
