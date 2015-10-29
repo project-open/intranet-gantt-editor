@@ -108,11 +108,11 @@ function launchGanttEditor(debug){
         fields: ['key', 'text', 'def'],
         data : [
             {key: 'show_project_dependencies', text: 'Show Project Dependencies', def: true},
-            {key: 'show_project_resource_load', text: 'Show Project Assigned Resources', def: true},
-            {key: 'show_dept_assigned_resources', text: 'Show Department Assigned Resources', def: true},
-            {key: 'show_dept_available_resources', text: 'Show Department Available Resources', def: false},
-            {key: 'show_dept_percent_work_load', text: 'Show Department % Work Load', def: true},
-            {key: 'show_dept_accumulated_overload', text: 'Show Department Accumulated Overload', def: false}
+            {key: 'show_project_resource_load', text: 'Show Project Assigned Resources', def: true}
+//            {key: 'show_dept_assigned_resources', text: 'Show Department Assigned Resources', def: true},
+//            {key: 'show_dept_available_resources', text: 'Show Department Available Resources', def: false},
+//            {key: 'show_dept_percent_work_load', text: 'Show Department % Work Load', def: true},
+//            {key: 'show_dept_accumulated_overload', text: 'Show Department Accumulated Overload', def: false}
         ]
     });
     confSetupStore.each(function(model) {
