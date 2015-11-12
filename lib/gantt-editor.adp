@@ -20,6 +20,7 @@ Ext.require([
     'PO.controller.ResizeController',
     'PO.model.timesheet.TimesheetTask',
     'PO.store.CategoryStore',
+    'PO.store.group.GroupStore',
     'PO.store.timesheet.TaskTreeStore',
     'PO.store.timesheet.TaskStatusStore',
     'PO.store.user.SenchaPreferenceStore',
@@ -640,6 +641,7 @@ Ext.onReady(function() {
     var taskStatusStore = Ext.create('PO.store.timesheet.TaskStatusStore');
     var projectMemberStore = Ext.create('PO.store.user.UserStore', {storeId: 'projectMemberStore'});
     var userStore = Ext.create('PO.store.user.UserStore', {storeId: 'userStore'});
+    var groupStore = Ext.create('PO.store.group.GroupStore', {storeId: 'groupStore'});
 
     // Store Coodinator starts app after all stores have been loaded:
     var coordinator = Ext.create('PO.controller.StoreLoadCoordinator', {
@@ -648,7 +650,8 @@ Ext.onReady(function() {
             'taskTreeStore',
             'taskStatusStore',
             'senchaPreferenceStore',
-            'projectMemberStore'
+            'projectMemberStore',
+            'groupStore'
         ],
         listeners: {
             load: function() {
@@ -661,10 +664,25 @@ Ext.onReady(function() {
 
     taskStatusStore.load();
 
-    // Get the list of users assigned to this project
+    groupStore.load({								// Just the list of groups
+        callback: function() {
+            if (debug) console.log('PO.store.group.GroupStore: loaded');
+        }
+    });
+
+    // Get the list of users assigned to the main project
+    // or any of it's tasks or tickets
     projectMemberStore.getProxy().extraParams = { 
         format: 'json',
-        query: 'user_id in (select object_id_two from acs_rels where object_id_one = @project_id@)'
+        query: "user_id in (					\
+		select	r.object_id_two				\
+		from	acs_rels r,				\
+			im_projects main_p,			\
+			im_projects sub_p			\
+		where	main_p.project_id = @project_id@ and	\
+			sub_p.tree_sortkey between main_p.tree_sortkey and tree_right(main_p.tree_sortkey) and \
+			r.object_id_one = sub_p.project_id	\
+	)"
     };
     projectMemberStore.load();
 
