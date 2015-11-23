@@ -19,7 +19,7 @@ set data_list {}
 set main_project_id $project_id
 
 # Create a random ID for the task_editor
-set task_editor_rand [expr round(rand() * 100000000.0)]
+set task_editor_rand [expr {round(rand() * 100000000.0)}]
 set task_editor_id "task_editor_$task_editor_rand"
 
 
