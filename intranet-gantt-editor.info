@@ -10,7 +10,7 @@
     <inherit-templates-p>f</inherit-templates-p>
     <auto-mount>intranet-gantt-editor</auto-mount>
 
-    <version name="0.1d" url="http://openacs.org/repository/download/apm/intranet-gantt-editor-0.1d.apm">
+    <version name="5.0.0.0.0" url="http://www.project-open.org/download/apm/intranet-gantt-editor-5.0.0.0.0.apm">
         <owner url="mailto:frank.bergmann@project-open.com">Frank Bergmann</owner>
         <summary>Gantt editor</summary>
         <vendor url="http://www.project-open.com/">]project-open[</vendor>
