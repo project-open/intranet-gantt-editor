@@ -16,8 +16,8 @@ Ext.require([
     'GanttEditor.view.GanttBarPanel',
     'PO.Utilities',
     'PO.class.PreferenceStateProvider',
-    'PO.controller.StoreLoadCoordinator',
     'PO.controller.ResizeController',
+    'PO.controller.StoreLoadCoordinator',
     'PO.model.timesheet.TimesheetTask',
     'PO.store.CategoryStore',
     'PO.store.group.GroupStore',
@@ -50,6 +50,7 @@ function launchGanttEditor(debug){
     var senchaPreferenceStore = Ext.StoreManager.get('senchaPreferenceStore');
     var oneDayMiliseconds = 24 * 3600 * 1000;
 
+    var renderDiv = Ext.get("@gantt_editor_id@");
 
     /* ***********************************************************************
      * Help Menu
@@ -380,57 +381,19 @@ function launchGanttEditor(debug){
          * it fills the entire browser screen.
          */
         onButtonMaximize: function() {
-            var me = this;
-            if (me.debug) console.log('GanttButtonController.onButtonMaximize');
             var buttonMaximize = Ext.getCmp('buttonMaximize');
             var buttonMinimize = Ext.getCmp('buttonMinimize');
             buttonMaximize.setVisible(false);
             buttonMinimize.setVisible(true);
-
-            var renderDiv = Ext.get("@gantt_editor_id@");
-            renderDiv.setWidth('100%');
-            renderDiv.setHeight('100%');
-            renderDiv.applyStyles({ 
-                'position':'absolute',
-                'z-index': '2000',
-                'left': '0',
-                'top': '0'
-            });
-          
-            // Disable the "resizable" properties of the outer panel
-            me.ganttPanelContainer.resizer.resizeTracker.disable();
-
-            // Disable scrolling in the browser
-            document.documentElement.style.overflow = 'hidden';			// firefox, chrome
-            document.body.scroll = "no";	      				// ie only
-      
-            resizeController.onSwitchToFullScreen();
+            resizeController.onSwitchToFullScreen(renderDiv);
         },
 
         onButtonMinimize: function() {
-            var me = this;
-            if (me.debug) console.log('GanttButtonController.onButtonMinimize');
             var buttonMaximize = Ext.getCmp('buttonMaximize');
             var buttonMinimize = Ext.getCmp('buttonMinimize');
             buttonMaximize.setVisible(true);
             buttonMinimize.setVisible(false);
-
-            var renderDiv = Ext.get("@gantt_editor_id@");
-            renderDiv.setWidth('auto');
-            renderDiv.setHeight('auto');
-            renderDiv.applyStyles({
-                'position':'relative',
-                'z-index': '0',
-            });
-
-            // Re-enable the "resizable" properties of the outer panel
-            me.ganttPanelContainer.resizer.resizeTracker.enable();
-
-            // Disable scrolling in the browser
-            document.documentElement.style.overflow = 'auto';			// firefox, chrome
-            document.body.scroll = "yes";	      				// ie only
-
-            resizeController.onSwitchBackFromFullScreen();
+            resizeController.onSwitchBackFromFullScreen(renderDiv);
         },
 
         onZoomIn: function() {
@@ -568,17 +531,14 @@ function launchGanttEditor(debug){
         'ganttPanelContainer': ganttPanelContainer,
         'ganttTreePanel': ganttTreePanel,
         'ganttBarPanel': ganttBarPanel,
-        'taskTreeStore': taskTreeStore,
-        'ganttPanelContainer': ganttPanelContainer
+        'taskTreeStore': taskTreeStore
     });
     ganttButtonController.init(this).onLaunch(this);
 
     // Contoller to handle size and resizing related events
     var resizeController = Ext.create('PO.controller.ResizeController', {
         debug: debug,
-        'ganttPanelContainer': ganttPanelContainer,
-        'ganttTreePanel': ganttTreePanel,
-        'ganttBarPanel': ganttBarPanel
+        'outerContainer': ganttPanelContainer
     });
     resizeController.init(this).onLaunch(this);
     resizeController.onResize();						// Set the size of the outer GanttButton Panel
@@ -599,15 +559,6 @@ function launchGanttEditor(debug){
     });
     ganttSchedulingController.init(this).onLaunch(this);
 
-    /*
-    // Open the TaskPropertyPanel in order to speedup debugging
-    var root = taskTreeStore.getRootNode();
-    var mainProject = root.childNodes[0];
-    var firstTask = mainProject.childNodes[1];
-    taskPropertyPanel.setValue(firstTask);
-    taskPropertyPanel.setActiveTab('taskPropertyAssignments');
-    taskPropertyPanel.show();
-    */
 };
 
 
@@ -620,22 +571,13 @@ function launchGanttEditor(debug){
 Ext.onReady(function() {
     Ext.QuickTips.init();							// No idea why this is necessary, but it is...
     Ext.getDoc().on('contextmenu', function(ev) { ev.preventDefault(); });  // Disable Right-click context menu on browser background
-    // Ext.get("@gantt_editor_id@").on('contextmenu', function(ev) { ev.preventDefault(); });  // Disable Right-click context menu on browser background
     var debug = true;
-
 
     /* ***********************************************************************
      * State
      *********************************************************************** */
     // Deal with state
     Ext.state.Manager.setProvider(new Ext.state.CookieProvider());
-/*  
-    // PreferenceStateProvider does not work yet
-    Ext.state.Manager.setProvider(new PO.class.PreferenceStateProvider({
-        url: '/intranet-gantt-editor/lib/gantt-editor'
-    }));
-*/
-
     var taskTreeStore = Ext.create('PO.store.timesheet.TaskTreeStore');
     var senchaPreferenceStore = Ext.create('PO.store.user.SenchaPreferenceStore');
     var taskStatusStore = Ext.create('PO.store.timesheet.TaskStatusStore');
