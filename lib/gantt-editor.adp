@@ -72,6 +72,7 @@ function launchGanttEditor(debug){
      *********************************************************************** */
     var alphaMenu = Ext.create('PO.view.menu.AlphaMenu', {
         id: 'alphaMenu',
+	alphaComponent: 'Gantt Editor',
         debug: debug,
         style: {overflow: 'visible'},						// For the Combo popup
         slaId: 1478943,					                	// ID of the ]po[ "PD Gantt Editor" project
