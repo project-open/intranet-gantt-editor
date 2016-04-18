@@ -178,8 +178,6 @@ function launchGanttEditor(debug){
     Ext.define('PO.view.gantt_editor.GanttButtonPanel', {
         extend: 'Ext.panel.Panel',
         alias: 'ganttPanelContainer',
-        width: 900,
-        height: 500,
         layout: 'border',
         defaults: {
             collapsible: true,
