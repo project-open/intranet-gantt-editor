@@ -11,7 +11,7 @@ Ext.require([
     'Ext.tree.*',
     'Ext.ux.CheckColumn',
     'GanttEditor.controller.GanttTreePanelController',
-    'GanttEditor.controller.GanttBarPanelController',
+    'GanttEditor.controller.GanttZoomController',
     'GanttEditor.controller.GanttSchedulingController',
     'GanttEditor.view.GanttBarPanel',
     'PO.Utilities',
@@ -396,11 +396,13 @@ function launchGanttEditor(debug){
         },
 
         onZoomIn: function() {
+	    alert('GanttButtonController.onZoomIn: ToDo: remove');
             if (me.debug) console.log('GanttButtonController.onZoomIn');
             this.ganttBarPanel.onZoomIn();
         },
 
         onZoomOut: function() {
+	    alert('GanttButtonController.onZoomOut: ToDo: remove');
             if (me.debug) console.log('GanttButtonController.onZoomOut');
             this.ganttBarPanel.onZoomOut();
         },
@@ -508,10 +510,6 @@ function launchGanttEditor(debug){
             {id:'gradientId2', angle:0, stops:{0:{color:'#590'}, 20:{color:'#599'}, 100:{color:'#ddd'}}}
         ]
     });
-    var ganttBarPanelController = Ext.create('GanttEditor.controller.GanttBarPanelController', {
-        debug: debug
-    });
-    ganttBarPanelController.init(this);
 
     // Outer Gantt editor jointing the two parts (TreePanel + Draw)
     var ganttPanelContainer = Ext.create('PO.view.gantt_editor.GanttButtonPanel', {
@@ -541,6 +539,13 @@ function launchGanttEditor(debug){
     });
     resizeController.init(this).onLaunch(this);
     resizeController.onResize();						// Set the size of the outer GanttButton Panel
+
+    // Controller for zoom in/out
+    var ganttZoomController = Ext.create('GanttEditor.controller.GanttZoomController', {
+        debug: debug
+    });
+    ganttZoomController.init(this);
+    ganttZoomController.onButtonZoomCenter();					// ToDo: Remember the user's position. Meanwhile center...
 
     // Create the panel showing properties of a task,
     // but don't show it yet.

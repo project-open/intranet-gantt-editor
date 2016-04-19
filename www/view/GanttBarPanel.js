@@ -319,8 +319,10 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
             diff: 0.0
         };
         var dependencies = toTaskModel.get('predecessors');
+	if ("" == dependencies) { dependencies = []; }
         dependencies.push(dependency);
         toTaskModel.set('predecessors', dependencies);
+	toTaskModel.setDirty();							// above just modified array, so we need to notify
 
         me.needsRedraw = true;
 
@@ -662,24 +664,24 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
         endX = toBBox.x + s;
 
 	// Horizontal: left to right or inverse
-        if (endX >= startX) { 
+        if (toBBox.x  >= fromBBox.x) { 
 	    // "normal" dependencies from left to right
             color = '#222';
             startX = fromBBox.x + fromBBox.width;				// End-to-start dep starts at the right side of the fromBBox
 	} else {
 	    // "inverse" dependency drawn in red
 	    color = 'red'; 
-            startX = fromBBox.x;				// Inverse dep starts at the left side of the fromBBox
+            startX = fromBBox.x;						// Inverse dep starts at the left side of the fromBBox
 	}
 
 	// Vertical: Top to down, or inverse
-	if (endY >= startY) {
+	if (toBBox.y >= fromBBox.y) {
 	    // "normal" dependency from a task higher up to a task further down
             endY = toBBox.y;
 	} else {
 	    // "inverse" dependency from a lower task to a task higher up
             endY = toBBox.y + toBBox.height;
-	    s = -s;
+	    s = -s;								// Draw the dependency arrow from bottom to top
 	}
 
         // Draw the main connection line between start and end.
@@ -688,7 +690,7 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
             stroke: color,
             'shape-rendering': 'crispy-edges',
             'stroke-width': 0.5,
-            zIndex: -100,                                 // -100
+            zIndex: -100,							// -100
             path: 'M '+ (startX)    + ', ' + (startY)
                 + 'L '+ (endX)      + ', ' + (startY)
                 + 'L '+ (endX)      + ', ' + (endY)
@@ -702,8 +704,8 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
             stroke: color,
             fill: color,
             'stroke-width': 0.5,
-            zIndex: 1000,                              // -100
-            path: 'M '+ (endX)   + ', ' + (endY)					// Point of arrow head
+            zIndex: -100,							// -100
+            path: 'M '+ (endX)   + ', ' + (endY)				// Point of arrow head
                 + 'L '+ (endX-s) + ', ' + (endY-s)
                 + 'L '+ (endX+s) + ', ' + (endY-s)
                 + 'L '+ (endX)   + ', ' + (endY)

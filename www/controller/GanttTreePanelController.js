@@ -110,21 +110,21 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
 
         var prevNode = lastSelectedParent.getChildAt(prevNodeIndex);
 
-        // Remove the item from the tree
+        // Add the item as a child of the prevNode
         prevNode.set('leaf', false);
         prevNode.appendChild(lastSelected);						// Add to the previous node as a child
         prevNode.expand();
+	var prevNodeId = ""+prevNode.get('id');
+
+	// Set the parent_id of the indented item
+	lastSelected.set('parent_id', prevNodeId);					// This should trigger a Gantt re-schedule
 
         ganttTreePanel.getView().focusNode(lastSelected);				// Focus back on the task for keyboard commands
 
-//	lastSelected.set('parent_id', prevNode.get('id'));				// Set the parent_id of the indented task
-
         me.treeRenumber(); 								// Update the tree's task numbering
         me.getGanttBarPanel().needsRedraw = true;					// Force delayed redraw
+	// ToDo: Re-schedule the tree
 
-        // ToDo: It seems the TreePanel looses focus here
-        // selectionModel.select(lastSelected);
-        // selectionModel.setLastFocused(lastSelected);
     },
 
     /**

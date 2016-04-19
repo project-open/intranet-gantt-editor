@@ -52,6 +52,15 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
                 case "end_date":
                     me.onEndDateChanged(treeStore, model, operation, event);
                     break;
+                case "parent_id":
+		    // Task has new parent - indentation or un-indentation
+                    me.onStartDateChanged(treeStore, model, operation, event);
+                    me.onEndDateChanged(treeStore, model, operation, event);
+                    break;
+                case "leaf":
+		    // A task has changed from leaf to tree or reverse:
+		    // Don't do anything, this is handled with the "parent_id" field anyway
+                    break;
                 }
             });
         }
