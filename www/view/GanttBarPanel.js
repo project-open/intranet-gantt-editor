@@ -161,7 +161,8 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
                         if (me.debug) console.log('dependencyContextMenu.deleteDependency: ');
                         var predId = dependencyModel.pred_id;
                         var succId = dependencyModel.succ_id;
-                        var succModel = me.taskModelHash[succId];	// Dependencies are stored as succModel.predecessors
+                        var predModel = me.taskModelHash[predId];		// This should be empty!!
+                        var succModel = me.taskModelHash[succId];		// Dependencies are stored as succModel.predecessors
 
                         var predecessors = succModel.get('predecessors');
                         var orgPredecessorsLen = predecessors.length
@@ -172,6 +173,7 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
                             }
                         }
                         succModel.set('predecessors',predecessors);
+			succModel.setDirty();					// set('...', Object) may not set dirty if same object...
                         if (predecessors.length != orgPredecessorsLen) {
 			    me.needsRedraw = true;
                         }
@@ -644,6 +646,7 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
      */
     drawDependencyMsp: function(dependencyModel, tooltipHtml) {
         var me = this;
+	var s, color, startX, startY, endX, endY;
 
         var fromId = dependencyModel.pred_id;
         var fromBBox = me.taskBBoxHash[fromId];					// We start drawing with the end of the first bar...
@@ -654,15 +657,30 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
         var toModel = me.taskModelHash[toId]
         if (!fromBBox || !toBBox) { return; }
 
-        var s = me.arrowheadSize;
-        var startX = fromBBox.x + fromBBox.width;				// End-to-start dependencies from a earlier task to a later task
-        var startY = fromBBox.y + fromBBox.height/2;
-        var endX = toBBox.x + s;
-        var endY = toBBox.y;
+        s = me.arrowheadSize;
+        startY = fromBBox.y + fromBBox.height/2;
+        endX = toBBox.x + s;
 
-        // Color: Arrows are black if dependencies are OK, or red otherwise
-        var color = '#222';
-        if (endX < startX) { color = 'red'; }
+	// Horizontal: left to right or inverse
+        if (endX >= startX) { 
+	    // "normal" dependencies from left to right
+            color = '#222';
+            startX = fromBBox.x + fromBBox.width;				// End-to-start dep starts at the right side of the fromBBox
+	} else {
+	    // "inverse" dependency drawn in red
+	    color = 'red'; 
+            startX = fromBBox.x;				// Inverse dep starts at the left side of the fromBBox
+	}
+
+	// Vertical: Top to down, or inverse
+	if (endY >= startY) {
+	    // "normal" dependency from a task higher up to a task further down
+            endY = toBBox.y;
+	} else {
+	    // "inverse" dependency from a lower task to a task higher up
+            endY = toBBox.y + toBBox.height;
+	    s = -s;
+	}
 
         // Draw the main connection line between start and end.
         var arrowLine = me.surface.add({
@@ -670,7 +688,7 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
             stroke: color,
             'shape-rendering': 'crispy-edges',
             'stroke-width': 0.5,
-            zIndex: -100,
+            zIndex: -100,                                 // -100
             path: 'M '+ (startX)    + ', ' + (startY)
                 + 'L '+ (endX)      + ', ' + (startY)
                 + 'L '+ (endX)      + ', ' + (endY)
@@ -678,14 +696,13 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
         arrowLine.dependencyModel = dependencyModel;
         Ext.create("Ext.tip.ToolTip", { target: arrowLine.el, width: 250, html: tooltipHtml, hideDelay: 1000 });
 
-
         // Draw the arrow head (filled)
         var arrowHead = me.surface.add({
             type: 'path',
             stroke: color,
             fill: color,
             'stroke-width': 0.5,
-            zIndex: -100,
+            zIndex: 1000,                              // -100
             path: 'M '+ (endX)   + ', ' + (endY)					// Point of arrow head
                 + 'L '+ (endX-s) + ', ' + (endY-s)
                 + 'L '+ (endX+s) + ', ' + (endY-s)
@@ -693,6 +710,7 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
         }).show(true);
         arrowHead.dependencyModel = dependencyModel;
         Ext.create("Ext.tip.ToolTip", { target: arrowHead.el, width: 250, html: tooltipHtml, hideDelay: 1000 });
+
 
         if (me.debug) console.log('GanttEditor.view.GanttBarPanel.drawTaskDependency: Finished');
         return;
