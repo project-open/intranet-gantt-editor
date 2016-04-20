@@ -545,7 +545,7 @@ function launchGanttEditor(debug){
         debug: debug
     });
     ganttZoomController.init(this);
-    ganttZoomController.onButtonZoomCenter();					// ToDo: Remember the user's position. Meanwhile center...
+    ganttZoomController.zoomOnProject();					// ToDo: Remember the user's position. Meanwhile center...
 
     // Create the panel showing properties of a task,
     // but don't show it yet.

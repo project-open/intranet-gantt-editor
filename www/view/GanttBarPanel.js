@@ -9,8 +9,8 @@
 
 /**
  * Gantt panel for GanttEditor, displaying the list of 
- * task of a single project.
- * Relies on GanttTreePanel for the Y position of the bars.
+ * Gantt task of a single project.
+ * Relies on GanttTreePanel for the Y position of the Gantt bars.
  */
 Ext.define('GanttEditor.view.GanttBarPanel', {
     extend: 'PO.view.gantt.AbstractGanttPanel',

@@ -106,9 +106,6 @@ Ext.define('GanttEditor.controller.GanttZoomController', {
         
         ganttBarPanel.axisStartDate = new Date(axisStartTime - diff);
         ganttBarPanel.axisEndDate = new Date(axisEndTime + diff);
-        // ganttBarPanel.axisEndX = Math.round(axisEndX / zoomFactor);
-
-        me.onButtonZoomCenter();					// Center the project
 
         // Redraw before passing control back to the browser
         me.getGanttBarPanel().needsRedraw = true;
@@ -117,60 +114,91 @@ Ext.define('GanttEditor.controller.GanttZoomController', {
     },
 
     /**
-     * Zoom Center
-     * Set the scroll bar so that the currently selected task
-     * (or the main task if no task is selected) is shown in 
-     * the middle of the GanttBarPanel.
+     * Zoom towards a task selected by the user.
+     * Set the scroll bar so that the task is shown in 
+     * the middle of the GanttBarPanel, but don't zoom
+     * in or out.
      */
-    onButtonZoomCenter: function() {
-	var startTime, endTime, startX, endX, midX;
+    zoomOnSelectedTask: function(selectedTask) {
         var me = this;
-        if (me.debug) console.log('GanttEditor.controller.GanttZoomController.onButtonZoomCenter: Starting');
+        if (me.debug) console.log('GanttEditor.controller.GanttZoomController.zoomOnSelectedTask: Starting');
+
+        var ganttBarPanel = me.getGanttBarPanel();
+        var ganttTreePanel = me.getGanttTreePanel();
+        var taskTreeStore = ganttTreePanel.getStore();
+
+        // Calculate the "midX" X-coordinate of the middle of the current task
+        var start_date = selectedTask.get('start_date');
+        var end_date = selectedTask.get('end_date');
+        if ("" == start_date || "" == end_date) return;     // Skip if there are issues with start or end_date
+        
+        var startTime = PO.Utilities.pgToDate(start_date);
+        var endDate = PO.Utilities.pgToDate(end_date);
+
+        var startX = ganttBarPanel.date2x(startTime);
+        var endX = ganttBarPanel.date2x(endTime);
+        var midX = Math.round((startX + endX) / 2);
+
+        // Compare the middle of the Gantt bar with the middle of the screen
+        var ganttSize = ganttBarPanel.getSize();
+        var ganttMidX = Math.round(ganttSize.width / 2);
+        
+        var scrollX = midX - ganttMidX;
+        if (scrollX < 0) scrollX = 0;
+        if (scrollX > (ganttBarPanel.axisEndX - 100)) scrollX = ganttBarPanel.axisEndX - 100;
+        
+        var scrollableEl = ganttBarPanel.getEl();                       // Ext.dom.Element that enables scrolling
+        scrollableEl.setScrollLeft(scrollX);
+
+        // Redraw before passing control back to the browser
+        me.getGanttBarPanel().needsRedraw = true;
+
+        if (me.debug) console.log('GanttEditor.controller.GanttZoomController.zoomOnSelectedTask: Finished');
+    },
+
+
+    /**
+     * Set zoom so that the entire project is visible in the 
+     * visible GanttBarPanel area.
+     */
+    zoomOnProject: function() {
+        var me = this;
+        if (me.debug) console.log('GanttEditor.controller.GanttZoomController.zoomOnProject: Starting');
+
+        var oneDayMiliseconds = 24 * 3600 * 1000;
         var ganttBarPanel = me.getGanttBarPanel();
         var ganttTreePanel = me.getGanttTreePanel();
         var taskTreeStore = ganttTreePanel.getStore();
         var zoomFactor = me.zoomFactor;
+
+        // Initialize extremes for maximum calculation
+        var startTime = 10000*10000*10000*10000;
+        var endTime = 0;
         
-	// Get the last selected task
-        var selectionModel = ganttTreePanel.getSelectionModel();
-        var lastSelected = selectionModel.getLastSelected();
+        // Iterate through all children to find min & max
+        var rootNode = taskTreeStore.getRootNode();
+        rootNode.cascadeBy(function(model) {
+            var start_date = model.get('start_date');
+            if ("" != start_date) {
+                var t = PO.Utilities.pgToDate(start_date).getTime();
+                if (t < startTime) { startTime = t; }
+            }
+            var end_date = model.get('end_date');
+            if ("" != end_date) {
+                var t = PO.Utilities.pgToDate(end_date).getTime();
+                if (t > endTime) { endTime = t; }
+            }
+        });
 
-        if (lastSelected) {
-	    // Manually selected a task - center around this task
-            // Calculate the "midX" X-coordinate of the middle of the current task
-            startTime = PO.Utilities.pgToDate(lastSelected.get('start_date')).getTime();
-            endTime = PO.Utilities.pgToDate(lastSelected.get('end_date')).getTime();
-        } else {
-	    // No task selected (after initial load) - center entire project
-            startTime = 10000*10000*10000*10000;
-            endTime = 0;
+        // Error: start_date or end_date not available in the project - just ignore in this strange case
+        if (endTime == 0 || startTime == 10000*10000*10000*10000) return;
+        
+        ganttBarPanel.axisStartDate = new Date(startTime - 0.2 * (endTime - startTime) - oneDayMiliseconds);
+        ganttBarPanel.axisEndDate =   new Date(endTime   + 0.2 * (endTime - startTime) + oneDayMiliseconds);
 
-            // Iterate through all children of the root node to find min & max
-            var rootNode = taskTreeStore.getRootNode();
-            rootNode.cascadeBy(function(model) {
-		var t = PO.Utilities.pgToDate(model.get('start_date')).getTime();
-		if (t < startTime) { startTime = t; }
-		t = PO.Utilities.pgToDate(model.get('end_date')).getTime();
-		if (t > endTime) { endTime = t; }
-            });
-	}
-
-        startX = ganttBarPanel.date2x(startTime);
-        endX = ganttBarPanel.date2x(endTime);
-        midX = Math.round((startX + endX) / 2);
-
-        // Check if we need to zoom out - in this case the bar start is outside the drawing area
-        if (startX < 0) {
-            var axisStartTime = ganttBarPanel.axisStartDate.getTime();
-            var axisEndTime = ganttBarPanel.axisEndDate.getTime();
-            var axisEndX = ganttBarPanel.axisEndX;
-            var diff = (axisEndTime - axisStartTime) / zoomFactor;
-            
-            ganttBarPanel.axisStartDate = new Date(startTime);
-            ganttBarPanel.axisEndDate = new Date(endTime);
-        }
-
-        // Compare the middle of the Gantt bar with the middle of the screen
+        var startX = ganttBarPanel.date2x(startTime);
+        var endX = ganttBarPanel.date2x(endTime);
+        var midX = Math.round((startX + endX) / 2);
         var ganttSize = ganttBarPanel.getSize();
         var ganttMidX = Math.round(ganttSize.width / 2);
 
@@ -184,8 +212,38 @@ Ext.define('GanttEditor.controller.GanttZoomController', {
         // Redraw before passing control back to the browser
         me.getGanttBarPanel().needsRedraw = true;
 
+        if (me.debug) console.log('GanttEditor.controller.GanttZoomController.zoomOnProject: Finished');
+    },
+
+
+    /**
+     * Zoom Center
+     * Set the scroll bar so that the currently selected task
+     * (or the main task if no task is selected) is shown in 
+     * the middle of the GanttBarPanel.
+     */
+    onButtonZoomCenter: function() {
+        var startDate, endDate, startX, endX, midX;
+        var me = this;
+        if (me.debug) console.log('GanttEditor.controller.GanttZoomController.onButtonZoomCenter: Starting');
+
+        var ganttBarPanel = me.getGanttBarPanel();
+        var ganttTreePanel = me.getGanttTreePanel();
+        var taskTreeStore = ganttTreePanel.getStore();
+        
+        // Center around a selected Gantt task.
+        var selectionModel = ganttTreePanel.getSelectionModel();
+        var lastSelected = selectionModel.getLastSelected();
+        if (lastSelected) {
+            me.zoomOnSelectedTask(lastSelected);
+            return;
+        }
+
+        me.zoomOnProject();
+
         if (me.debug) console.log('GanttEditor.controller.GanttZoomController.onButtonZoomCenter: Finished');
     }
+
 
 });
 
