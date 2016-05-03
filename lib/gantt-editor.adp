@@ -49,8 +49,8 @@ function launchGanttEditor(debug){
     var taskTreeStore = Ext.StoreManager.get('taskTreeStore');
     var senchaPreferenceStore = Ext.StoreManager.get('senchaPreferenceStore');
     var oneDayMiliseconds = 24 * 3600 * 1000;
-
     var renderDiv = Ext.get("@gantt_editor_id@");
+    var gifPath = "/intranet/images/navbar_default/";
 
     /* ***********************************************************************
      * Help Menu
@@ -185,87 +185,30 @@ function launchGanttEditor(debug){
             bodyPadding: 0
         },
         tbar: [
-            {
-                icon: '/intranet/images/navbar_default/disk.png',
-                tooltip: 'Save the project to the ]po[ backend',
-                id: 'buttonSave',
-                disabled: true
-            }, {
-                icon: '/intranet/images/navbar_default/arrow_refresh.png',
-                tooltip: 'Reload project data from ]po[ backend, discarding changes',
-                id: 'buttonReload'
-            }, {
-                icon: '/intranet/images/navbar_default/arrow_out.png',
-                tooltip: 'Maximize the editor &nbsp;',
-                id: 'buttonMaximize'
-            }, {
-                icon: '/intranet/images/navbar_default/arrow_in.png',
-                tooltip: 'Restore default editor size &nbsp;',
-                id: 'buttonMinimize',
-                hidden: true
-            }, {
-                xtype: 'tbseparator' 
-            }, {
-                icon: '/intranet/images/navbar_default/add.png',
-                tooltip: 'Add a new task',
-                id: 'buttonAdd'
-            }, {
-                icon: '/intranet/images/navbar_default/delete.png',
-                tooltip: 'Delete a task',
-                id: 'buttonDelete'
-            }, {
-                xtype: 'tbseparator' 
-            }, {
-                // Event captured and handled by GanttTreePanelController
-                icon: '/intranet/images/navbar_default/arrow_left.png',
-                tooltip: 'Reduce Indent',
-                id: 'buttonReduceIndent'
-            }, {
-                // Event captured and handled by GanttTreePanelController
-                icon: '/intranet/images/navbar_default/arrow_right.png',
-                tooltip: 'Increase Indent',
-                id: 'buttonIncreaseIndent'
-            }, {
-                xtype: 'tbseparator'
-            }, {
-                icon: '/intranet/images/navbar_default/link_add.png',
-                tooltip: 'Add dependency',
-                id: 'buttonAddDependency',
-                hidden: true
-            }, {
-                icon: '/intranet/images/navbar_default/link_break.png',
-                tooltip: 'Break dependency',
-                id: 'buttonBreakDependency',
-                hidden: true
-            }, '->', {
-                icon: '/intranet/images/navbar_default/zoom_in.png',
-                tooltip: 'Zoom in time axis',
-                id: 'buttonZoomIn'
-            }, {
-                icon: '/intranet/images/navbar_default/zoom.png',
-                tooltip: 'Center',
-                id: 'buttonZoomCenter'
-            }, {
-                icon: '/intranet/images/navbar_default/zoom_out.png',
-                tooltip: 'Zoom out of time axis',
-                id: 'buttonZoomOut'
-            }, '->', {
-                text: 'Scheduling',
-                icon: '/intranet/images/navbar_default/clock.png',
-                menu: schedulingMenu
-            }, {
-                text: 'Configuration',
-                icon: '/intranet/images/navbar_default/wrench.png',
-                menu: configMenu
-            }, {
-                text: 'Help',
-                icon: '/intranet/images/navbar_default/help.png',
-                menu: helpMenu
-            }, {
-                text: 'This is Alpha!',
-                icon: '/intranet/images/navbar_default/bug.png',
-                menu: alphaMenu
-            }
+            { icon: gifPath+'disk.png', tooltip: 'Save the project to the ]po[ backend', id: 'buttonSave', disabled: true}, 
+	    { icon: gifPath+'arrow_refresh.png', tooltip: 'Reload project data from ]po[ backend, discarding changes', id: 'buttonReload'}, 
+	    { icon: gifPath+'arrow_out.png', tooltip: 'Maximize the editor &nbsp;', id: 'buttonMaximize'}, 
+	    { icon: gifPath+'arrow_in.png', tooltip: 'Restore default editor size &nbsp;', id: 'buttonMinimize', hidden: true},
+	    { xtype: 'tbseparator' }, 
+	    { icon: gifPath+'add.png', tooltip: 'Add a new task', id: 'buttonAdd'}, 
+	    { icon: gifPath+'delete.png', tooltip: 'Delete a task', id: 'buttonDelete'}, 
+	    { xtype: 'tbseparator' }, 
+	    // Event captured and handled by GanttTreePanelController 
+	    { icon: gifPath+'arrow_left.png', tooltip: 'Reduce Indent', id: 'buttonReduceIndent'}, 
+	    // Event captured and handled by GanttTreePanelController 
+	    { icon: gifPath+'arrow_right.png', tooltip: 'Increase Indent', id: 'buttonIncreaseIndent'}, 
+	    { xtype: 'tbseparator'}, 
+	    { icon: gifPath+'link_add.png', tooltip: 'Add dependency', id: 'buttonAddDependency', hidden: true}, 
+	    { icon: gifPath+'link_break.png', tooltip: 'Break dependency', id: 'buttonBreakDependency', hidden: true}, 
+	    '->', 
+	    { icon: gifPath+'zoom_in.png', tooltip: 'Zoom in time axis', id: 'buttonZoomIn'}, 
+	    { icon: gifPath+'zoom.png', tooltip: 'Center', id: 'buttonZoomCenter'}, 
+	    { icon: gifPath+'zoom_out.png', tooltip: 'Zoom out of time axis', id: 'buttonZoomOut'}, 
+	    '->', 
+	    { text: 'Scheduling', icon: gifPath+'clock.png', menu: schedulingMenu}, 
+	    { text: 'Configuration', icon: gifPath+'wrench.png', menu: configMenu}, 
+	    { text: 'Help', icon: gifPath+'help.png', menu: helpMenu}, 
+	    { text: 'This is Alpha!', icon: gifPath+'bug.png', menu: alphaMenu}
         ]
     });
 
