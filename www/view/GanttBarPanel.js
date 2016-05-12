@@ -81,6 +81,7 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
 	var me = this;
         if (me.debug) console.log('PO.view.gantt.GanttBarPanel.onObjectStoreDataChanged: Starting');
 
+	// Modified, removed and new records in the store
 	var modRec = event.getModifiedRecords();
 	var remRec = event.getRemovedRecords();
 	var newRec = event.getNewRecords();
