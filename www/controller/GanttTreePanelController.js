@@ -223,6 +223,7 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
                 r.set('id', object_id);
                 r.set('project_id', object_id_string);
                 r.set('task_id', object_id_string);
+		if ("" == r.get('project_nr')) r.set('project_nr', "task_"+object_id_string);
             },
             failure: function(response){
                 Ext.Msg.alert('Error retreiving object_id from server', 
