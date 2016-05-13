@@ -149,17 +149,18 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
         var me = this;
         if (me.debug) console.log('PO.view.gantt.GanttBarPanel.onDependencyRightClick: Starting: '+ sprite);
         if (null == sprite) { return; }     					// Something went completely wrong...
-        var dependencyModel = sprite.dependencyModel;
 
         // Menu for right-clicking a dependency arrow.
         if (!me.dependencyContextMenu) {
             me.dependencyContextMenu = Ext.create('Ext.menu.Menu', {
                 id: 'dependencyContextMenu',
                 style: {overflow: 'visible'},					// For the Combo popup
+		dependencyModel: sprite.dependencyModel,
                 items: [{
                     text: 'Delete Dependency',
                     handler: function() {
                         if (me.debug) console.log('dependencyContextMenu.deleteDependency: ');
+			var dependencyModel = this.ownerCt.dependencyModel;
                         var predId = dependencyModel.pred_id;
                         var succId = dependencyModel.succ_id;
                         var predModel = me.taskModelHash[predId];		// This should be empty!!
@@ -182,6 +183,7 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
                 }]
             });
         }
+	me.dependencyContextMenu.dependencyModel = sprite.dependencyModel;      // context menu may be executed more than once with different deps
         me.dependencyContextMenu.showAt(event.getXY());
         if (me.debug) console.log('PO.view.gantt.GanttBarPanel.onDependencyRightClick: Finished');
     },
