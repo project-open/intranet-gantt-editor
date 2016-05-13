@@ -667,7 +667,7 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
         endX = toBBox.x + s;
 
 	// Horizontal: left to right or inverse
-        if (toBBox.x  >= fromBBox.x) { 
+        if (toBBox.x  >= fromBBox.x + fromBBox.width) { 
 	    // "normal" dependencies from left to right
             color = '#222';
             startX = fromBBox.x + fromBBox.width;				// End-to-start dep starts at the right side of the fromBBox
@@ -678,7 +678,7 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
 	}
 
 	// Vertical: Top to down, or inverse
-	if (toBBox.y >= fromBBox.y) {
+	if (toBBox.y >= fromBBox.y + fromBBox.height) {
 	    // "normal" dependency from a task higher up to a task further down
             endY = toBBox.y;
 	} else {
