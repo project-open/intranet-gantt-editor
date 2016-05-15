@@ -238,7 +238,7 @@ function launchGanttEditor(debug){
         region: 'center',
         debug: debug,
 
-        axisEndX: 5000,								// Size of the time axis. Always starts with 0.
+        axisEndX: 2000,								// Size of the time axis. Always starts with 0.
         axisStartDate: new Date(reportStartTime - 7 * oneDayMiliseconds),
         axisEndDate: new Date(reportEndTime + 1.5 * (reportEndTime - reportStartTime) + 7 * oneDayMiliseconds ),
 
