@@ -588,6 +588,7 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
             assignees.forEach(function(assignee) {
                 if (0 == assignee.percent) { return; }				// Don't show empty assignments
                 var userModel = projectMemberStore.getById(""+assignee.user_id);
+		if (!userModel) return;
                 if ("" != text) { text = text + ', '; }
                 text = text + userModel.get('first_names').substr(0, 1) + userModel.get('last_name').substr(0, 1);
                 if (100 != assignee.percent) {
