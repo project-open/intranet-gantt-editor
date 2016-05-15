@@ -52,6 +52,9 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
                 case "end_date":
                     me.onEndDateChanged(treeStore, model, operation, event);
                     break;
+                case "planned_units":
+		    me.onPlannedUnitsChanged(treeStore, model, operation, event);
+                    break;
                 case "parent_id":
 		    // Task has new parent - indentation or un-indentation
                     me.onStartDateChanged(treeStore, model, operation, event);
@@ -70,6 +73,34 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
 
         if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.onTreeStoreUpdate: Finished');
     },
+
+    /**
+     * The user changed the planned units of a leave task.
+     * We now need to re-calculate the planned units towards the
+     * root of the tree.
+     */
+    onPlannedUnitsChanged: function(treeStore, model, operation, event) {
+        var me = this;
+        if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.onPlannedUnitsChanged: Starting');
+        var parent = model.parentNode;
+        if (!parent) return;
+
+        // Calculate the sum of planned units of all nodes below parent
+        var plannedUnits = 0.0;
+        parent.eachChild(function(sibling) {
+            var siblingPlannedUnits = parseFloat(sibling.get('planned_units'));
+	    if (!isNaN(siblingPlannedUnits)) {
+		plannedUnits = plannedUnits + siblingPlannedUnits;
+	    }
+        });
+
+        // Check if we have to update the parent
+        if (parseFloat(parent.get('planned_units')) != plannedUnits) {
+            parent.set('planned_units', ""+plannedUnits);	                    // This will call this event recursively
+        }
+        if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.onPlannedUnitsChanged: Finished');
+    },
+
 
     /**
      * The start_date of a task has changed.
