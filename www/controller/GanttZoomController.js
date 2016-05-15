@@ -132,11 +132,11 @@ Ext.define('GanttEditor.controller.GanttZoomController', {
         var end_date = selectedTask.get('end_date');
         if ("" == start_date || "" == end_date) return;     // Skip if there are issues with start or end_date
         
-        var startTime = PO.Utilities.pgToDate(start_date);
+        var startDate = PO.Utilities.pgToDate(start_date);
         var endDate = PO.Utilities.pgToDate(end_date);
 
-        var startX = ganttBarPanel.date2x(startTime);
-        var endX = ganttBarPanel.date2x(endTime);
+        var startX = ganttBarPanel.date2x(startDate);
+        var endX = ganttBarPanel.date2x(endDate);
         var midX = Math.round((startX + endX) / 2);
 
         // Compare the middle of the Gantt bar with the middle of the screen
