@@ -192,25 +192,32 @@ Ext.define('GanttEditor.controller.GanttZoomController', {
 
         // Error: start_date or end_date not available in the project - just ignore in this strange case
         if (endTime == 0 || startTime == 10000*10000*10000*10000) return;
-        
-        ganttBarPanel.axisStartDate = new Date(startTime - 0.2 * (endTime - startTime) - oneDayMiliseconds);
-        ganttBarPanel.axisEndDate =   new Date(endTime   + 0.2 * (endTime - startTime) + oneDayMiliseconds);
 
         var startX = ganttBarPanel.date2x(startTime);
         var endX = ganttBarPanel.date2x(endTime);
         var midX = Math.round((startX + endX) / 2);
         var ganttSize = ganttBarPanel.getSize();
         var ganttMidX = Math.round(ganttSize.width / 2);
+	var surfaceWidth = ganttBarPanel.surface.width;
 
+	// Set axis start- and endDate so that the project fits into the ganttSize.width visible field
+	var factor = 1.0 * surfaceWidth / ganttSize.width;
+
+        ganttBarPanel.axisStartDate = new Date(startTime - (0.5 * factor) * (endTime - startTime) - oneDayMiliseconds);
+        ganttBarPanel.axisEndDate =   new Date(endTime   + (0.5 * factor) * (endTime - startTime) + oneDayMiliseconds);
+
+/*
         var scrollX = midX - ganttMidX;
         if (scrollX < 0) scrollX = 0;
         if (scrollX > (ganttBarPanel.axisEndX - 100)) scrollX = ganttBarPanel.axisEndX - 100;
-        
+*/
+
+	var scrollX = Math.round((surfaceWidth -ganttSize.width) / 2);
         var scrollableEl = ganttBarPanel.getEl();                       // Ext.dom.Element that enables scrolling
         scrollableEl.setScrollLeft(scrollX);
 
         // Redraw before passing control back to the browser
-        me.getGanttBarPanel().needsRedraw = true;
+        ganttBarPanel.needsRedraw = true;
 
         if (me.debug) console.log('GanttEditor.controller.GanttZoomController.zoomOnProject: Finished');
     },
