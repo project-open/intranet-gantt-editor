@@ -295,7 +295,7 @@ function launchGanttEditor(debug){
     // Create the panel showing properties of a task,
     // but don't show it yet.
     var taskPropertyPanel = Ext.create("PO.view.gantt.GanttTaskPropertyPanel", {
-        debug: debug
+        debug: true
     });
     taskPropertyPanel.hide();
 
