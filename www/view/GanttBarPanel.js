@@ -425,7 +425,7 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
 	var drawn = false;
 	
 	// Task with zero length: Draw a milestone
-	if (!drawn && ('t' == project.get('milestone_p') || 0 == w)) {           // either explicitely marked or zero duration
+	if (!drawn && project.isMilestone()) {           // either explicitely marked or zero duration
 	    drawn = true;
 	    var m = h/2;							// Half the size of the bar height
             var spriteBar = surface.add({
@@ -666,7 +666,12 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
 
         s = me.arrowheadSize;
         startY = fromBBox.y + fromBBox.height/2;
-        endX = toBBox.x + s;
+
+	if (toModel.isMilestone()) {
+            endX = toBBox.x;                                                    // Point directly to the start of the milestone
+	} else {
+            endX = toBBox.x + s;                                                // Point slightly behind the start of the task
+	}
 
 	// Horizontal: left to right or inverse
         if (toBBox.x  >= fromBBox.x + fromBBox.width) { 
