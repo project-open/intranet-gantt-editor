@@ -425,7 +425,7 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
 	var drawn = false;
 	
 	// Task with zero length: Draw a milestone
-	if (!drawn && 0 == w) {
+	if (!drawn && ('t' == project.get('milestone_p') || 0 == w)) {           // either explicitely marked or zero duration
 	    drawn = true;
 	    var m = h/2;							// Half the size of the bar height
             var spriteBar = surface.add({
