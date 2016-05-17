@@ -1,6 +1,19 @@
 <div id="@gantt_editor_id@" style="overflow: hidden; -webkit-user-select: none; -moz-user-select: none; -khtml-user-select: none; -ms-user-select: none; ">
-<script type='text/javascript'>
 
+<!-- define the icons for the various sub-types of projects in the tree -->
+<style type="text/css">
+    .icon-task      { background-image: url("/intranet/images/navbar_default/cog_go.png") !important; }
+    .icon-project   { background-image: url("/intranet/images/navbar_default/cog.png") !important; }
+    .icon-ticket    { background-image: url("/intranet/images/navbar_default/tag_blue.png") !important; }
+    .icon-milestone { background-image: url("/intranet/images/navbar_default/milestone.png") !important; }
+    .icon-sla       { background-image: url("/intranet/images/navbar_default/tag_blue_add.png") !important; }
+    .icon-program   { background-image: url("/intranet/images/navbar_default/tag_blue_add.png") !important; }
+    .icon-release   { background-image: url("/intranet/images/navbar_default/arrow_rotate_clockwise.png") !important; }
+    .icon-release-item { background-image: url("/intranet/images/navbar_default/arrow_right.png") !important; }
+    .icon-crm       { background-image: url("/intranet/images/navbar_default/group.png") !important; }
+</style>
+
+<script type='text/javascript'>
 // Ext.Loader.setConfig({enabled: true});
 Ext.Loader.setPath('PO', '/sencha-core');
 Ext.Loader.setPath('GanttEditor', '/intranet-gantt-editor');
