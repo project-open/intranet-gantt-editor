@@ -367,7 +367,7 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
 
         me.surface.removeAll();
         me.surface.setSize(me.axisEndX, surfaceYSize);		// Set the size of the drawing area
-        me.drawAxis();								// Draw the top axis
+        me.drawAxisAuto();							// Draw the top axis
 
         // Iterate through all children of the root node and check if they are visible
         rootNode.cascadeBy(function(model) {
