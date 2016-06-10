@@ -222,7 +222,7 @@ function launchGanttEditor(debug){
 	    { text: 'Scheduling', icon: gifPath+'clock.png', menu: schedulingMenu}, 
 	    { text: 'Configuration', icon: gifPath+'wrench.png', menu: configMenu}, 
 	    { text: 'Help', icon: gifPath+'help.png', menu: helpMenu}, 
-	    { text: 'This is Alpha!', icon: gifPath+'bug.png', menu: alphaMenu}
+	    { text: 'This is Beta!', icon: gifPath+'bug.png', menu: alphaMenu}
         ]
     });
 
