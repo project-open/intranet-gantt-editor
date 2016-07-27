@@ -1,3 +1,4 @@
+<if "" eq @main_parent_id@>
 <div id="@gantt_editor_id@" style="overflow: hidden; -webkit-user-select: none; -moz-user-select: none; -khtml-user-select: none; -ms-user-select: none; ">
 
 <!-- define the icons for the various sub-types of projects in the tree -->
@@ -419,4 +420,9 @@ Ext.onReady(function() {
 });
 </script>
 </div>
+</if>
+<else>
+
+Project #@project_id@ is a sub-project, so we can't show a Gantt Editor for it.
+</else>
 

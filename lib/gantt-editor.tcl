@@ -26,7 +26,8 @@ set gantt_editor_id "gantt_editor_$gantt_editor_rand"
 
 db_1row project_info "
 select	max(end_date) as report_end_date,
-	min(start_date) as report_start_date
+	min(start_date) as report_start_date,
+	(select parent_id from im_projects where project_id = :project_id) as main_parent_id
 from	(
 	select	sub_p.start_date,
 		sub_p.end_date
