@@ -187,7 +187,7 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
             parent_id: parent_id,
             company_id: lastSelected.get('company_id'),
             project_status_id: 76,							// Status: Open
-            project_type_id: 100,							// Type: Timesheet Task
+            project_type_id: 100,							// Type: Gantt Task
             assignees: []
         });
         var rNode = root.createNode(r);							// Convert model into tree node
