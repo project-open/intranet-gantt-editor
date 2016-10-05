@@ -87,11 +87,26 @@ Ext.define('GanttEditor.controller.GanttButtonController', {
         buttonSave.setDisabled(true);
     },
 
+    /**
+     * The user has pressed the "Save" button - save and report
+     * any error messages
+     */
     onButtonSave: function() {
         var me = this;
         if (me.debug) console.log('GanttButtonController.ButtonSave');
         var me = this;
-        me.taskTreeStore.save();
+        me.taskTreeStore.save({
+	    failure: function(batch, context) { 
+		var msg = batch.proxy.reader.jsonData.message;
+		if (!msg) msg = 'undefined error';
+		Ext.MessageBox.minWidth = 500;
+		Ext.MessageBox.alert('Server Error', "Error saving data on the server side.<br>"+
+			"&nbsp;<br>"+
+			"Here are the error details:<br>"+
+			"<pre>" + msg+"</pre>"
+		);
+	    }
+	});
         // Now block the "Save" button, unless some data are changed.
         var buttonSave = Ext.getCmp('buttonSave');
         buttonSave.setDisabled(true);
