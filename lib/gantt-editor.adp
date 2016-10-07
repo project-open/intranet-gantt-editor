@@ -322,6 +322,9 @@ function launchGanttEditor(debug){
     });
     ganttSchedulingController.init(this).onLaunch(this);
 
+
+//    ganttButtonController.onButtonSave();
+
 };
 
 

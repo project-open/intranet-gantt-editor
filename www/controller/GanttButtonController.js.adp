@@ -94,22 +94,59 @@ Ext.define('GanttEditor.controller.GanttButtonController', {
     onButtonSave: function() {
         var me = this;
         if (me.debug) console.log('GanttButtonController.ButtonSave');
-        var me = this;
         me.taskTreeStore.save({
 	    failure: function(batch, context) { 
 		var msg = batch.proxy.reader.jsonData.message;
 		if (!msg) msg = 'undefined error';
-		Ext.MessageBox.minWidth = 500;
-		Ext.MessageBox.alert('Server Error', "Error saving data on the server side.<br>"+
-			"&nbsp;<br>"+
-			"Here are the error details:<br>"+
-			"<pre>" + msg+"</pre>"
-		);
+		// Ext.MessageBox.minWidth = 500;
+
+		var msgBox = Ext.create('Ext.window.MessageBox');
+		msgBox.show({
+		    title: 'Server Error', 
+		    msg: "Error saving data on the server side.<br>&nbsp;<br>"+
+			"Send error message to ]project-open[ for incident reporting?<br>"+
+			"Please see our <a href='http://www.project-open.com/en/company/project-open-privacy.html'>privacy statementy</a> "+
+			"for details.<br><pre>" + msg+"</pre>",
+		    minWidth: 500,
+		    buttonText: { yes: "Report this Error" },
+		    icon: Ext.Msg.QUESTION,
+		    fn: function(text) {
+			if (text == 'yes') {
+			    Ext.Ajax.request({
+				url: "http://www.project-open.net/intranet-forum/new-system-incident",
+				method: 'POST',
+				headers: { 
+				    'Content-Type': 'multipart/form-data',
+				    'Access-Control-Allow-Origin': '*'
+				},
+				params : {
+				    privacy_statement_p: 't', no_master_p: '1', error_info: msg,
+				    error_url: '@error_url;noquote@', error_location: '@error_location@',
+				    error_type: '@error_type@', report_url: '@report_url@',system_url: '@system_url@',
+				    error_first_names: '@first_names@', error_last_name: '@last_name@',  error_email: '@email@',
+				    username: '@username@',
+				    publisher_name: '@publisher_name@',
+				    package_versions: '@package_versions@',
+				    system_id: '@system_id@', hardware_id: '@hardware_id@',
+				    platform: '@platform@', os: '@os@', os_version: '@os_version@'
+				},
+				success: function(response) {
+				    var text = response.responseText;
+				    Ext.Msg.alert('Successfully reported', text);
+				},
+				failure: function(response) {
+				    var text = response.responseText;
+				    Ext.Msg.alert('Error reporting incident', 'Error reporting incident.<br>'+text);
+				},
+			    });
+			}
+		    }
+		});
 	    }
 	});
         // Now block the "Save" button, unless some data are changed.
         var buttonSave = Ext.getCmp('buttonSave');
-        buttonSave.setDisabled(true);
+//        buttonSave.setDisabled(true);
     },
 
     /**
