@@ -160,11 +160,7 @@ Ext.define('GanttEditor.controller.GanttButtonController', {
         var buttonSave = Ext.getCmp('buttonSave');
         buttonSave.setDisabled(false);					// Allow to "save" changes
 
-        // fraber 150730: Disabled. This will probably cause trouble
-        // However, we need to add the redraws() at the topmost level.
-        // fraber 151027: Replaced by a needsRedraw flag handled by 
-        // onIdle event
-        me.ganttBarPanel.needsRedraw = true;
+        me.ganttBarPanel.needsRedraw = true;				// Tell the ganttBarPanel to redraw with the next frame
     },
 
     /**

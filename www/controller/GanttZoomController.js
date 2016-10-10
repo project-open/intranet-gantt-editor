@@ -32,23 +32,7 @@ Ext.define('GanttEditor.controller.GanttZoomController', {
             '#buttonZoomCenter': { click: me.onButtonZoomCenter }
         });
         
-        // Redraw GanttBars when all events are handled
-        Ext.globalEvents.on("idle", this.onIdle, me)
-
         if (me.debug) console.log('GanttEditor.controller.GanttZoomController.init: Finished');
-    },
-
-    /**
-     * Called before passing control back to the Browser.
-     * Used to initiate a redraw() if necessary.
-     * No logging, because this routine is called so frequently.
-     */
-    onIdle: function() {
-        var me = this;
-        var ganttBarPanel = me.getGanttBarPanel();
-        if (ganttBarPanel.needsRedraw) {
-            ganttBarPanel.redraw();
-        }
     },
 
     /**

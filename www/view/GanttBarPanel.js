@@ -55,6 +55,9 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
             'scope': this
         });
 
+        // Redraw GanttBars when all events are handled
+        Ext.globalEvents.on("idle", this.onIdle, me);				// Fires before return to browser
+
         // Iterate through all children of the root node and check if they are visible
 
         me.objectStore.on({
@@ -71,6 +74,20 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
         this.addEvents('move');
 
         if (me.debug) console.log('PO.view.gantt.GanttBarPanel.initComponent: Finished');
+    },
+
+
+    /**
+     * Called before passing control back to the Browser.
+     * Used to initiate a redraw() if necessary.
+     * No logging, because this routine is called so frequently.
+     */
+    onIdle: function() {
+        var me = this;
+        if (me.needsRedraw) {
+	    me.redraw();
+            me.needsRedraw = false;						// mark the "dirty" flat as cleaned
+	}
     },
 
     /**
@@ -341,7 +358,6 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
         if (me.debug) console.log('PO.class.GanttDrawComponent.redraw: Starting');
 
 	if (!me.needsRedraw) { return; }
-        me.needsRedraw = false;								// mark the "dirty" flat as cleaned
         if (undefined === me.surface) { return; }
         
         // Get the root of the ganttTree
