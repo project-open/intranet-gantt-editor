@@ -8,7 +8,9 @@
  */
 
 /**
- * Deal with Zoom In/Out and a few other events of the GanttBarPanel.
+ * Deal with zoom In/Out buttons, sizing the X axis according to the
+ * project and centering the scroll bars to show the entire projects.
+ * All related to the GanttBarPanel.
  */
 Ext.define('GanttEditor.controller.GanttZoomController', {
     extend: 'Ext.app.Controller',
@@ -18,7 +20,8 @@ Ext.define('GanttEditor.controller.GanttZoomController', {
     ],
     
     debug: false,
-    zoomFactor: 5.0,                                     // Fast or slow zooming? 2.0 is fast, 10.0 is very slow
+    senchaPreferenceStore: null,			// preferences
+    zoomFactor: 5.0,	   				// Fast or slow zooming? 2.0 is fast, 10.0 is very slow
 
     init: function() {
         var me = this;
@@ -83,6 +86,7 @@ Ext.define('GanttEditor.controller.GanttZoomController', {
         var newScrollX = scrollX - centralDiffX;
 
         scrollableEl.setScrollLeft(newScrollX);
+	me.senchaPreferenceStore.setPreference('scrollX', newScrollX);                  	// write new scrollX as a default into a persistent preference
 
         // Redraw before passing control back to the browser
         me.getGanttBarPanel().needsRedraw = true;
@@ -149,6 +153,7 @@ Ext.define('GanttEditor.controller.GanttZoomController', {
         
         var scrollableEl = ganttBarPanel.getEl();                       // Ext.dom.Element that enables scrolling
         scrollableEl.setScrollLeft(scrollX);
+	me.senchaPreferenceStore.setPreference('scrollX', scrollX);	// write new scrollX as a default into a persistent preference
 
         // Redraw before passing control back to the browser
         me.getGanttBarPanel().needsRedraw = true;
@@ -206,15 +211,10 @@ Ext.define('GanttEditor.controller.GanttZoomController', {
         ganttBarPanel.axisStartDate = new Date(startTime - (0.5 * factor) * (endTime - startTime) - oneDayMiliseconds);
         ganttBarPanel.axisEndDate =   new Date(endTime   + (0.5 * factor) * (endTime - startTime) + oneDayMiliseconds);
 
-/*
-        var scrollX = midX - ganttMidX;
-        if (scrollX < 0) scrollX = 0;
-        if (scrollX > (ganttBarPanel.axisEndX - 100)) scrollX = ganttBarPanel.axisEndX - 100;
-*/
-
 	var scrollX = Math.round((surfaceWidth -ganttSize.width) / 2);
         var scrollableEl = ganttBarPanel.getEl();                       // Ext.dom.Element that enables scrolling
         scrollableEl.setScrollLeft(scrollX);
+	me.senchaPreferenceStore.setPreference('scrollX', scrollX);	// write new scrollX as a default into a persistent preference
 
         // Redraw before passing control back to the browser
         ganttBarPanel.needsRedraw = true;
