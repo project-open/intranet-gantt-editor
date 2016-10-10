@@ -67,6 +67,9 @@ function launchGanttEditor(debug){
     var renderDiv = Ext.get("@gantt_editor_id@");
     var gifPath = "/intranet/images/navbar_default/";
 
+    var reportStartTime = PO.Utilities.pgToDate('@report_start_date@').getTime();
+    var reportEndTime = PO.Utilities.pgToDate('@report_end_date@').getTime();
+
     /* ***********************************************************************
      * Help Menu
      *********************************************************************** */
@@ -87,11 +90,11 @@ function launchGanttEditor(debug){
      *********************************************************************** */
     var alphaMenu = Ext.create('PO.view.menu.AlphaMenu', {
         id: 'alphaMenu',
-	alphaComponent: 'Gantt Editor',
+        alphaComponent: 'Gantt Editor',
         debug: debug,
         style: {overflow: 'visible'},						// For the Combo popup
-        slaId: 1478943,					                	// ID of the ]po[ "PD Gantt Editor" project
-        ticketStatusId: 30000				                	// "Open" and sub-states
+        slaId: 1478943,					        		// ID of the ]po[ "PD Gantt Editor" project
+        ticketStatusId: 30000							// "Open" and sub-states
     });
 
     /* ***********************************************************************
@@ -99,7 +102,7 @@ function launchGanttEditor(debug){
      *********************************************************************** */
     var configMenuOnItemCheck = function(item, checked){
         if (me.debug) console.log('configMenuOnItemCheck: item.id='+item.id);
-        senchaPreferenceStore.setPreference('@page_url@', item.id, checked);
+        senchaPreferenceStore.setPreference(item.id, checked);
     }
 
     var configMenu = Ext.create('Ext.menu.Menu', {
@@ -114,7 +117,7 @@ function launchGanttEditor(debug){
                     if (menu.debug) console.log('configMenu.OnResetConfiguration');
                     senchaPreferenceStore.each(function(model) {
                         var url = model.get('preference_url');
-                        if (url != '@page_url@') { return; }
+                        if (url != window.location.pathname) { return; }
                         model.destroy();
                     });
                 }
@@ -138,7 +141,7 @@ function launchGanttEditor(debug){
         var def = model.get('def');
         var checked = senchaPreferenceStore.getPreferenceBoolean(key, def);
         if (!senchaPreferenceStore.existsPreference(key)) {
-            senchaPreferenceStore.setPreference('@page_url@', key, checked ? 'true' : 'false');
+            senchaPreferenceStore.setPreference(key, checked ? 'true' : 'false');
         }
         var item = Ext.create('Ext.menu.CheckItem', {
             id: key,
@@ -156,7 +159,7 @@ function launchGanttEditor(debug){
      *********************************************************************** */
     var schedulingMenuOnItemCheck = function(item, checked){
         if (me.debug) console.log('schedulingMenuOnItemCheck: item.id='+item.id);
-        senchaPreferenceStore.setPreference('@page_url@', item.id, checked);
+        senchaPreferenceStore.setPreference(item.id, checked);
     }
 
     var schedulingMenu = Ext.create('Ext.menu.Menu', {
@@ -201,29 +204,29 @@ function launchGanttEditor(debug){
         },
         tbar: [
             { icon: gifPath+'disk.png', tooltip: 'Save the project to the ]po[ backend', id: 'buttonSave', disabled: true}, 
-	    { icon: gifPath+'arrow_refresh.png', tooltip: 'Reload project data from ]po[ backend, discarding changes', id: 'buttonReload'}, 
-	    { icon: gifPath+'arrow_out.png', tooltip: 'Maximize the editor &nbsp;', id: 'buttonMaximize'}, 
-	    { icon: gifPath+'arrow_in.png', tooltip: 'Restore default editor size &nbsp;', id: 'buttonMinimize', hidden: true},
-	    { xtype: 'tbseparator' }, 
-	    { icon: gifPath+'add.png', tooltip: 'Add a new task', id: 'buttonAdd'}, 
-	    { icon: gifPath+'delete.png', tooltip: 'Delete a task', id: 'buttonDelete'}, 
-	    { xtype: 'tbseparator' }, 
-	    // Event captured and handled by GanttTreePanelController 
-	    { icon: gifPath+'arrow_left.png', tooltip: 'Reduce Indent', id: 'buttonReduceIndent'}, 
-	    // Event captured and handled by GanttTreePanelController 
-	    { icon: gifPath+'arrow_right.png', tooltip: 'Increase Indent', id: 'buttonIncreaseIndent'}, 
-	    { xtype: 'tbseparator'}, 
-	    { icon: gifPath+'link_add.png', tooltip: 'Add dependency', id: 'buttonAddDependency', hidden: true}, 
-	    { icon: gifPath+'link_break.png', tooltip: 'Break dependency', id: 'buttonBreakDependency', hidden: true}, 
-	    '->', 
-	    { icon: gifPath+'zoom_in.png', tooltip: 'Zoom in time axis', id: 'buttonZoomIn'}, 
-	    { icon: gifPath+'zoom.png', tooltip: 'Center', id: 'buttonZoomCenter'}, 
-	    { icon: gifPath+'zoom_out.png', tooltip: 'Zoom out of time axis', id: 'buttonZoomOut'}, 
-	    '->', 
-	    { text: 'Scheduling', icon: gifPath+'clock.png', menu: schedulingMenu}, 
-	    { text: 'Configuration', icon: gifPath+'wrench.png', menu: configMenu}, 
-	    { text: 'Help', icon: gifPath+'help.png', menu: helpMenu}, 
-	    { text: 'This is Beta!', icon: gifPath+'bug.png', menu: alphaMenu}
+            { icon: gifPath+'arrow_refresh.png', tooltip: 'Reload project data from ]po[ backend, discarding changes', id: 'buttonReload'}, 
+            { icon: gifPath+'arrow_out.png', tooltip: 'Maximize the editor &nbsp;', id: 'buttonMaximize'}, 
+            { icon: gifPath+'arrow_in.png', tooltip: 'Restore default editor size &nbsp;', id: 'buttonMinimize', hidden: true},
+            { xtype: 'tbseparator' }, 
+            { icon: gifPath+'add.png', tooltip: 'Add a new task', id: 'buttonAdd'}, 
+            { icon: gifPath+'delete.png', tooltip: 'Delete a task', id: 'buttonDelete'}, 
+            { xtype: 'tbseparator' }, 
+            // Event captured and handled by GanttTreePanelController 
+            { icon: gifPath+'arrow_left.png', tooltip: 'Reduce Indent', id: 'buttonReduceIndent'}, 
+            // Event captured and handled by GanttTreePanelController 
+            { icon: gifPath+'arrow_right.png', tooltip: 'Increase Indent', id: 'buttonIncreaseIndent'}, 
+            { xtype: 'tbseparator'}, 
+            { icon: gifPath+'link_add.png', tooltip: 'Add dependency', id: 'buttonAddDependency', hidden: true}, 
+            { icon: gifPath+'link_break.png', tooltip: 'Break dependency', id: 'buttonBreakDependency', hidden: true}, 
+            '->', 
+            { icon: gifPath+'zoom_in.png', tooltip: 'Zoom in time axis', id: 'buttonZoomIn'}, 
+            { icon: gifPath+'zoom.png', tooltip: 'Center', id: 'buttonZoomCenter'}, 
+            { icon: gifPath+'zoom_out.png', tooltip: 'Zoom out of time axis', id: 'buttonZoomOut'}, 
+            '->', 
+            { text: 'Scheduling', icon: gifPath+'clock.png', menu: schedulingMenu}, 
+            { text: 'Configuration', icon: gifPath+'wrench.png', menu: configMenu}, 
+            { text: 'Help', icon: gifPath+'help.png', menu: helpMenu}, 
+            { text: 'This is Beta!', icon: gifPath+'bug.png', menu: alphaMenu}
         ]
     });
 
@@ -245,8 +248,6 @@ function launchGanttEditor(debug){
     
 
     // Right-hand side Gantt display
-    var reportStartTime = PO.Utilities.pgToDate('@report_start_date@').getTime();
-    var reportEndTime = PO.Utilities.pgToDate('@report_end_date@').getTime();
     var ganttBarPanel = Ext.create('GanttEditor.view.GanttBarPanel', {
         id: 'ganttBarPanel',
         region: 'center',
@@ -257,7 +258,7 @@ function launchGanttEditor(debug){
         axisEndDate: new Date(reportEndTime + 1.5 * (reportEndTime - reportStartTime) + 7 * oneDayMiliseconds ),
 
         overflowX: 'scroll',							// Allows for horizontal scrolling, but not vertical
-        scrollFlags: {x: true},
+        scrollFlags: { x: true },
 
         objectPanel: ganttTreePanel,
         objectStore: taskTreeStore,
@@ -282,8 +283,9 @@ function launchGanttEditor(debug){
     // Contoller to handle size and resizing related events
     var resizeController = Ext.create('PO.controller.ResizeController', {
         debug: debug,
-	'renderDiv': renderDiv,
-        'outerContainer': ganttPanelContainer
+        redrawPanel: ganttBarPanel,						// panel with redraw() function and needsRedraw variable
+        renderDiv: renderDiv,							// container of outerContainer
+        outerContainer: ganttPanelContainer					// outermost panel with resize border
     }).init();
     resizeController.onLaunch(this);
     resizeController.onResize();						// Set the size of the outer GanttButton Panel
@@ -295,13 +297,14 @@ function launchGanttEditor(debug){
         'ganttTreePanel': ganttTreePanel,
         'ganttBarPanel': ganttBarPanel,
         'taskTreeStore': taskTreeStore,
-	'resizeController': resizeController
+        'resizeController': resizeController
     });
     ganttButtonController.init(this).onLaunch(this);
 
     // Controller for zoom in/out
     var ganttZoomController = Ext.create('GanttEditor.controller.GanttZoomController', {
-        debug: debug
+        debug: debug,
+        senchaPreferenceStore: senchaPreferenceStore
     });
     ganttZoomController.init(this);
     ganttZoomController.zoomOnProject();					// ToDo: Remember the user's position. Meanwhile center...
@@ -383,14 +386,14 @@ Ext.onReady(function() {
     projectMemberStore.getProxy().extraParams = { 
         format: 'json',
         query: "user_id in (					\
-		select	r.object_id_two				\
-		from	acs_rels r,				\
-			im_projects main_p,			\
-			im_projects sub_p			\
-		where	main_p.project_id = @project_id@ and	\
-			sub_p.tree_sortkey between main_p.tree_sortkey and tree_right(main_p.tree_sortkey) and \
-			r.object_id_one = sub_p.project_id	\
-	)"
+                select	r.object_id_two				\
+                from	acs_rels r,				\
+                	im_projects main_p,			\
+                	im_projects sub_p			\
+                where	main_p.project_id = @project_id@ and	\
+                	sub_p.tree_sortkey between main_p.tree_sortkey and tree_right(main_p.tree_sortkey) and \
+                	r.object_id_one = sub_p.project_id	\
+        )"
     };
     projectMemberStore.load();
 
