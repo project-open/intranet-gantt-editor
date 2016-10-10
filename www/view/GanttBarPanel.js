@@ -78,22 +78,22 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
      * Normally we need to redraw here.
      */
     onObjectStoreDataChanged: function(event, eOpts) {
-	var me = this;
+        var me = this;
         if (me.debug) console.log('PO.view.gantt.GanttBarPanel.onObjectStoreDataChanged: Starting');
 
-	// Modified, removed and new records in the store
-	var modRec = event.getModifiedRecords();
-	var remRec = event.getRemovedRecords();
-	var newRec = event.getNewRecords();
+        // Modified, removed and new records in the store
+        var modRec = event.getModifiedRecords();
+        var remRec = event.getRemovedRecords();
+        var newRec = event.getNewRecords();
 
-	// Redraw for collapse/expand is handled explicitly
-	// in onItemCollapse/onItemExpand.
-	// Optimization: Don't redraw in these cases.
-	if (0 == remRec.length + newRec.length + modRec.length) { return; }
-	if (0 == remRec.length + newRec.length && 1 == modRec.length) {
-	    var mod = modRec[0].modified;
-	    if ('expanded' in mod) { return; }
-	}
+        // Redraw for collapse/expand is handled explicitly
+        // in onItemCollapse/onItemExpand.
+        // Optimization: Don't redraw in these cases.
+        if (0 == remRec.length + newRec.length + modRec.length) { return; }
+        if (0 == remRec.length + newRec.length && 1 == modRec.length) {
+            var mod = modRec[0].modified;
+            if ('expanded' in mod) { return; }
+        }
 
         me.needsRedraw = true;
 
@@ -155,12 +155,12 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
             me.dependencyContextMenu = Ext.create('Ext.menu.Menu', {
                 id: 'dependencyContextMenu',
                 style: {overflow: 'visible'},					// For the Combo popup
-		dependencyModel: sprite.dependencyModel,
+                dependencyModel: sprite.dependencyModel,
                 items: [{
                     text: 'Delete Dependency',
                     handler: function() {
                         if (me.debug) console.log('dependencyContextMenu.deleteDependency: ');
-			var dependencyModel = this.ownerCt.dependencyModel;
+                        var dependencyModel = this.ownerCt.dependencyModel;
                         var predId = dependencyModel.pred_id;
                         var succId = dependencyModel.succ_id;
                         var predModel = me.taskModelHash[predId];		// This should be empty!!
@@ -175,15 +175,15 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
                             }
                         }
                         succModel.set('predecessors',predecessors);
-			succModel.setDirty();					// set('...', Object) may not set dirty if same object...
+                        succModel.setDirty();					// set('...', Object) may not set dirty if same object...
                         if (predecessors.length != orgPredecessorsLen) {
-			    me.needsRedraw = true;
+                            me.needsRedraw = true;
                         }
                     }
                 }]
             });
         }
-	me.dependencyContextMenu.dependencyModel = sprite.dependencyModel;      // context menu may be executed more than once with different deps
+        me.dependencyContextMenu.dependencyModel = sprite.dependencyModel;      // context menu may be executed more than once with different deps
         me.dependencyContextMenu.showAt(event.getXY());
         if (me.debug) console.log('PO.view.gantt.GanttBarPanel.onDependencyRightClick: Finished');
     },
@@ -211,7 +211,7 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
 
         var bBox = me.dndBaseSprite.getBBox();					// Get the current coordinates of the moved Gantt bar
         var diffTime = xDiff * (me.axisEndDate.getTime() - me.axisStartDate.getTime()) / (me.axisEndX - me.axisStartX);
-	var diffDays = Math.round(diffTime / 24.0 / 3600.0 / 1000.0);
+        var diffDays = Math.round(diffTime / 24.0 / 3600.0 / 1000.0);
 
         var startDate = PO.Utilities.pgToDate(projectModel.get('start_date'));
         var endDate = PO.Utilities.pgToDate(projectModel.get('end_date'));
@@ -232,10 +232,10 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
 
         // projectModel.set('start_date', PO.Utilities.dateToPg(newStartDate));
         // projectModel.set('end_date', PO.Utilities.dateToPg(newEndDate));
-	projectModel.set({
+        projectModel.set({
             'start_date': PO.Utilities.dateToPg(newStartDate),
-	    'end_date': PO.Utilities.dateToPg(newEndDate)
-	});
+            'end_date': PO.Utilities.dateToPg(newEndDate)
+        });
 
         me.needsRedraw = true;
 
@@ -312,7 +312,7 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
         if (null == fromTaskId) return;						// Something went wrong...
         var toTaskId = toTaskModel.get('task_id');				// String value!
         if (null == toTaskId) return; 						// Something went wrong...
-	if (fromTaskId == toTaskId) return;					// No dependency on itself...
+        if (fromTaskId == toTaskId) return;					// No dependency on itself...
 
         // Create a new dependency object
         if (me.debug) console.log('PO.view.gantt.GanttBarPanel.createDependency: '+fromTaskId+' -> '+toTaskId);
@@ -323,10 +323,10 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
             diff: 0.0
         };
         var dependencies = toTaskModel.get('predecessors');
-	if ("" == dependencies) { dependencies = []; }
+        if ("" == dependencies) { dependencies = []; }
         dependencies.push(dependency);
         toTaskModel.set('predecessors', dependencies);
-	toTaskModel.setDirty();							// above just modified array, so we need to notify
+        toTaskModel.setDirty();							// above just modified array, so we need to notify
 
         me.needsRedraw = true;
 
@@ -339,14 +339,16 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
     redraw: function(a, b, c, d, e) {
         var me = this;
         if (me.debug) console.log('PO.class.GanttDrawComponent.redraw: Starting');
-	me.needsRedraw = false;								// mark the "dirty" flat as cleaned
+
+	if (!me.needsRedraw) { return; }
+        me.needsRedraw = false;								// mark the "dirty" flat as cleaned
         if (undefined === me.surface) { return; }
-	
-	// Get the root of the ganttTree
+        
+        // Get the root of the ganttTree
         var ganttTreeView = me.objectPanel.getView();
         var rootNode = me.objectStore.getRootNode();
-	var numNodes = me.nodesInTree(rootNode);
-	var surfaceYSize = numNodes * 20;
+        var numNodes = me.nodesInTree(rootNode);
+        var surfaceYSize = numNodes * 20;
         if (me.debug) console.log('PO.class.GanttDrawComponent.redraw: numNodes='+numNodes);
 
         me.surface.removeAll();
@@ -382,22 +384,22 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
         var percentCompleted = parseFloat(project.get('percent_completed'));
         var predecessors = project.get('predecessors');
         var assignees = project.get('assignees');				// Array of {id, percent, name, email, initials}
-	var start_date, end_date;
+        var start_date, end_date;
 
-	// Get start- and end date (look at parents if necessary...)
-	var p = project;
-	while ("" == (start_date = p.get('start_date')) && !!p.parentNode) { p = p.parentNode;}
-	var p = project;
-	while ("" == (end_date = p.get('end_date')) && !!p.parentNode) { p = p.parentNode; }
-	if ("" == start_date || "" == end_date) { return; }
+        // Get start- and end date (look at parents if necessary...)
+        var p = project;
+        while ("" == (start_date = p.get('start_date')) && !!p.parentNode) { p = p.parentNode;}
+        var p = project;
+        while ("" == (end_date = p.get('end_date')) && !!p.parentNode) { p = p.parentNode; }
+        if ("" == start_date || "" == end_date) { return; }
 
-	var startTime = PO.Utilities.pgToDate(start_date).getTime();
-	var endTime = PO.Utilities.pgToDate(end_date).getTime();
+        var startTime = PO.Utilities.pgToDate(start_date).getTime();
+        var endTime = PO.Utilities.pgToDate(end_date).getTime();
 
         var x = me.date2x(startTime);						// X position based on time scale
         var y = me.calcGanttBarYPosition(project);				// Y position based on TreePanel y position of task.
         var w = Math.floor(me.axisEndX * (endTime - startTime) / (me.axisEndDate.getTime() - me.axisStartDate.getTime()));
-	if (w < 0) { w = 10; }	       	 	    	       	 		// Skip if start/end are completely wrong (probably end < start..)
+        if (w < 0) { w = 10; }	       	 	    	       	 		// Skip if start/end are completely wrong (probably end < start..)
         var h = me.ganttBarHeight;						// Constant determines height of the bar
         var d = Math.floor(h / 2.0) + 1;					// Size of the indent of the super-project bar
 
@@ -406,12 +408,12 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
         me.taskBBoxHash[id] = {x: x, y: y, width: w, height: h};		// Remember the outer dimensions of the box for dependency drawing
         me.taskModelHash[id] = project;						// Remember the models per ID
 
-	var drawn = false;
-	
-	// Task with zero length: Draw a milestone
-	if (!drawn && project.isMilestone()) {           // either explicitely marked or zero duration
-	    drawn = true;
-	    var m = h/2;							// Half the size of the bar height
+        var drawn = false;
+        
+        // Task with zero length: Draw a milestone
+        if (!drawn && project.isMilestone()) {           // either explicitely marked or zero duration
+            drawn = true;
+            var m = h/2;							// Half the size of the bar height
             var spriteBar = surface.add({
                 type: 'path',
                 stroke: 'black',
@@ -428,11 +430,11 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
                     mouseout: function()  { this.animate({duration: 500, to: {'stroke-width': 0.3}}); }
                 }
             }).show(true);
-	}
+        }
 
-	// Draw a standard Gantt bar if the task is a leaf (has no children)
+        // Draw a standard Gantt bar if the task is a leaf (has no children)
         if (!drawn && !project.hasChildNodes()) {						// Parent tasks don't have DnD and look different
-	    drawn = true;
+            drawn = true;
             // The main Gantt bar with Drag-and-Drop configuration
             var spriteBar = surface.add({
                 type: 'rect', x: x, y: y, width: w, height: h, radius: 3,
@@ -541,9 +543,9 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
             };
         }
 
-	// Draw a Gantt container task if the task has children
+        // Draw a Gantt container task if the task has children
         if (!drawn && project.hasChildNodes()) {				// Parent tasks don't have DnD and look different
-	    drawn = true;
+            drawn = true;
             var spriteBar = surface.add({
                 type: 'path',
                 stroke: 'blue',
@@ -572,7 +574,7 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
             assignees.forEach(function(assignee) {
                 if (0 == assignee.percent) { return; }				// Don't show empty assignments
                 var userModel = projectMemberStore.getById(""+assignee.user_id);
-		if (!userModel) return;
+                if (!userModel) return;
                 if ("" != text) { text = text + ', '; }
                 text = text + userModel.get('first_names').substr(0, 1) + userModel.get('last_name').substr(0, 1);
                 if (100 != assignee.percent) {
@@ -607,29 +609,29 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
      */
     drawDependency: function(dependencyModel) {
         var me = this;
-	// if (me.debug) console.log('GanttEditor.view.GanttBarPanel.drawTaskDependency: Starting');
+        // if (me.debug) console.log('GanttEditor.view.GanttBarPanel.drawTaskDependency: Starting');
 
         var fromId = dependencyModel.pred_id;
         var fromModel = me.taskModelHash[fromId]
         var toId = dependencyModel.succ_id;
         var toModel = me.taskModelHash[toId]
 
-	// We can get dependencies from other projects.
-	// These are not in the taskModelHash, so just skip these
-	// ToDo: Show dependencies from other projects
+        // We can get dependencies from other projects.
+        // These are not in the taskModelHash, so just skip these
+        // ToDo: Show dependencies from other projects
         if (undefined === fromModel || undefined === toModel) { 
-	    if (me.debug) console.log('GanttEditor.view.GanttBarPanel.drawTaskDependency: Dependency from other project: Skipping');
-	    return; 
-	}
+            if (me.debug) console.log('GanttEditor.view.GanttBarPanel.drawTaskDependency: Dependency from other project: Skipping');
+            return; 
+        }
 
         // Text for dependency tool tip
         var html = "<b>Task dependency</b>:<br>" +
             "From <a href='/intranet/projects/view?project_id=" + fromId + "' target='_blank'>" + fromModel.get('project_name') + "</a> " +
             "to <a href='/intranet/projects/view?project_id=" + toId + "' target='_blank'>" + toModel.get('project_name') + "</a>";
 
-	me.drawDependencyMsp(dependencyModel,html);
+        me.drawDependencyMsp(dependencyModel,html);
 
-	// if (me.debug) console.log('GanttEditor.view.GanttBarPanel.drawTaskDependency: Finished');
+        // if (me.debug) console.log('GanttEditor.view.GanttBarPanel.drawTaskDependency: Finished');
     },
 
     /**
@@ -637,46 +639,46 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
      */
     drawDependencyMsp: function(dependencyModel, tooltipHtml) {
         var me = this;
-	var s, color, startX, startY, endX, endY;
+        var s, color, startX, startY, endX, endY;
 
         var fromId = dependencyModel.pred_id;
         var fromBBox = me.taskBBoxHash[fromId];					// We start drawing with the end of the first bar...
         var fromModel = me.taskModelHash[fromId]
 
         var toId = dependencyModel.succ_id;
-        var toBBox = me.taskBBoxHash[toId];			        	// .. and draw towards the start of the 2nd bar.
+        var toBBox = me.taskBBoxHash[toId];			                // .. and draw towards the start of the 2nd bar.
         var toModel = me.taskModelHash[toId]
         if (!fromBBox || !toBBox) { return; }
 
         s = me.arrowheadSize;
         startY = fromBBox.y + fromBBox.height/2;
 
-	if (toModel.isMilestone()) {
+        if (toModel.isMilestone()) {
             endX = toBBox.x;                                                    // Point directly to the start of the milestone
-	} else {
+        } else {
             endX = toBBox.x + s;                                                // Point slightly behind the start of the task
-	}
+        }
 
-	// Horizontal: left to right or inverse
+        // Horizontal: left to right or inverse
         if (toBBox.x  >= fromBBox.x + fromBBox.width) { 
-	    // "normal" dependencies from left to right
+            // "normal" dependencies from left to right
             color = '#222';
             startX = fromBBox.x + fromBBox.width;				// End-to-start dep starts at the right side of the fromBBox
-	} else {
-	    // "inverse" dependency drawn in red
-	    color = 'red'; 
+        } else {
+            // "inverse" dependency drawn in red
+            color = 'red'; 
             startX = fromBBox.x;						// Inverse dep starts at the left side of the fromBBox
-	}
+        }
 
-	// Vertical: Top to down, or inverse
-	if (toBBox.y >= fromBBox.y + fromBBox.height) {
-	    // "normal" dependency from a task higher up to a task further down
+        // Vertical: Top to down, or inverse
+        if (toBBox.y >= fromBBox.y + fromBBox.height) {
+            // "normal" dependency from a task higher up to a task further down
             endY = toBBox.y;
-	} else {
-	    // "inverse" dependency from a lower task to a task higher up
+        } else {
+            // "inverse" dependency from a lower task to a task higher up
             endY = toBBox.y + toBBox.height;
-	    s = -s;								// Draw the dependency arrow from bottom to top
-	}
+            s = -s;								// Draw the dependency arrow from bottom to top
+        }
 
         // Draw the main connection line between start and end.
         var arrowLine = me.surface.add({
