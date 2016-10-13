@@ -39,6 +39,16 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
         if (me.debug) console.log('PO.view.gantt.GanttBarPanel.initComponent: Starting');
         this.callParent(arguments);
 
+	// Default values for axis startDate and endDate
+	var oneDayMiliseconds = 24 * 3600 * 1000;
+        me.axisEndX = 2000;								// Size of the time axis. Always starts with 0.
+        me.axisStartDate = new Date(me.reportStartTime - 1.5 * oneDayMiliseconds);
+        me.axisEndDate = new Date(me.reportEndTime + 1.5 * (me.reportEndTime - me.reportStartTime) + 7 * oneDayMiliseconds);
+
+	// Set axis and scroll configuration if saved in the preference store
+	me.redrawSetScrolls();
+	// !!!
+
         // Catch the moment when the "view" of the Project grid
         // is ready in order to draw the GanttBars for the first time.
         // The view seems to take a while...
@@ -385,8 +395,43 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
             me.drawProjectDependencies(model);
         });
 
+	// Restore scrolling state as before
+	me.redrawSetScrolls();
+
         if (me.debug) console.log('PO.class.GanttDrawComponent.redraw: Finished');
     },
+
+
+
+    redrawSetScrolls: function() {
+        var me = this;
+        if (me.debug) console.log('PO.class.GanttDrawComponent.redrawSetScrolls: Started');
+
+        me.preferenceStore.each(function(model) {
+            var preferenceKey = model.get('preference_key');
+            var preferenceValue = model.get('preference_value');
+            var preferenceInt = parseInt(preferenceValue);
+            switch (preferenceKey) {
+            case 'scrollX':
+		var scrollableEl = me.getEl();                                  // Ext.dom.Element that enables scrolling
+		if (scrollableEl) {
+                    scrollableEl.setScrollLeft(preferenceInt);
+		    if (me.debug) console.log('PO.class.GanttDrawComponent.redrawSetScrolls: scrollX='+preferenceInt);
+		}
+                break;
+	    case 'axisStartTime':
+                me.axisStartDate = new Date(preferenceInt);
+		if (me.debug) console.log('PO.class.GanttDrawComponent.redrawSetScrolls: axisStartTime='+preferenceInt);
+                break;
+	    case 'axisEndTime':
+                me.axisEndDate = new Date(preferenceInt);
+		if (me.debug) console.log('PO.class.GanttDrawComponent.redrawSetScrolls: axisEndTime='+preferenceInt);
+                break;
+            };
+        });
+        if (me.debug) console.log('PO.class.GanttDrawComponent.redrawSetScrolls: Finished');
+    },
+
 
     /**
      * Draw a single bar for a project or task
