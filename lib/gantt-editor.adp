@@ -101,6 +101,7 @@ function launchGanttEditor(debug){
      * Config Menu
      *********************************************************************** */
     var configMenuOnItemCheck = function(item, checked){
+	var me = this;
         if (me.debug) console.log('configMenuOnItemCheck: item.id='+item.id);
         senchaPreferenceStore.setPreference(item.id, checked);
     }
@@ -116,8 +117,6 @@ function launchGanttEditor(debug){
                     var menu = me.ownerCt;
                     if (menu.debug) console.log('configMenu.OnResetConfiguration');
                     senchaPreferenceStore.each(function(model) {
-                        var url = model.get('preference_url');
-                        if (url != window.location.pathname) { return; }
                         model.destroy();
                     });
                 }
@@ -252,10 +251,9 @@ function launchGanttEditor(debug){
         id: 'ganttBarPanel',
         region: 'center',
         debug: debug,
-
-        axisEndX: 2000,								// Size of the time axis. Always starts with 0.
-        axisStartDate: new Date(reportStartTime - 7 * oneDayMiliseconds),
-        axisEndDate: new Date(reportEndTime + 1.5 * (reportEndTime - reportStartTime) + 7 * oneDayMiliseconds ),
+	
+	reportStartTime: reportStartTime,
+	reportEndTime: reportEndTime,
 
         overflowX: 'scroll',							// Allows for horizontal scrolling, but not vertical
         scrollFlags: { x: true },
@@ -301,13 +299,13 @@ function launchGanttEditor(debug){
     });
     ganttButtonController.init(this).onLaunch(this);
 
-    // Controller for zoom in/out
+    // Controller for Zoom in/out, scrolling and 
+    // centering tasks on the ganttBarPanel surface
     var ganttZoomController = Ext.create('GanttEditor.controller.GanttZoomController', {
         debug: debug,
         senchaPreferenceStore: senchaPreferenceStore
     });
     ganttZoomController.init(this);
-    ganttZoomController.zoomOnProject();					// ToDo: Remember the user's position. Meanwhile center...
 
     // Create the panel showing properties of a task,
     // but don't show it yet.
