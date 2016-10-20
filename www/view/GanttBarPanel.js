@@ -512,11 +512,27 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
                 model: project,							// Store the task information for the sprite
                 baseSprite: spriteBar,						// "Base" sprite for the DnD action
                 dragAction: function(panel, e, diff, dndConfig) {		// Executed onMouseMove in AbstractGanttPanel
+
                     var shadow = panel.dndShadowSprite;				// Sprite "shadow" (copy of baseSprite) to move around
+		    var linkSprite = panel.dndLinkSprite;
+
                     shadow.setAttributes({translate: {x: diff[0], y: 0}}, true);// Move shadow according to mouse position
+
+                    if ( diff[1] > 10 || diff[1] < -10 ) {
+                        shadow.destroy();
+                        shadow = null;
+                        linkSprite.show(true);
+                        var point = me.getMousePoint(e);
+                        linkSprite.setAttributes( {x: point[0], y: point[1] - 5}, true);
+                        // console.log('zIndex: ' + linkSprite.zIndex);
+                    } else {
+                        linkSprite.destroy();
+                        linkSprite = null;
+                    };
                 },
                 dropAction: function(panel, e, diff, dndConfig) {		// Executed onMouseUp in AbastractGanttPanel
                     if (me.debug) console.log('PO.view.gantt.GanttBarPanel.drawProjectBar.spriteBar.dropAction:');
+                    panel.dndLinkSprite.destroy();                              // Hide Link graphic
                     var point = me.getMousePoint(e);				// Corrected mouse coordinates
                     var baseSprite = panel.dndBaseSprite;			// spriteBar to be affected by DnD
                     if (!baseSprite) { return; }				// Something went completely wrong...
