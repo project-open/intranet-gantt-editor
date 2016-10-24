@@ -502,7 +502,7 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
                 fill: 'url(#gradientId)',
                 stroke: 'blue',
                 'stroke-width': 0.3,
-                zIndex: 0,							// Neutral zIndex - in the middle
+                zIndex: -100,							// Neutral zIndex - in the middle
                 listeners: {							// Highlight the sprite on mouse-over
                     mouseover: function() { this.animate({duration: 500, to: {'stroke-width': 0.5}}); },
                     mouseout: function()  { this.animate({duration: 500, to: {'stroke-width': 0.3}}); }
@@ -513,21 +513,19 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
                 baseSprite: spriteBar,						// "Base" sprite for the DnD action
                 dragAction: function(panel, e, diff, dndConfig) {		// Executed onMouseMove in AbstractGanttPanel
 
+		    var mousePoint = me.getMousePoint(e);
                     var shadow = panel.dndShadowSprite;				// Sprite "shadow" (copy of baseSprite) to move around
-		    var linkSprite = panel.dndLinkSprite;
+                    var spriteLink = panel.dndLinkSprite;  
 
                     shadow.setAttributes({translate: {x: diff[0], y: 0}}, true);// Move shadow according to mouse position
+                    spriteLink.setAttributes({x: mousePoint[0], y: mousePoint[1] - 5}, true);
 
-                    if ( diff[1] > 10 || diff[1] < -10 ) {
+                    if ( diff[1] > 6 || diff[1] < -6 ) {
                         shadow.destroy();
                         shadow = null;
-                        linkSprite.show(true);
-                        var point = me.getMousePoint(e);
-                        linkSprite.setAttributes( {x: point[0], y: point[1] - 5}, true);
-                        // console.log('zIndex: ' + linkSprite.zIndex);
+                        spriteLink.setAttributes({width: 16, height:16} , true);
                     } else {
-                        linkSprite.destroy();
-                        linkSprite = null;
+                        spriteLink.setAttributes({width: 0, height:0} , true);
                     };
                 },
                 dropAction: function(panel, e, diff, dndConfig) {		// Executed onMouseUp in AbastractGanttPanel
