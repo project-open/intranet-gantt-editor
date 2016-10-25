@@ -513,19 +513,18 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
                 baseSprite: spriteBar,						// "Base" sprite for the DnD action
                 dragAction: function(panel, e, diff, dndConfig) {		// Executed onMouseMove in AbstractGanttPanel
 
-		    var mousePoint = me.getMousePoint(e);
                     var shadow = panel.dndShadowSprite;				// Sprite "shadow" (copy of baseSprite) to move around
-                    var spriteLink = panel.dndLinkSprite;  
+		    var linkSprite = panel.dndLinkSprite;
 
-                    shadow.setAttributes({translate: {x: diff[0], y: 0}}, true);// Move shadow according to mouse position
-                    spriteLink.setAttributes({x: mousePoint[0], y: mousePoint[1] - 5}, true);
-
-                    if ( diff[1] > 6 || diff[1] < -6 ) {
-                        shadow.destroy();
-                        shadow = null;
-                        spriteLink.setAttributes({width: 16, height:16} , true);
+                    if ( diff[1] > 10 || diff[1] < -10 ) {
+                        shadow.hide(true);
+                        linkSprite.show(true);
+			var point = me.getMousePoint(e);
+                        linkSprite.setAttributes( {x: point[0], y: point[1] - 5}, true);
                     } else {
-                        spriteLink.setAttributes({width: 0, height:0} , true);
+			shadow.show(true);
+			shadow.setAttributes({translate: {x: diff[0], y: 0}}, true);// Move shadow according to mouse position
+                        linkSprite.hide();
                     };
                 },
                 dropAction: function(panel, e, diff, dndConfig) {		// Executed onMouseUp in AbastractGanttPanel
