@@ -41,13 +41,12 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
 
         // Default values for axis startDate and endDate
         var oneDayMiliseconds = 24 * 3600 * 1000;
-        me.axisEndX = 2000;								// Size of the time axis. Always starts with 0.
+        me.axisEndX = 2000;							// Size of the time axis. Always starts with 0.
         me.axisStartDate = new Date(me.reportStartTime - 1.5 * oneDayMiliseconds);
         me.axisEndDate = new Date(me.reportEndTime + 1.5 * (me.reportEndTime - me.reportStartTime) + 7 * oneDayMiliseconds);
 
         // Set axis and scroll configuration if saved in the preference store
         me.redrawSetScrolls();
-        // !!!
 
         // Catch the moment when the "view" of the Project grid
         // is ready in order to draw the GanttBars for the first time.
@@ -378,7 +377,7 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
         if (me.debug) console.log('PO.class.GanttDrawComponent.redraw: numNodes='+numNodes);
 
         me.surface.removeAll();
-        me.surface.setSize(me.axisEndX, surfaceYSize);		// Set the size of the drawing area
+        me.surface.setSize(me.axisEndX, surfaceYSize);				// Set the size of the drawing area
         me.drawAxisAuto();							// Draw the top axis
 
         // Iterate through all children of the root node and check if they are visible
@@ -472,7 +471,7 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
         var drawn = null;
         
         // Task with zero length: Draw a milestone
-        if (!drawn && project.isMilestone()) {           // either explicitely marked or zero duration
+        if (!drawn && project.isMilestone()) {					// either explicitely marked or zero duration
             drawn = "milestone";
             var m = h/2;							// Half the size of the bar height
             var spriteBar = surface.add({
@@ -494,7 +493,7 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
         }
 
         // Draw a standard Gantt bar if the task is a leaf (has no children)
-        if (!drawn && !project.hasChildNodes()) {						// Parent tasks don't have DnD and look different
+        if (!drawn && !project.hasChildNodes()) {				// Parent tasks don't have DnD and look different
             drawn = "bar";
             // The main Gantt bar with Drag-and-Drop configuration
             var spriteBar = surface.add({
@@ -527,8 +526,8 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
                     if (me.debug) console.log('PO.view.gantt.GanttBarPanel.drawProjectBar.spriteBarHandle.dragAction:');
                     var baseBBox = panel.dndBaseSprite.getBBox();
                     var shadow = panel.dndShadowSprite;
-		    var width = baseBBox.width + diff[0];
-		    if (width < 0) width = 0;
+                    var width = baseBBox.width + diff[0];
+                    if (width < 0) width = 0;
                     shadow.setAttributes({width: width}).show(true);
                 },
                 dropAction: function(panel, e, diff, dndConfig) {
@@ -608,7 +607,7 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
             }).show(true);
         }
 
-	if (!drawn) { alert('GanttBarPanel.drawProjectBar: not drawn'); }
+        if (!drawn) { alert('GanttBarPanel.drawProjectBar: not drawn'); }
         
         // Convert assignment information into a string
         // and write behind the Gantt bar
@@ -625,15 +624,21 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
                     text = text + '['+assignee.percent+'%]';
                 }
             });
-            var axisText = surface.add({type:'text', text:text, x:x+w+2, y:y+d, fill:'#000', font:"10px Arial"}).show(true);
+
+	    var xOffset = w + 4;						// Default: Start directly behind the bar
+	    switch (drawn) {
+		case 'milestone': xOffset = 8;					// Milestone: Ignore bar width, but add some extra space
+	    }
+
+            var axisText = surface.add({type:'text', text:text, x:x+xOffset, y:y+d, fill:'#000', font:"10px Arial"}).show(true);
         }
 
-	// Add a drag-and-drop configuration to all spriteBars (bar, supertask and milestone)
-	// in order to allow them to act as both source and target of inter-task dependencies.
-        spriteBar.dndConfig = {						// Drag-and-drop configuration
+        // Add a drag-and-drop configuration to all spriteBars (bar, supertask and milestone)
+        // in order to allow them to act as both source and target of inter-task dependencies.
+        spriteBar.dndConfig = {							// Drag-and-drop configuration
             model: project,							// Store the task information for the sprite
             baseSprite: spriteBar,						// "Base" sprite for the DnD action
-            dragAction: function(panel, e, diff, dndConfig) {		// Executed onMouseMove in AbstractGanttPanel
+            dragAction: function(panel, e, diff, dndConfig) {			// Executed onMouseMove in AbstractGanttPanel
                 var shadow = panel.dndShadowSprite;				// Sprite "shadow" (copy of baseSprite) to move around
                 var linkSprite = panel.dndLinkSprite;
                 if ( diff[1] > 10 || diff[1] < -10 ) {
@@ -643,18 +648,18 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
                     linkSprite.setAttributes( {x: point[0], y: point[1] - 5}, true);
                 } else {
                     shadow.show(true);
-                    shadow.setAttributes({translate: {x: diff[0], y: 0}}, true);// Move shadow according to mouse position
+                    shadow.setAttributes({translate: {x: diff[0], y: 0}}, true); // Move shadow according to mouse position
                     linkSprite.hide(true);
                 };
             },
-            dropAction: function(panel, e, diff, dndConfig) {		// Executed onMouseUp in AbastractGanttPanel
+            dropAction: function(panel, e, diff, dndConfig) {			// Executed onMouseUp in AbastractGanttPanel
                 if (me.debug) console.log('PO.view.gantt.GanttBarPanel.drawProjectBar.spriteBar.dropAction:');
-                panel.dndLinkSprite.destroy();                              // Hide Link graphic
+                panel.dndLinkSprite.destroy();					// Hide Link graphic
                 var point = me.getMousePoint(e);				// Corrected mouse coordinates
-                var baseSprite = panel.dndBaseSprite;			// spriteBar to be affected by DnD
-                if (!baseSprite) { return; }				// Something went completely wrong...
+                var baseSprite = panel.dndBaseSprite;				// spriteBar to be affected by DnD
+                if (!baseSprite) { return; }					// Something went completely wrong...
                 var dropSprite = panel.getSpriteForPoint(point);		// Check where the user has dropped the shadow
-                if (baseSprite == dropSprite) { dropSprite = null; }	// Dropped on same sprite? => normal drop
+                if (baseSprite == dropSprite) { dropSprite = null; }		// Dropped on same sprite? => normal drop
                 if (0 == Math.abs(diff[0]) + Math.abs(diff[1])) {  		// Same point as before?
                     return;							// Drag-start == drag-end or single-click
                 }
@@ -667,7 +672,7 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
         };
 
 
-	// if (me.debug) { if (me.debug) console.log('PO.view.gantt.GanttBarPanel.drawProjectBar: Finished'); }
+        // if (me.debug) { if (me.debug) console.log('PO.view.gantt.GanttBarPanel.drawProjectBar: Finished'); }
     },
 
     /**
