@@ -20,6 +20,7 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
     ],
 
     ganttTreePanel: null,
+    senchaPreferenceStore: null,
 
     init: function() {
         var me = this;
@@ -42,6 +43,26 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
                 'scope': this
             });;
         }
+    },
+
+
+    /**
+     * Show a warning that the GanttEditor is Beta
+     */
+    readOnlyWarning: function() {
+        var me = this;
+        console.log('PO.controller.GanttTreePanelController.readOnlyWarning');
+        Ext.Msg.alert('This software is Beta',
+		      '<nobr>This software is in Beta state and contains a number of known</nobr><br>'+
+		      'and unknown issues (please see the "This is Beta") menu.<br> ' +
+		      '<br>' +
+		      'However, many users have asked for this feature and use this<br>' +
+		      'Gantt Editor already successfully, working around existing issues.<br> ' +
+		      '<br>' +
+		      'In order to start working with the Gantt Editor, please uncheck<br>' +
+		      'the Configuration -> Read Only option.<br>'
+	);
+
     },
 
     /**
@@ -97,7 +118,12 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
      */
     onButtonIncreaseIndent: function() {
         var me = this;
-        if (me.debug) console.log('GanttTreePanel.onButtonIncreaseIndent');
+        if (me.debug) console.log('GanttTreePanelController.onButtonIncreaseIndent');
+
+	// Check if read-only and abort in this case
+	var readOnly = me.senchaPreferenceStore.getPreferenceBoolean('read_only',true);
+	if (readOnly) { me.readOnlyWarning(); return; }
+
         var ganttTreePanel = this.getGanttTreePanel();
         var selectionModel = ganttTreePanel.getSelectionModel();
         var lastSelected = selectionModel.getLastSelected();
@@ -132,7 +158,11 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
      */
     onButtonReduceIndent: function() {
         var me = this;
-        if (me.debug) console.log('GanttTreePanel.onButtonReduceIndent');
+        if (me.debug) console.log('GanttTreePanelController.onButtonReduceIndent');
+
+	// Check if read-only and abort in this case
+	var readOnly = me.senchaPreferenceStore.getPreferenceBoolean('read_only',true);
+	if (readOnly) { me.readOnlyWarning(); return; }
 
         var ganttTreePanel = this.getGanttTreePanel();
         var selectionModel = ganttTreePanel.getSelectionModel();
@@ -162,7 +192,12 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
      */
     onButtonAdd: function() {
         var me = this;
-        if (me.debug) console.log('PO.view.gantt.GanttTreePanel.onButtonAdd: ');
+        if (me.debug) console.log('PO.view.gantt.GanttTreePanelController.onButtonAdd: ');
+
+	// Check if read-only and abort in this case
+	var readOnly = me.senchaPreferenceStore.getPreferenceBoolean('read_only',true);
+	if (readOnly) { me.readOnlyWarning(); return; }
+
         var ganttTreePanel = me.getGanttTreePanel();
         var rowEditing = ganttTreePanel.plugins[0];
         var taskTreeStore = ganttTreePanel.getStore();
@@ -188,6 +223,7 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
             company_id: lastSelected.get('company_id'),
             project_status_id: 76,							// Status: Open
             project_type_id: 100,							// Type: Gantt Task
+            iconCls: 'icon-task',
             assignees: []
         });
         var rNode = root.createNode(r);							// Convert model into tree node
@@ -211,7 +247,6 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
         r.set('project_name', 'New Task');
         r.set('start_date', new Date().toISOString().substring(0,10));
         r.set('end_date', new Date(new Date().getTime() + 1000 * 3600 * 24).toISOString().substring(0,10));
-        r.set('assignees', "");
 
         // Get a server-side object_id for the task
         Ext.Ajax.request({
@@ -250,7 +285,11 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
      */
     onButtonDelete: function() {
         var me = this;
-        if (me.debug) console.log('PO.view.gantt.GanttTreePanel.onButtonDelete: ');
+        if (me.debug) console.log('PO.view.gantt.GanttTreePanelController.onButtonDelete: ');
+
+	// Check if read-only and abort in this case
+	var readOnly = me.senchaPreferenceStore.getPreferenceBoolean('read_only',true);
+	if (readOnly) { me.readOnlyWarning(); return; }
 
         var ganttTreePanel = me.getGanttTreePanel();
         var rowEditing = ganttTreePanel.plugins[0];
@@ -298,7 +337,7 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
      */
     onContainerClick: function() {
         var me = this;
-        if (me.debug) console.log('PO.view.gantt.GanttTreePanel.onContainerClick: ');
+        if (me.debug) console.log('PO.view.gantt.GanttTreePanelController.onContainerClick: ');
 
         // Clear the selection in order to force adding the task at the bottom
         var ganttTreePanel = me.getGanttTreePanel();

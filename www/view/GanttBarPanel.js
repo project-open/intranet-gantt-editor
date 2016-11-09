@@ -39,15 +39,15 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
         if (me.debug) console.log('PO.view.gantt.GanttBarPanel.initComponent: Starting');
         this.callParent(arguments);
 
-	// Default values for axis startDate and endDate
-	var oneDayMiliseconds = 24 * 3600 * 1000;
+        // Default values for axis startDate and endDate
+        var oneDayMiliseconds = 24 * 3600 * 1000;
         me.axisEndX = 2000;								// Size of the time axis. Always starts with 0.
         me.axisStartDate = new Date(me.reportStartTime - 1.5 * oneDayMiliseconds);
         me.axisEndDate = new Date(me.reportEndTime + 1.5 * (me.reportEndTime - me.reportStartTime) + 7 * oneDayMiliseconds);
 
-	// Set axis and scroll configuration if saved in the preference store
-	me.redrawSetScrolls();
-	// !!!
+        // Set axis and scroll configuration if saved in the preference store
+        me.redrawSetScrolls();
+        // !!!
 
         // Catch the moment when the "view" of the Project grid
         // is ready in order to draw the GanttBars for the first time.
@@ -95,9 +95,9 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
     onIdle: function() {
         var me = this;
         if (me.needsRedraw) {
-	    me.redraw();
+            me.redraw();
             me.needsRedraw = false;						// mark the "dirty" flat as cleaned
-	}
+        }
     },
 
     /**
@@ -367,7 +367,7 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
         var me = this;
         if (me.debug) console.log('PO.class.GanttDrawComponent.redraw: Starting');
 
-	if (!me.needsRedraw) { return; }
+        if (!me.needsRedraw) { return; }
         if (undefined === me.surface) { return; }
         
         // Get the root of the ganttTree
@@ -395,8 +395,8 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
             me.drawProjectDependencies(model);
         });
 
-	// Restore scrolling state as before
-	me.redrawSetScrolls();
+        // Restore scrolling state as before
+        me.redrawSetScrolls();
 
         if (me.debug) console.log('PO.class.GanttDrawComponent.redraw: Finished');
     },
@@ -413,19 +413,19 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
             var preferenceInt = parseInt(preferenceValue);
             switch (preferenceKey) {
             case 'scrollX':
-		var scrollableEl = me.getEl();                                  // Ext.dom.Element that enables scrolling
-		if (scrollableEl) {
+                var scrollableEl = me.getEl();                                  // Ext.dom.Element that enables scrolling
+                if (scrollableEl) {
                     scrollableEl.setScrollLeft(preferenceInt);
-		    if (me.debug) console.log('PO.class.GanttDrawComponent.redrawSetScrolls: scrollX='+preferenceInt);
-		}
+                    if (me.debug) console.log('PO.class.GanttDrawComponent.redrawSetScrolls: scrollX='+preferenceInt);
+                }
                 break;
-	    case 'axisStartTime':
+            case 'axisStartTime':
                 me.axisStartDate = new Date(preferenceInt);
-		if (me.debug) console.log('PO.class.GanttDrawComponent.redrawSetScrolls: axisStartTime='+preferenceInt);
+                if (me.debug) console.log('PO.class.GanttDrawComponent.redrawSetScrolls: axisStartTime='+preferenceInt);
                 break;
-	    case 'axisEndTime':
+            case 'axisEndTime':
                 me.axisEndDate = new Date(preferenceInt);
-		if (me.debug) console.log('PO.class.GanttDrawComponent.redrawSetScrolls: axisEndTime='+preferenceInt);
+                if (me.debug) console.log('PO.class.GanttDrawComponent.redrawSetScrolls: axisEndTime='+preferenceInt);
                 break;
             };
         });
@@ -514,17 +514,17 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
                 dragAction: function(panel, e, diff, dndConfig) {		// Executed onMouseMove in AbstractGanttPanel
 
                     var shadow = panel.dndShadowSprite;				// Sprite "shadow" (copy of baseSprite) to move around
-		    var linkSprite = panel.dndLinkSprite;
+                    var linkSprite = panel.dndLinkSprite;
 
                     if ( diff[1] > 10 || diff[1] < -10 ) {
                         shadow.hide(true);
                         linkSprite.show(true);
-			var point = me.getMousePoint(e);
+                        var point = me.getMousePoint(e);
                         linkSprite.setAttributes( {x: point[0], y: point[1] - 5}, true);
                     } else {
-			shadow.show(true);
-			shadow.setAttributes({translate: {x: diff[0], y: 0}}, true);// Move shadow according to mouse position
-                        linkSprite.hide();
+                        shadow.show(true);
+                        shadow.setAttributes({translate: {x: diff[0], y: 0}}, true);// Move shadow according to mouse position
+                        linkSprite.hide(true);
                     };
                 },
                 dropAction: function(panel, e, diff, dndConfig) {		// Executed onMouseUp in AbastractGanttPanel
@@ -595,6 +595,7 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
                 fill: 'red',
                 opacity: 0.0,
                 zIndex: 40,
+
                 style: { cursor: 'col-resize' }					// Set special cursor shape ("column resize")
             }).show(true);
             spriteBarPercentHandle.dndConfig = {
