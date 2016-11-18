@@ -247,6 +247,7 @@ function launchGanttEditor(debug){
     // Right-hand side Gantt display
     var ganttBarPanel = Ext.create('GanttEditor.view.GanttBarPanel', {
         id: 'ganttBarPanel',
+	cls: 'gantt-bar-panel',
         region: 'center',
         debug: debug,
 	
@@ -260,7 +261,7 @@ function launchGanttEditor(debug){
         objectStore: taskTreeStore,
         preferenceStore: senchaPreferenceStore,
         gradients: [
-            {id:'gradientId', angle:66, stops:{0:{color:'#cdf'}, 100:{color:'#ace'}}},
+            {id:'gradientId', angle:66, stops:{0:{color:'#99b2cc'}, 100:{color:'#ace'}}},
             {id:'gradientId2', angle:0, stops:{0:{color:'#590'}, 20:{color:'#599'}, 100:{color:'#ddd'}}}
         ]
     });
