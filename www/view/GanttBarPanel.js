@@ -373,7 +373,7 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
         var ganttTreeView = me.objectPanel.getView();
         var rootNode = me.objectStore.getRootNode();
         var numNodes = me.nodesInTree(rootNode);
-        var surfaceYSize = numNodes * 20;
+        var surfaceYSize = numNodes * 20 + 50;					// +50 offset for the column bar on in TreePanel
         if (me.debug) console.log('PO.class.GanttDrawComponent.redraw: numNodes='+numNodes);
 
         me.surface.removeAll();
