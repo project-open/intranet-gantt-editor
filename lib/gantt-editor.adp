@@ -34,10 +34,12 @@ Ext.require([
     'PO.controller.ResizeController',
     'PO.controller.StoreLoadCoordinator',
     'PO.model.timesheet.TimesheetTask',
+    'PO.model.timesheet.Material',
     'PO.store.CategoryStore',
     'PO.store.group.GroupStore',
     'PO.store.timesheet.TaskTreeStore',
     'PO.store.timesheet.TaskStatusStore',
+    'PO.store.timesheet.TaskMaterialStore',
     'PO.store.user.SenchaPreferenceStore',
     'PO.store.user.UserStore',
     'PO.view.field.POComboGrid',
@@ -349,6 +351,7 @@ Ext.onReady(function() {
     var taskTreeStore = Ext.create('PO.store.timesheet.TaskTreeStore');
     var senchaPreferenceStore = Ext.create('PO.store.user.SenchaPreferenceStore');
     var taskStatusStore = Ext.create('PO.store.timesheet.TaskStatusStore');
+    var taskMaterialStore = Ext.create('PO.store.timesheet.TaskMaterialStore');
     var projectMemberStore = Ext.create('PO.store.user.UserStore', {storeId: 'projectMemberStore'});
     var userStore = Ext.create('PO.store.user.UserStore', {storeId: 'userStore'});
     var groupStore = Ext.create('PO.store.group.GroupStore', {storeId: 'groupStore'});
@@ -359,6 +362,7 @@ Ext.onReady(function() {
         stores: [
             'taskTreeStore',
             'taskStatusStore',
+            'taskMaterialStore',
             'senchaPreferenceStore',
             'projectMemberStore',
             'groupStore'
@@ -373,6 +377,7 @@ Ext.onReady(function() {
     });
 
     taskStatusStore.load();
+    taskMaterialStore.load();
 
     groupStore.load({								// Just the list of groups
         callback: function() {

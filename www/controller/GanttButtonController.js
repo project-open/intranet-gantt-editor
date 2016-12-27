@@ -112,15 +112,28 @@ Ext.define('GanttEditor.controller.GanttButtonController', {
      * Some record of the taskTreeStore has changed.
      * Enable the "Save" button to save these changes.
      */
-    onTaskTreeStoreUpdate: function() {
+    onTaskTreeStoreUpdate: function(treeStore, model, action, affectedColumns, eOpts) {
         var me = this;
-        // if (me.debug) console.log('GanttButtonController.onTaskTreeStoreUpdate');
+        if (me.debug) console.log('GanttButtonController.onTaskTreeStoreUpdate');
 
 	// Check if read-only and abort in this case
 	var readOnly = me.senchaPreferenceStore.getPreferenceBoolean('read_only',true);
-	if (readOnly) { 
-	    me.ganttTreePanelController.readOnlyWarning(); 
-	    return; 
+	if (readOnly) {
+	    var cnt = 0;
+	    for (var idx in affectedColumns) {
+		var col = affectedColumns[idx];
+		console.log('GanttButtonController.onTaskTreeStoreUpdate: col='+col);
+		switch (col) {
+		    case "expanded": break;
+		    case "collapsed": break;
+		    default: cnt++;
+		}
+	    };
+
+	    if (cnt > 0) {
+		me.ganttTreePanelController.readOnlyWarning(); 
+		return; 
+	    }
 	}
 
 	// Enable the Save button
