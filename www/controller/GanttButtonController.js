@@ -14,11 +14,13 @@
 Ext.define('GanttEditor.controller.GanttButtonController', {
     extend: 'Ext.app.Controller',
     debug: true,
-    'ganttTreePanel': null,						// Set during init: left-hand task tree panel
-    'ganttBarPanel': null,						// Set during init: right-hand surface with Gantt sprites
-    'taskTreeStore': null,						// Set during init: treeStore with task data
-    'ganttPanelContainer': null,
-    'resizeController': null,
+    ganttTreePanel: null,						// Set during init: left-hand task tree panel
+    ganttBarPanel: null,						// Set during init: right-hand surface with Gantt sprites
+    taskTreeStore: null,						// Set during init: treeStore with task data
+    ganttPanelContainer: null,
+    resizeController: null,
+    senchaPreferenceStore: null,
+    ganttTreePanelController: null,
 
     refs: [
         { ref: 'ganttTreePanel', selector: '#ganttTreePanel' }
@@ -113,10 +115,19 @@ Ext.define('GanttEditor.controller.GanttButtonController', {
     onTaskTreeStoreUpdate: function() {
         var me = this;
         // if (me.debug) console.log('GanttButtonController.onTaskTreeStoreUpdate');
-        var me = this;
+
+	// Check if read-only and abort in this case
+	var readOnly = me.senchaPreferenceStore.getPreferenceBoolean('read_only',true);
+	if (readOnly) { 
+	    me.ganttTreePanelController.readOnlyWarning(); 
+	    return; 
+	}
+
+	// Enable the Save button
         var buttonSave = Ext.getCmp('buttonSave');
         buttonSave.setDisabled(false);					// Allow to "save" changes
 
+	// ToDo: This isn't always the case...
         me.ganttBarPanel.needsRedraw = true;				// Tell the ganttBarPanel to redraw with the next frame
     },
 

@@ -290,11 +290,13 @@ function launchGanttEditor(debug){
     // Controller that deals with button events.
     var ganttButtonController = Ext.create('GanttEditor.controller.GanttButtonController', {
         debug: debug,
-        'ganttPanelContainer': ganttPanelContainer,
-        'ganttTreePanel': ganttTreePanel,
-        'ganttBarPanel': ganttBarPanel,
-        'taskTreeStore': taskTreeStore,
-        'resizeController': resizeController
+        ganttPanelContainer: ganttPanelContainer,
+        ganttTreePanel: ganttTreePanel,
+        ganttBarPanel: ganttBarPanel,
+        taskTreeStore: taskTreeStore,
+        resizeController: resizeController,
+	senchaPreferenceStore: senchaPreferenceStore,
+	ganttTreePanelController: ganttTreePanelController
     });
     ganttButtonController.init(this).onLaunch(this);
 
