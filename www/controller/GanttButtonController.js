@@ -103,7 +103,7 @@ Ext.define('GanttEditor.controller.GanttButtonController', {
 	});
         // Now block the "Save" button, unless some data are changed.
         var buttonSave = Ext.getCmp('buttonSave');
-//        buttonSave.setDisabled(true);
+        buttonSave.setDisabled(true);
     },
 
     /**
