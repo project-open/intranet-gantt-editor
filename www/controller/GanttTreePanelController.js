@@ -60,7 +60,7 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
 		      'Gantt Editor already successfully, working around existing issues.<br> ' +
 		      '<br>' +
 		      'In order to start working with the Gantt Editor, please uncheck<br>' +
-		      'the Configuration -> Read Only option.<br>'
+		      'the Configuration -> Read Only option.<br>&nbsp;<br>'
 	);
 
     },
