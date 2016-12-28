@@ -35,11 +35,13 @@ Ext.require([
     'PO.controller.StoreLoadCoordinator',
     'PO.model.timesheet.TimesheetTask',
     'PO.model.timesheet.Material',
+    'PO.model.timesheet.CostCenter',
     'PO.store.CategoryStore',
     'PO.store.group.GroupStore',
     'PO.store.timesheet.TaskTreeStore',
     'PO.store.timesheet.TaskStatusStore',
     'PO.store.timesheet.TaskMaterialStore',
+    'PO.store.timesheet.TaskCostCenterStore',
     'PO.store.user.SenchaPreferenceStore',
     'PO.store.user.UserStore',
     'PO.view.field.POComboGrid',
@@ -54,6 +56,7 @@ Ext.require([
 
 // Global parameters from server-side
 var default_material_id = parseInt('@default_material_id@');			// "Default" material
+var default_cost_center_id = parseInt('@default_cost_center_id@');		// "The Company" cost-center
 var default_uom_id = parseInt('@default_uom_id@');				// "Hour" default Unit of Measure
 var write_project_p = parseInt('@write_p@');					// 0 or 1
 
@@ -352,6 +355,7 @@ Ext.onReady(function() {
     var senchaPreferenceStore = Ext.create('PO.store.user.SenchaPreferenceStore');
     var taskStatusStore = Ext.create('PO.store.timesheet.TaskStatusStore');
     var taskMaterialStore = Ext.create('PO.store.timesheet.TaskMaterialStore');
+    var taskCostCenterStore = Ext.create('PO.store.timesheet.TaskCostCenterStore');
     var projectMemberStore = Ext.create('PO.store.user.UserStore', {storeId: 'projectMemberStore'});
     var userStore = Ext.create('PO.store.user.UserStore', {storeId: 'userStore'});
     var groupStore = Ext.create('PO.store.group.GroupStore', {storeId: 'groupStore'});
@@ -363,6 +367,7 @@ Ext.onReady(function() {
             'taskTreeStore',
             'taskStatusStore',
             'taskMaterialStore',
+            'taskCostCenterStore',
             'senchaPreferenceStore',
             'projectMemberStore',
             'groupStore'
@@ -378,6 +383,7 @@ Ext.onReady(function() {
 
     taskStatusStore.load();
     taskMaterialStore.load();
+    taskCostCenterStore.load();
 
     groupStore.load({								// Just the list of groups
         callback: function() {

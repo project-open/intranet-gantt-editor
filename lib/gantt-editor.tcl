@@ -43,4 +43,5 @@ from	(
 
 # Default material and Unit of Measure: "Default" and "Hour"
 set default_material_id [im_material_default_material_id]
+set default_cost_center_id [im_cost_center_company]
 set default_uom_id [im_uom_hour]
