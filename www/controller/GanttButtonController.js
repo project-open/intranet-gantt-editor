@@ -58,6 +58,17 @@ Ext.define('GanttEditor.controller.GanttButtonController', {
         // Listen to any changes in store records
         me.taskTreeStore.on({'update': me.onTaskTreeStoreUpdate, 'scope': this});
 
+	// write_project_p is a global variable defined in gantt-editor.adp
+        var buttonSave = Ext.getCmp('buttonSave');
+        var buttonLock = Ext.getCmp('buttonLock');
+	if (1 == write_project_p) {
+	    buttonSave.show();
+	    buttonLock.hide();
+	} else {
+	    buttonSave.hide();
+	    buttonLock.show();
+	}
+
         return this;
     },
 

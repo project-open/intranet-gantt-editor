@@ -52,7 +52,17 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
     readOnlyWarning: function() {
         var me = this;
         console.log('PO.controller.GanttTreePanelController.readOnlyWarning');
-        Ext.Msg.alert('This software is Beta',
+
+	if (0 == write_project_p) {
+            Ext.Msg.alert("Read-Only Mode",
+		      "<nobr>You don't have write permissions on this project.</nobr><br>"+
+		      "<nobr>You won't be able to save your changes.</nobr><br>"+
+		      "Please contact the project manager and request write permissions." +
+		      "<br>&nbsp;<br>"
+	    );
+
+	} else {
+            Ext.Msg.alert('This software is Beta',
 		      '<nobr>This software is in Beta state and contains a number of known</nobr><br>'+
 		      'and unknown issues (please see the "This is Beta") menu.<br> ' +
 		      '<br>' +
@@ -61,8 +71,8 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
 		      '<br>' +
 		      'In order to start working with the Gantt Editor, please uncheck<br>' +
 		      'the Configuration -> Read Only option.<br>&nbsp;<br>'
-	);
-
+	    );
+	}
     },
 
     /**

@@ -15,9 +15,12 @@
 
 
 set page_url [im_url_with_query]
+set current_user_id [auth::require_login]
+set main_project_id $project_id; # project_id may be overwritten by SQLs below
 
-# project_id may be overwritten by SQLs below
-set main_project_id $project_id
+# Determine the permission of the user
+im_project_permissions $current_user_id $main_project_id view_p read_p write_p admin_p
+
 
 # Create a random ID for the gantt editor
 set gantt_editor_rand [expr {round(rand() * 100000000.0)}]

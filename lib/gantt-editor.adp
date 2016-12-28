@@ -1,4 +1,4 @@
-<if "" eq @main_parent_id@>
+<if "" eq @main_parent_id@ and "1" eq @read_p@>
 <div id="@gantt_editor_id@" style="overflow: hidden; -webkit-user-select: none; -moz-user-select: none; -khtml-user-select: none; -ms-user-select: none; ">
 
 <!-- define the icons for the various sub-types of projects in the tree -->
@@ -55,6 +55,8 @@ Ext.require([
 // Global parameters from server-side
 var default_material_id = parseInt('@default_material_id@');			// "Default" material
 var default_uom_id = parseInt('@default_uom_id@');				// "Hour" default Unit of Measure
+var write_project_p = parseInt('@write_p@');					// 0 or 1
+
 
 /**
  * Launch the actual editor
@@ -201,7 +203,8 @@ function launchGanttEditor(debug){
             bodyPadding: 0
         },
         tbar: [
-            { icon: gifPath+'disk.png', tooltip: 'Save the project to the ]po[ backend', id: 'buttonSave', disabled: true}, 
+            { icon: gifPath+'lock.png', tooltip: 'Read-only - you can not save changes', id: 'buttonLock', disabled: true}, 
+            { icon: gifPath+'disk.png', tooltip: '<nobr>Save the project to the &#93;po&#91; backend</nobr>', id: 'buttonSave', disabled: true}, 
             { icon: gifPath+'arrow_refresh.png', tooltip: 'Reload project data from ]po[ backend, discarding changes', id: 'buttonReload'}, 
             { icon: gifPath+'arrow_out.png', tooltip: 'Maximize the editor &nbsp;', id: 'buttonMaximize'}, 
             { icon: gifPath+'arrow_in.png', tooltip: 'Restore default editor size &nbsp;', id: 'buttonMinimize', hidden: true},
@@ -326,9 +329,6 @@ function launchGanttEditor(debug){
     });
     ganttSchedulingController.init(this).onLaunch(this);
 
-
-//    ganttButtonController.onButtonSave();
-
 };
 
 
@@ -432,7 +432,8 @@ Ext.onReady(function() {
 </div>
 </if>
 <else>
-
+<if "0" eq @read_p@>
 Project #@project_id@ is a sub-project, so we can't show a Gantt Editor for it.
+</if>
 </else>
 
