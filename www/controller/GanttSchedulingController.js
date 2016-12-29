@@ -38,6 +38,10 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
         return this;
     },
 
+    /**
+     * Some function has changed the TreeStore:
+     * Make sure to propagate the changes along dependencies
+     */
     onTreeStoreUpdate: function(treeStore, model, operation, fieldsChanged, event) {
         var me = this;
         if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.onTreeStoreUpdate: Starting');
@@ -131,6 +135,9 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
             if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.onStartDateChanged: Updating parent at level='+parent.getDepth());
             parent.set('start_date', PO.Utilities.dateToPg(minStartDate));	// This will call this event recursively
         }
+
+	me.checkStartEndDateConstraint(treeStore, model);			// check start < end constraint
+
         if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.onStartDateChanged: Finished');
     },
 
@@ -164,6 +171,35 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
             if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.onEndDateChanged: Updating parent at level='+parent.getDepth());
             parent.set('end_date', PO.Utilities.dateToPg(maxEndDate));		// This will call this event recursively
         }
+
+	me.checkStartEndDateConstraint(treeStore, model);			// check start < end constraint
+
         if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.onEndDateChanged: Finished');
     },
+
+    /**
+     * Make sure endDate is after startDate
+     */
+    checkStartEndDateConstraint: function(treeStore, model) {
+        var me = this;
+        if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.checkStartEndDateConstraint: Starting');
+	
+        var startDate = PO.Utilities.pgToDate(model.get('start_date'));
+        var endDate = PO.Utilities.pgToDate(model.get('end_date'));
+
+        if (startDate && endDate) {
+            var startTime = startDate.getTime();
+            var endTime = endDate.getTime();
+            if (startTime > endTime) {
+		// The user has entered inconsistent start/end dates
+		endTime = startTime + 1000 * 3600 * 24;
+		endDate = new Date(endTime);
+		endDateString = endDate.toISOString().substring(0,10);
+		model.set('end_date', endDateString);
+	    }
+        }
+
+        if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.checkStartEndDateConstraint: Finished');
+    }
+
 });
