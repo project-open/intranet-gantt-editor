@@ -401,7 +401,10 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
     },
 
 
-
+    /**
+     * Set axis and scroll configuration as stored
+     * in the SenchaPreferenceStore
+     */
     redrawSetScrolls: function() {
         var me = this;
         if (me.debug) console.log('PO.class.GanttDrawComponent.redrawSetScrolls: Started');
@@ -607,31 +610,33 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
             }).show(true);
         }
 
-        if (!drawn) { alert('GanttBarPanel.drawProjectBar: not drawn'); }
+        if (!drawn) { alert('GanttBarPanel.drawProjectBar: not drawn for some reason'); }
         
-        // Convert assignment information into a string
-        // and write behind the Gantt bar
-        var projectMemberStore = Ext.StoreManager.get('projectMemberStore');
-        var text = "";
-        if ("" != assignees) {
-            assignees.forEach(function(assignee) {
-                if (0 == assignee.percent) { return; }				// Don't show empty assignments
-                var userModel = projectMemberStore.getById(""+assignee.user_id);
-                if (!userModel) return;
-                if ("" != text) { text = text + ', '; }
-                text = text + userModel.get('first_names').substr(0, 1) + userModel.get('last_name').substr(0, 1);
-                if (100 != assignee.percent) {
-                    text = text + '['+assignee.percent+'%]';
-                }
-            });
-
-	    var xOffset = w + 4;						// Default: Start directly behind the bar
-	    switch (drawn) {
+	// Draw assignee initials behind the Gantt bar.
+        var drawAssignees = me.preferenceStore.getPreferenceBoolean('show_project_assigned_resources', true);
+	if (drawAssignees) {
+            var projectMemberStore = Ext.StoreManager.get('projectMemberStore');
+            var text = "";
+            if ("" != assignees) {
+		assignees.forEach(function(assignee) {
+                    if (0 == assignee.percent) { return; }				// Don't show empty assignments
+                    var userModel = projectMemberStore.getById(""+assignee.user_id);
+                    if (!userModel) return;
+                    if ("" != text) { text = text + ', '; }
+                    text = text + userModel.get('first_names').substr(0, 1) + userModel.get('last_name').substr(0, 1);
+                    if (100 != assignee.percent) {
+			text = text + '['+assignee.percent+'%]';
+                    }
+		});
+		
+		var xOffset = w + 4;						// Default: Start directly behind the bar
+		switch (drawn) {
 		case 'milestone': xOffset = 8;					// Milestone: Ignore bar width, but add some extra space
-	    }
-
-            var axisText = surface.add({type:'text', text:text, x:x+xOffset, y:y+d, fill:'#000', font:"10px Arial"}).show(true);
-        }
+		}
+		
+		var axisText = surface.add({type:'text', text:text, x:x+xOffset, y:y+d, fill:'#000', font:"10px Arial"}).show(true);
+            }
+	}
 
         // Add a drag-and-drop configuration to all spriteBars (bar, supertask and milestone)
         // in order to allow them to act as both source and target of inter-task dependencies.

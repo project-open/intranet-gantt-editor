@@ -51,6 +51,7 @@ Ext.require([
     'PO.view.gantt.GanttTaskPropertyPanel',
     'PO.view.gantt.GanttTreePanel',
     'PO.view.menu.AlphaMenu',
+    'PO.view.menu.ConfigMenu',
     'PO.view.menu.HelpMenu'
 ]);
 
@@ -107,55 +108,26 @@ function launchGanttEditor(debug){
     /* ***********************************************************************
      * Config Menu
      *********************************************************************** */
-    var configMenuOnItemCheck = function(item, checked){
-	var me = this;
-        if (me.debug) console.log('configMenuOnItemCheck: item.id='+item.id);
-        senchaPreferenceStore.setPreference(item.id, checked);
-    }
-
-    var configMenu = Ext.create('Ext.menu.Menu', {
-        id: 'configMenu',
+    var configMenu = Ext.create('PO.view.menu.ConfigMenu', {
         debug: debug,
-        style: {overflow: 'visible'},						// For the Combo popup
+        id: 'configMenu',
+	senchaPreferenceStore: senchaPreferenceStore,
         items: [{
-                text: 'Reset Configuration',
-                handler: function() {
-                    var me = this;
-                    var menu = me.ownerCt;
-                    if (menu.debug) console.log('configMenu.OnResetConfiguration');
-                    senchaPreferenceStore.each(function(model) {
-                        model.destroy();
-                    });
-                }
-        }, '-']
+            key: 'read_only',
+            text: 'Read Only (Beta version - use with caution!)',
+            checked: true
+        }, {
+	    id: 'config_menu_show_project_dependencies',
+            key: 'show_project_dependencies', 
+            text: 'Show Project Dependencies', 
+            checked: true
+        },  {
+	    id: 'config_menu_show_project_assigned_resources',
+            key: 'show_project_assigned_resources', 
+            text: 'Show Project Assigned Resources', 
+            checked: true
+        }]
     });
-
-    // Setup the configMenu items
-    var confSetupStore = Ext.create('Ext.data.Store', {
-        fields: ['key', 'text', 'def'],
-        data : [
-            {key: 'read_only', text: 'Read Only (Beta version - use with caution!)', def: true},
-            {key: 'show_project_dependencies', text: 'Show Project Dependencies', def: true},
-            {key: 'show_project_resource_load', text: 'Show Project Assigned Resources', def: true}
-        ]
-    });
-    confSetupStore.each(function(model) {
-        var key = model.get('key');
-        var def = model.get('def');
-        var checked = senchaPreferenceStore.getPreferenceBoolean(key, def);
-        if (!senchaPreferenceStore.existsPreference(key)) {
-            senchaPreferenceStore.setPreference(key, checked ? 'true' : 'false');
-        }
-        var item = Ext.create('Ext.menu.CheckItem', {
-            id: key,
-            text: model.get('text'),
-            checked: checked,
-            checkHandler: configMenuOnItemCheck
-        });
-        configMenu.add(item);
-    });
-
-
 
     /* ***********************************************************************
      * Scheduling Menu
@@ -245,7 +217,7 @@ function launchGanttEditor(debug){
 
     var ganttTreePanelController = Ext.create('GanttEditor.controller.GanttTreePanelController', {
         ganttTreePanel: ganttTreePanel,
-	senchaPreferenceStore: senchaPreferenceStore,
+        senchaPreferenceStore: senchaPreferenceStore,
         debug: debug
     });
     ganttTreePanelController.init(this);
@@ -255,12 +227,12 @@ function launchGanttEditor(debug){
     // Right-hand side Gantt display
     var ganttBarPanel = Ext.create('GanttEditor.view.GanttBarPanel', {
         id: 'ganttBarPanel',
-	cls: 'gantt-bar-panel',
+        cls: 'gantt-bar-panel',
         region: 'center',
         debug: debug,
-	
-	reportStartTime: reportStartTime,
-	reportEndTime: reportEndTime,
+        
+        reportStartTime: reportStartTime,
+        reportEndTime: reportEndTime,
 
         overflowX: 'scroll',							// Allows for horizontal scrolling, but not vertical
         scrollFlags: { x: true },
@@ -303,8 +275,8 @@ function launchGanttEditor(debug){
         ganttBarPanel: ganttBarPanel,
         taskTreeStore: taskTreeStore,
         resizeController: resizeController,
-	senchaPreferenceStore: senchaPreferenceStore,
-	ganttTreePanelController: ganttTreePanelController
+        senchaPreferenceStore: senchaPreferenceStore,
+        ganttTreePanelController: ganttTreePanelController
     });
     ganttButtonController.init(this).onLaunch(this);
 
@@ -398,11 +370,11 @@ Ext.onReady(function() {
         query: "user_id in (					\
                 select	r.object_id_two				\
                 from	acs_rels r,				\
-                	im_projects main_p,			\
-                	im_projects sub_p			\
+                        im_projects main_p,			\
+                        im_projects sub_p			\
                 where	main_p.project_id = @project_id@ and	\
-                	sub_p.tree_sortkey between main_p.tree_sortkey and tree_right(main_p.tree_sortkey) and \
-                	r.object_id_one = sub_p.project_id	\
+                        sub_p.tree_sortkey between main_p.tree_sortkey and tree_right(main_p.tree_sortkey) and \
+                        r.object_id_one = sub_p.project_id	\
         )"
     };
     projectMemberStore.load();

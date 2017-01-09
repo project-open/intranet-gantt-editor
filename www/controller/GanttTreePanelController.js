@@ -32,7 +32,11 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
             '#buttonReduceIndent': { click: this.onButtonReduceIndent},
             '#buttonIncreaseIndent': { click: this.onButtonIncreaseIndent},
             '#buttonAdd': { click: this.onButtonAdd},
-            '#buttonDelete': { click: this.onButtonDelete}
+            '#buttonDelete': { click: this.onButtonDelete},
+
+	    // Redraw GanttBars after changing the configuration
+            '#config_menu_show_project_dependencies': { click: this.redrawGanttBarPanel},
+            '#config_menu_show_project_assigned_resources': { click: this.redrawGanttBarPanel}
         });
 
         // Listen to drop events from tree drag-and-drop
