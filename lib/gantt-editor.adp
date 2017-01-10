@@ -227,7 +227,7 @@ function launchGanttEditor(debug){
     // Right-hand side Gantt display
     var ganttBarPanel = Ext.create('GanttEditor.view.GanttBarPanel', {
         id: 'ganttBarPanel',
-        cls: 'gantt-bar-panel',
+        cls: 'extjs-panel',
         region: 'center',
         debug: debug,
         
