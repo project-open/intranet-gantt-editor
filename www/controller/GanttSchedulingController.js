@@ -114,6 +114,11 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
     onStartDateChanged: function(treeStore, model, operation, event) {
         var me = this;
         if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.onStartDateChanged: Starting');
+
+	// Check for manually entered date. startDates start at 00:00:00 at night:
+	var myStartDate = model.get('start_date');
+	if (myStartDate.length == 10) { model.set('start_date', myStartDate + " 00:00:00"); }
+
         var parent = model.parentNode;						// 
         if (!parent) return;
         var parent_start_date = parent.get('start_date');
@@ -149,6 +154,10 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
     onEndDateChanged: function(treeStore, model, operation, event) {
         var me = this;
         if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.onEndDateChanged: Starting');
+
+	// Check for manually entered date. endDates end at 23:59:59 at night:
+	var myStartDate = model.get('start_date');
+	if (myStartDate.length == 10) { model.set('start_date', myStartDate + " 23:59:59"); }
 
         var parent = model.parentNode;
         if (!parent) return;
