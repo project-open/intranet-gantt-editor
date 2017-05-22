@@ -58,16 +58,16 @@ Ext.define('GanttEditor.controller.GanttButtonController', {
         // Listen to any changes in store records
         me.taskTreeStore.on({'update': me.onTaskTreeStoreUpdate, 'scope': this});
 
-	// write_project_p is a global variable defined in gantt-editor.adp
+        // write_project_p is a global variable defined in gantt-editor.adp
         var buttonSave = Ext.getCmp('buttonSave');
         var buttonLock = Ext.getCmp('buttonLock');
-	if (1 == write_project_p) {
-	    buttonSave.show();
-	    buttonLock.hide();
-	} else {
-	    buttonSave.hide();
-	    buttonLock.show();
-	}
+        if (1 == write_project_p) {
+            buttonSave.show();
+            buttonLock.hide();
+        } else {
+            buttonSave.hide();
+            buttonLock.show();
+        }
 
         return this;
     },
@@ -108,12 +108,12 @@ Ext.define('GanttEditor.controller.GanttButtonController', {
         var me = this;
         if (me.debug) console.log('GanttButtonController.ButtonSave');
         me.taskTreeStore.save({
-	    failure: function(batch, context) { 
-		var msg = batch.proxy.reader.jsonData.message;
-		if (!msg) msg = 'undefined error';
-		PO.Utilities.reportError('Server error while saving', msg);
-	    }
-	});
+            failure: function(batch, context) { 
+                var msg = batch.proxy.reader.jsonData.message;
+                if (!msg) msg = 'undefined error';
+                PO.Utilities.reportError("onButtonSave", 'Server error while saving: '+msg);
+            }
+        });
         // Now block the "Save" button, unless some data are changed.
         var buttonSave = Ext.getCmp('buttonSave');
         buttonSave.setDisabled(true);
@@ -127,31 +127,31 @@ Ext.define('GanttEditor.controller.GanttButtonController', {
         var me = this;
         if (me.debug) console.log('GanttButtonController.onTaskTreeStoreUpdate');
 
-	// Check if read-only and abort in this case
-	var readOnly = me.senchaPreferenceStore.getPreferenceBoolean('read_only',true);
-	if (readOnly) {
-	    var cnt = 0;
-	    for (var idx in affectedColumns) {
-		var col = affectedColumns[idx];
-		console.log('GanttButtonController.onTaskTreeStoreUpdate: col='+col);
-		switch (col) {
-		    case "expanded": break;
-		    case "collapsed": break;
-		    default: cnt++;
-		}
-	    };
+        // Check if read-only and abort in this case
+        var readOnly = me.senchaPreferenceStore.getPreferenceBoolean('read_only',true);
+        if (readOnly) {
+            var cnt = 0;
+            for (var idx in affectedColumns) {
+                var col = affectedColumns[idx];
+                console.log('GanttButtonController.onTaskTreeStoreUpdate: col='+col);
+                switch (col) {
+                    case "expanded": break;
+                    case "collapsed": break;
+                    default: cnt++;
+                }
+            };
 
-	    if (cnt > 0) {
-		me.ganttTreePanelController.readOnlyWarning(); 
-		return; 
-	    }
-	}
+            if (cnt > 0) {
+                me.ganttTreePanelController.readOnlyWarning(); 
+                return; 
+            }
+        }
 
-	// Enable the Save button
+        // Enable the Save button
         var buttonSave = Ext.getCmp('buttonSave');
         buttonSave.setDisabled(false);					// Allow to "save" changes
 
-	// ToDo: This isn't always the case...
+        // ToDo: This isn't always the case...
         me.ganttBarPanel.needsRedraw = true;				// Tell the ganttBarPanel to redraw with the next frame
     },
 
@@ -179,14 +179,14 @@ Ext.define('GanttEditor.controller.GanttButtonController', {
 
     onZoomIn: function() {
         var me = this;
-	alert('GanttButtonController.onZoomIn: ToDo: remove');
+        alert('GanttButtonController.onZoomIn: ToDo: remove');
         if (me.debug) console.log('GanttButtonController.onZoomIn');
         this.ganttBarPanel.onZoomIn();
     },
 
     onZoomOut: function() {
         var me = this;
-	alert('GanttButtonController.onZoomOut: ToDo: remove');
+        alert('GanttButtonController.onZoomOut: ToDo: remove');
         if (me.debug) console.log('GanttButtonController.onZoomOut');
         this.ganttBarPanel.onZoomOut();
     },
