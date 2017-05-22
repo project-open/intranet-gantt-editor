@@ -456,13 +456,15 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
         while ("" == (end_date = p.get('end_date')) && !!p.parentNode) { p = p.parentNode; }
         if ("" == start_date || "" == end_date) { return; }
 
-        var startTime = PO.Utilities.pgToDate(start_date).getTime();
-        var endTime = PO.Utilities.pgToDate(end_date).getTime();
+        var startDate = PO.Utilities.pgToDate(start_date);
+        var endDate = PO.Utilities.pgToDate(end_date);
+        var startTime = startDate.getTime();
+        var endTime = endDate.getTime();
 
         var x = me.date2x(startTime);						// X position based on time scale
         var y = me.calcGanttBarYPosition(project);				// Y position based on TreePanel y position of task.
         var w = Math.floor(me.axisEndX * (endTime - startTime) / (me.axisEndDate.getTime() - me.axisStartDate.getTime()));
-        if (w < 0) { w = 10; }	       	 	    	       	 		// Skip if start/end are completely wrong (probably end < start..)
+        if (w < 2) { w = 2; }	       	 	    	       	 		// Skip if start/end are completely wrong (probably end < start..)
         var h = me.ganttBarHeight;						// Constant determines height of the bar
         var d = Math.floor(h / 2.0) + 1;					// Size of the indent of the super-project bar
 
