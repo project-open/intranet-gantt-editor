@@ -410,7 +410,7 @@ Ext.onReady(function() {
 </div>
 </if>
 <else>
-<if "0" eq @read_p@>
+<if "" ne @main_project_parent_id@>
 Project #@project_id@ is a sub-project, so we can't show a Gantt Editor for it.
 </if>
 </else>

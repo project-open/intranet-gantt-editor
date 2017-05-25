@@ -17,6 +17,9 @@
 set page_url [im_url_with_query]
 set current_user_id [auth::require_login]
 set main_project_id $project_id; # project_id may be overwritten by SQLs below
+set main_project_parent_id [db_string mppi "select parent_id from im_projects where project_id = :main_project_id" -default ""]
+if {"" ne $main_project_parent_id} { set main_project_id "" }
+
 
 # Determine the permission of the user
 im_project_permissions $current_user_id $main_project_id view_p read_p write_p admin_p
