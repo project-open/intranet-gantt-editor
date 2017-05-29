@@ -306,6 +306,22 @@ function launchGanttEditor(debug){
     });
     ganttSchedulingController.init(this).onLaunch(this);
 
+    
+    // Create a warning if there are no tasks in the project
+    var numTasks = 0;
+    taskTreeStore.tree.root.eachChild(function() { numTasks = numTasks + 1; });
+    if (0 == numTasks) {
+	Ext.Msg.show({
+	    title: 'No tasks created yet',
+	    msg: 'Please click on the <img src="/intranet/images/navbar_default/add.png"> button above<br>in order to add a first task to your project.',
+	    height: 120,
+	    width: 400,
+	    buttons: Ext.Msg.OK,
+	    icon: Ext.Msg.INFO,
+	    modal: false
+	});
+    }
+
 };
 
 
