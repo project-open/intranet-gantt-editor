@@ -108,7 +108,10 @@ Ext.define('GanttEditor.controller.GanttButtonController', {
         var me = this;
         if (me.debug) console.log('GanttButtonController.ButtonSave');
 
-	// Fix wrong 
+	// Make sure there are no duplicate tasks
+	me.ganttTreePanelController.treeRenumber();
+
+	// Fix wrong milestone_p field
 	me.taskTreeStore.tree.root.eachChild(function(taskModel) {
 	    var milestoneP = taskModel.get('milestone_p');
 	    var m = milestoneP;
