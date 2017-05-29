@@ -107,6 +107,26 @@ Ext.define('GanttEditor.controller.GanttButtonController', {
     onButtonSave: function() {
         var me = this;
         if (me.debug) console.log('GanttButtonController.ButtonSave');
+
+	// Fix wrong 
+	me.taskTreeStore.tree.root.eachChild(function(taskModel) {
+	    var milestoneP = taskModel.get('milestone_p');
+	    var m = milestoneP;
+            switch (milestoneP) {
+            case "true": m = 't'; break;
+            case true: m = 't'; break;
+            case "false": m = 'f'; break;
+            case false: m = 'f'; break;
+            }
+
+	    if (milestoneP != m) {
+		if (me.debug) console.log('GanttButtonController.ButtonSave: Fixing milestone_p from "'+milestoneP+'" to "'+m+'"');
+		taskModel.set('milestone_p', 'f');
+	    }
+
+	});
+
+
         me.taskTreeStore.save({
             failure: function(batch, context) { 
                 var msg = batch.proxy.reader.jsonData.message;
