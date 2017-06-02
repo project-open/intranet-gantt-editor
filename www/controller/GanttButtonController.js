@@ -200,20 +200,6 @@ Ext.define('GanttEditor.controller.GanttButtonController', {
         me.resizeController.onSwitchBackFromFullScreen();
     },
 
-    onZoomIn: function() {
-        var me = this;
-        alert('GanttButtonController.onZoomIn: ToDo: remove');
-        if (me.debug) console.log('GanttButtonController.onZoomIn');
-        this.ganttBarPanel.onZoomIn();
-    },
-
-    onZoomOut: function() {
-        var me = this;
-        alert('GanttButtonController.onZoomOut: ToDo: remove');
-        if (me.debug) console.log('GanttButtonController.onZoomOut');
-        this.ganttBarPanel.onZoomOut();
-    },
-
     /**
      * Control the enabled/disabled status of the (-) (Delete) button
      */
