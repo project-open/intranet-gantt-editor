@@ -15,7 +15,7 @@ Ext.define('GanttEditor.controller.GanttButtonController', {
     extend: 'Ext.app.Controller',
     debug: true,
     ganttTreePanel: null,						// Set during init: left-hand task tree panel
-    ganttBarPanel: null,						// Set during init: right-hand surface with Gantt sprites
+    ganttBarPanel: null,						// Set during init: right-hand panel with Gantt sprites
     taskTreeStore: null,						// Set during init: treeStore with task data
     ganttPanelContainer: null,
     resizeController: null,

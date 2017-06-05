@@ -39,15 +39,6 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
         if (me.debug) console.log('PO.view.gantt.GanttBarPanel.initComponent: Starting');
         this.callParent(arguments);
 
-        // Default values for axis startDate and endDate
-        var oneDayMiliseconds = 24 * 3600 * 1000;
-        me.axisEndX = 2000;							// Size of the time axis. Always starts with 0.
-        me.axisStartDate = new Date(me.reportStartTime - 1.5 * oneDayMiliseconds);
-        me.axisEndDate = new Date(me.reportEndTime + 1.5 * (me.reportEndTime - me.reportStartTime) + 7 * oneDayMiliseconds);
-
-        // Set axis and scroll configuration if saved in the preference store
-        me.redrawSetScrolls();
-
         // Catch the moment when the "view" of the Project grid
         // is ready in order to draw the GanttBars for the first time.
         // The view seems to take a while...
@@ -366,8 +357,8 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
         var me = this;
         if (me.debug) console.log('PO.class.GanttDrawComponent.redraw: Starting');
 
-        if (!me.needsRedraw) { return; }
-        if (undefined === me.surface) { return; }
+        if (!me.needsRedraw) { return; }					// Lazy redraw: set only if a redraw is really necessary
+        if (undefined === me.surface) { return; }				// Don't redraw when still initializing
         
         // Get the root of the ganttTree
         var ganttTreeView = me.objectPanel.getView();
@@ -379,6 +370,11 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
         me.surface.removeAll();
         me.surface.setSize(me.axisEndX, surfaceYSize);				// Set the size of the drawing area
         me.drawAxisAuto();							// Draw the top axis
+        if (me.scrollX) {							// Deferred scrolling - only here we've got a scrollableEl...
+            var scrollableEl = me.getEl();                                  // Ext.dom.Element that enables scrolling
+            scrollableEl.setScrollLeft(me.scrollX);
+            delete me.scrollX;							// Remove the attribute - scroll only once...
+        }
 
         // Iterate through all children of the root node and check if they are visible
         rootNode.cascadeBy(function(model) {
@@ -394,46 +390,8 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
             me.drawProjectDependencies(model);
         });
 
-        // Restore scrolling state as before
-        me.redrawSetScrolls();
-
         if (me.debug) console.log('PO.class.GanttDrawComponent.redraw: Finished');
     },
-
-
-    /**
-     * Set axis and scroll configuration as stored
-     * in the SenchaPreferenceStore
-     */
-    redrawSetScrolls: function() {
-        var me = this;
-        if (me.debug) console.log('PO.class.GanttDrawComponent.redrawSetScrolls: Started');
-
-        me.preferenceStore.each(function(model) {
-            var preferenceKey = model.get('preference_key');
-            var preferenceValue = model.get('preference_value');
-            var preferenceInt = parseInt(preferenceValue);
-            switch (preferenceKey) {
-            case 'scrollX':
-                var scrollableEl = me.getEl();                                  // Ext.dom.Element that enables scrolling
-                if (scrollableEl) {
-                    scrollableEl.setScrollLeft(preferenceInt);
-                    if (me.debug) console.log('PO.class.GanttDrawComponent.redrawSetScrolls: scrollX='+preferenceInt);
-                }
-                break;
-            case 'axisStartTime':
-                me.axisStartDate = new Date(preferenceInt);
-                if (me.debug) console.log('PO.class.GanttDrawComponent.redrawSetScrolls: axisStartTime='+preferenceInt);
-                break;
-            case 'axisEndTime':
-                me.axisEndDate = new Date(preferenceInt);
-                if (me.debug) console.log('PO.class.GanttDrawComponent.redrawSetScrolls: axisEndTime='+preferenceInt);
-                break;
-            };
-        });
-        if (me.debug) console.log('PO.class.GanttDrawComponent.redrawSetScrolls: Finished');
-    },
-
 
     /**
      * Draw a single bar for a project or task
@@ -614,31 +572,31 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
 
         if (!drawn) { alert('GanttBarPanel.drawProjectBar: not drawn for some reason'); }
         
-	// Draw assignee initials behind the Gantt bar.
+        // Draw assignee initials behind the Gantt bar.
         var drawAssignees = me.preferenceStore.getPreferenceBoolean('show_project_assigned_resources', true);
-	if (drawAssignees) {
+        if (drawAssignees) {
             var projectMemberStore = Ext.StoreManager.get('projectMemberStore');
             var text = "";
             if ("" != assignees) {
-		assignees.forEach(function(assignee) {
+                assignees.forEach(function(assignee) {
                     if (0 == assignee.percent) { return; }				// Don't show empty assignments
                     var userModel = projectMemberStore.getById(""+assignee.user_id);
                     if (!userModel) return;
                     if ("" != text) { text = text + ', '; }
                     text = text + userModel.get('first_names').substr(0, 1) + userModel.get('last_name').substr(0, 1);
                     if (100 != assignee.percent) {
-			text = text + '['+assignee.percent+'%]';
+                	text = text + '['+assignee.percent+'%]';
                     }
-		});
-		
-		var xOffset = w + 4;						// Default: Start directly behind the bar
-		switch (drawn) {
-		case 'milestone': xOffset = 8;					// Milestone: Ignore bar width, but add some extra space
-		}
-		
-		var axisText = surface.add({type:'text', text:text, x:x+xOffset, y:y+d, fill:'#000', font:"10px Arial"}).show(true);
+                });
+                
+                var xOffset = w + 4;						// Default: Start directly behind the bar
+                switch (drawn) {
+                case 'milestone': xOffset = 8;					// Milestone: Ignore bar width, but add some extra space
+                }
+                
+                var axisText = surface.add({type:'text', text:text, x:x+xOffset, y:y+d, fill:'#000', font:"10px Arial"}).show(true);
             }
-	}
+        }
 
         // Add a drag-and-drop configuration to all spriteBars (bar, supertask and milestone)
         // in order to allow them to act as both source and target of inter-task dependencies.

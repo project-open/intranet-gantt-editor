@@ -19,6 +19,9 @@
 Ext.Loader.setPath('PO', '/sencha-core');
 Ext.Loader.setPath('GanttEditor', '/intranet-gantt-editor');
 
+// Disable the ?_dc=123456789 parameter from loader
+Ext.Loader.setConfig({disableCaching: false});
+
 Ext.require([
     'Ext.data.*',
     'Ext.grid.*',
@@ -74,9 +77,6 @@ function launchGanttEditor(debug){
     var oneDayMiliseconds = 24 * 3600 * 1000;
     var renderDiv = Ext.get("@gantt_editor_id@");
     var gifPath = "/intranet/images/navbar_default/";
-
-    var reportStartTime = PO.Utilities.pgToDate('@report_start_date@').getTime();
-    var reportEndTime = PO.Utilities.pgToDate('@report_end_date@').getTime();
 
     /* ***********************************************************************
      * Help Menu
@@ -222,28 +222,27 @@ function launchGanttEditor(debug){
     });
     ganttTreePanelController.init(this);
 
-    
 
     // Right-hand side Gantt display
+    var reportStartDate = PO.Utilities.pgToDate('@report_start_date@');
+    var reportEndDate = PO.Utilities.pgToDate('@report_end_date@');
     var ganttBarPanel = Ext.create('GanttEditor.view.GanttBarPanel', {
         id: 'ganttBarPanel',
         cls: 'extjs-panel',
         region: 'center',
-        debug: debug,
-        
-        reportStartTime: reportStartTime,
-        reportEndTime: reportEndTime,
-
+        debug: false,
+        reportStartDate: reportStartDate,					// start and end of first and last task in the project
+        reportEndDate: reportEndDate,
         overflowX: 'scroll',							// Allows for horizontal scrolling, but not vertical
         scrollFlags: { x: true },
-
-        objectPanel: ganttTreePanel,
-        objectStore: taskTreeStore,
-        preferenceStore: senchaPreferenceStore,
         gradients: [
             {id:'gradientId', angle:66, stops:{0:{color:'#99b2cc'}, 100:{color:'#ace'}}},
             {id:'gradientId2', angle:0, stops:{0:{color:'#590'}, 20:{color:'#599'}, 100:{color:'#ddd'}}}
-        ]
+        ],
+
+        objectPanel: ganttTreePanel,
+        objectStore: taskTreeStore,
+        preferenceStore: senchaPreferenceStore
     });
 
     // Outer Gantt editor jointing the two parts (TreePanel + Draw)
@@ -280,16 +279,14 @@ function launchGanttEditor(debug){
     });
     ganttButtonController.init(this).onLaunch(this);
 
-    // Controller for Zoom in/out, scrolling and 
-    // centering tasks on the ganttBarPanel surface
+    // Controller for Zoom in/out, scrolling and  centering
     var ganttZoomController = Ext.create('GanttEditor.controller.GanttZoomController', {
         debug: debug,
         senchaPreferenceStore: senchaPreferenceStore
     });
     ganttZoomController.init(this);
 
-    // Create the panel showing properties of a task,
-    // but don't show it yet.
+    // Create the panel showing properties of a task, but don't show it yet.
     var taskPropertyPanel = Ext.create("PO.view.gantt.GanttTaskPropertyPanel", {
         debug: true,
 	senchaPreferenceStore: senchaPreferenceStore,

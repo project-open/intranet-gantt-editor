@@ -20,19 +20,23 @@ Ext.define('GanttEditor.controller.GanttZoomController', {
     ],
     
     debug: false,
-    ganttBarPanel: null,
     senchaPreferenceStore: null,			// preferences
-    zoomFactor: 5.0,	   				// Fast or slow zooming? 2.0 is fast, 10.0 is very slow
+    zoomFactor: 1.5,	   				// Fast or slow zooming? 2.0 is fast, 1.2 is very slow
+
+    // ToDo: Do we need to update zooming after a resize?
 
     init: function() {
         var me = this;
         if (me.debug) console.log('GanttEditor.controller.GanttZoomController.init: Starting');
+
+        // Catch events from three zoom buttons
         me.control({
             '#buttonZoomIn': { click: me.onButtonZoomIn },
             '#buttonZoomOut': { click: me.onButtonZoomOut },
             '#buttonZoomCenter': { click: me.onButtonZoomCenter }
         });
 
+        // Catch scroll events
         var ganttBarPanel = me.getGanttBarPanel();
         var scrollableEl = ganttBarPanel.getEl();
         scrollableEl.on({
@@ -40,92 +44,128 @@ Ext.define('GanttEditor.controller.GanttZoomController', {
             'scope': this
         });
 
+	// Check if there is a state stored from a previous session.
+	var persistedP = me.restoreFromPreferenceStore();
+	if (!persistedP) {
+	    // Otherwise show the entire project as a default
+	    me.zoomOnEntireProject();
+	}
+
         if (me.debug) console.log('GanttEditor.controller.GanttZoomController.init: Finished');
     },
 
+
     /**
-     * A user(!) has changed the horizontal scrolling.
+     * Set axis and scroll configuration as stored
+     * in the SenchaPreferenceStore from the last session
+     */
+    restoreFromPreferenceStore: function() {
+        var me = this;
+        if (me.debug) console.log('GanttZoomController.restoreFromPreferenceStore: Started');
+
+        var ganttBarPanel = me.getGanttBarPanel();
+	var persistedP = false;
+        me.senchaPreferenceStore.each(function(model) {
+            var preferenceKey = model.get('preference_key');
+            var preferenceValue = model.get('preference_value');
+            var preferenceInt = parseInt(preferenceValue);
+            switch (preferenceKey) {
+            case 'scrollX': ganttBarPanel.scrollX = preferenceInt; persistedP = true; break;
+            case 'axisStartTime': ganttBarPanel.axisStartDate = new Date(preferenceInt); persistedP = true; break;
+            case 'axisEndTime': ganttBarPanel.axisEndDate = new Date(preferenceInt); persistedP = true; break;
+            case 'axisStartX': ganttBarPanel.axisStartX = preferenceInt; persistedP = true; break;
+            case 'axisEndX': ganttBarPanel.axisEndX = preferenceInt; persistedP = true; break;
+            };
+        });
+
+        if (me.debug) console.log('GanttZoomController.restoreFromPreferenceStore: Finished');
+	return persistedP;
+    },
+
+
+    /**
+     * Set zoom so that the entire project fits on the surface
+     * without scroll bar.
+     */
+    zoomOnEntireProject: function() {
+	var me = this;
+
+        if (me.debug) console.log('GanttEditor.controller.GanttZoomController.zoomEntireProject: Started');
+        var ganttBarPanel = me.getGanttBarPanel();
+
+        // Default values for axis startDate and endDate
+        var oneDayMiliseconds = 24 * 3600 * 1000;
+        var reportStartTime = ganttBarPanel.reportStartDate.getTime();
+        var reportEndTime = ganttBarPanel.reportEndDate.getTime();
+        var panelBox = ganttBarPanel.getBox();
+        var panelWidth = panelBox.width;
+        var panelHeight = panelBox.height;
+
+        ganttBarPanel.axisStartX = 0;
+        ganttBarPanel.axisEndX = panelWidth;
+        ganttBarPanel.surface.setSize(panelWidth,panelHeight);
+        // space at the left and right of the Gantt Chart for DnD
+        var marginTime = (reportEndTime - reportStartTime) * 0.2;
+        var minMarginTime = 2.0 * oneDayMiliseconds;
+        if (marginTime < minMarginTime) marginTime = minMarginTime;
+        ganttBarPanel.axisStartDate = new Date(reportStartTime - marginTime);
+        ganttBarPanel.axisEndDate = new Date(reportEndTime + marginTime);
+
+	// persist the changes
+        me.senchaPreferenceStore.setPreference('axisStartTime', ganttBarPanel.axisStartDate.getTime());
+        me.senchaPreferenceStore.setPreference('axisEndTime', ganttBarPanel.axisEndDate.getTime());
+        me.senchaPreferenceStore.setPreference('axisEndX', ganttBarPanel.axisEndX);
+        me.senchaPreferenceStore.setPreference('scrollX', 0);
+
+        me.getGanttBarPanel().needsRedraw = true;                             // request a redraw
+
+        if (me.debug) console.log('GanttEditor.controller.GanttZoomController.zoomEntireProject: Finished');
+    },
+
+
+
+    /**
+     * A user(!) has changed the horizontal scrolling by moving the scroll-bar.
      * Store the new value persistently on the server.
-     * Debugging is disabled because there many be many
-     * events per second.
+     * This is all we need to do, because the Browser handles the scrolling for us.
+     * Debugging is disabled because there many be many events per second.
      */
     onHorizontalScroll: function(scrollEvent, htmlElement, eOpts) {
         var me = this;
-        // if (me.debug) console.log('GanttEditor.controller.GanttZoomController.onHorizontalScroll: Starting');
-        
         var ganttBarPanel = me.getGanttBarPanel();
         var scrollableEl = ganttBarPanel.getEl();
         var scrollX = scrollableEl.getScrollLeft();
         me.senchaPreferenceStore.setPreference('scrollX', ''+Math.round(scrollX));
-
-        // if (me.debug) console.log('GanttEditor.controller.GanttZoomController.onHorizontalScroll: Finished');
     },
 
     /**
-     * Zoom In
+     * Zoom In - The user has pressed the (+) button.
+     * Increase the size of the surface. That's all we really need for a zoom.
      */
     onButtonZoomIn: function() {
         var me = this;
         if (me.debug) console.log('GanttEditor.controller.GanttZoomController.onButtonZoomIn: Starting');
+
         var ganttBarPanel = me.getGanttBarPanel();
-        var scrollableEl = ganttBarPanel.getEl();                       // Ext.dom.Element that enables scrolling
-        var zoomFactor = me.zoomFactor;
-
-        var axisStartTime = ganttBarPanel.axisStartDate.getTime();
-        var axisEndTime = ganttBarPanel.axisEndDate.getTime();
-        var axisEndX = ganttBarPanel.axisEndX;
-        var scrollX = scrollableEl.getScrollLeft();
-        var surfaceWidth = ganttBarPanel.getSize().width;
-        
-        // Calculate the current "central time" in the middle of the view area
-        var centralX = scrollX + Math.round(surfaceWidth / 2);                     // X position of the center of the visible area
-        var oldCentralTime = ganttBarPanel.x2time(centralX);
-        
-        // Calculate the diff for the axis start- and end time.
-        var diff = ((axisEndTime - axisStartTime) / (1 + 2 / zoomFactor)) / zoomFactor;	     // Reverse the the effect of ZoomOut
-        ganttBarPanel.axisStartDate = new Date(axisStartTime + diff);
-        ganttBarPanel.axisEndDate = new Date(axisEndTime - diff);
-        me.senchaPreferenceStore.setPreference('axisStartTime', ganttBarPanel.axisStartDate.getTime());	   // persist
-        me.senchaPreferenceStore.setPreference('axisEndTime', ganttBarPanel.axisEndDate.getTime());	   // persist
-
-        // Calculate the new "central time" in the middle of the view area
-        var newCentralTime = ganttBarPanel.x2time(centralX);
-
-        // Calculate the new scroll, so that new = old central time.
-        var centralDiffTime = newCentralTime - oldCentralTime;
-        var centralDiffX = centralDiffTime * axisEndX / (axisEndTime - axisStartTime);
-        var newScrollX = scrollX - centralDiffX;
-
-        scrollableEl.setScrollLeft(newScrollX);
-        me.senchaPreferenceStore.setPreference('scrollX', newScrollX);                  	// write new scrollX as a default into a persistent preference
-
-        // Redraw before passing control back to the browser
+        ganttBarPanel.axisEndX = me.zoomFactor * ganttBarPanel.axisEndX;
         me.getGanttBarPanel().needsRedraw = true;
+        me.senchaPreferenceStore.setPreference('axisEndX', ganttBarPanel.axisEndX);        // Persist the new zoom parameters
 
         if (me.debug) console.log('GanttEditor.controller.GanttZoomController.onButtonZoomIn: Finished');
     },
 
     /**
      * Zoom Out
+     * Decrease the size of the surface. That's all we have to do...
      */
     onButtonZoomOut: function() {
         var me = this;
         if (me.debug) console.log('GanttEditor.controller.GanttZoomController.onButtonZoomOut: Starting');
         var ganttBarPanel = me.getGanttBarPanel();
-        var zoomFactor = me.zoomFactor;
 
-        var axisStartTime = ganttBarPanel.axisStartDate.getTime();
-        var axisEndTime = ganttBarPanel.axisEndDate.getTime();
-        var axisEndX = ganttBarPanel.axisEndX;
-        var diff = (axisEndTime - axisStartTime) / zoomFactor;
-        
-        ganttBarPanel.axisStartDate = new Date(axisStartTime - diff);
-        ganttBarPanel.axisEndDate = new Date(axisEndTime + diff);
-        me.senchaPreferenceStore.setPreference('axisStartTime', ganttBarPanel.axisStartDate.getTime());	   // persist
-        me.senchaPreferenceStore.setPreference('axisEndTime', ganttBarPanel.axisEndDate.getTime());	   // persist
-
-        // Redraw before passing control back to the browser
+        ganttBarPanel.axisEndX = ganttBarPanel.axisEndX / me.zoomFactor;
         me.getGanttBarPanel().needsRedraw = true;
+        me.senchaPreferenceStore.setPreference('axisEndX', ganttBarPanel.axisEndX);        // Persist the new zoom parameters
 
         if (me.debug) console.log('GanttEditor.controller.GanttZoomController.onButtonZoomOut: Finished');
     },
@@ -141,8 +181,6 @@ Ext.define('GanttEditor.controller.GanttZoomController', {
         if (me.debug) console.log('GanttEditor.controller.GanttZoomController.zoomOnSelectedTask: Starting');
 
         var ganttBarPanel = me.getGanttBarPanel();
-        var ganttTreePanel = me.getGanttTreePanel();
-        var taskTreeStore = ganttTreePanel.getStore();
 
         // Calculate the "midX" X-coordinate of the middle of the current task
         var start_date = selectedTask.get('start_date');
@@ -151,7 +189,6 @@ Ext.define('GanttEditor.controller.GanttZoomController', {
         
         var startDate = PO.Utilities.pgToDate(start_date);
         var endDate = PO.Utilities.pgToDate(end_date);
-
         var startX = ganttBarPanel.date2x(startDate);
         var endX = ganttBarPanel.date2x(endDate);
         var midX = Math.round((startX + endX) / 2);
@@ -168,73 +205,7 @@ Ext.define('GanttEditor.controller.GanttZoomController', {
         scrollableEl.setScrollLeft(scrollX);
         me.senchaPreferenceStore.setPreference('scrollX', scrollX);	// write new scrollX as a default into a persistent preference
 
-        // Redraw before passing control back to the browser
-        me.getGanttBarPanel().needsRedraw = true;
-
         if (me.debug) console.log('GanttEditor.controller.GanttZoomController.zoomOnSelectedTask: Finished');
-    },
-
-
-    /**
-     * Set zoom so that the entire project is visible in the 
-     * visible GanttBarPanel area.
-     */
-    zoomOnProject: function() {
-        var me = this;
-        if (me.debug) console.log('GanttEditor.controller.GanttZoomController.zoomOnProject: Starting');
-
-        var oneDayMiliseconds = 24 * 3600 * 1000;
-        var ganttBarPanel = me.getGanttBarPanel();
-        var ganttTreePanel = me.getGanttTreePanel();
-        var taskTreeStore = ganttTreePanel.getStore();
-        var zoomFactor = me.zoomFactor;
-
-        // Initialize extremes for maximum calculation
-        var startTime = 10000*10000*10000*10000;
-        var endTime = 0;
-        
-        // Iterate through all children to find min & max
-        var rootNode = taskTreeStore.getRootNode();
-        rootNode.cascadeBy(function(model) {
-            var start_date = model.get('start_date');
-            if ("" != start_date) {
-                var t = PO.Utilities.pgToDate(start_date).getTime();
-                if (t < startTime) { startTime = t; }
-            }
-            var end_date = model.get('end_date');
-            if ("" != end_date) {
-                var t = PO.Utilities.pgToDate(end_date).getTime();
-                if (t > endTime) { endTime = t; }
-            }
-        });
-
-        // Error: start_date or end_date not available in the project - just ignore in this strange case
-        if (endTime == 0 || startTime == 10000*10000*10000*10000) return;
-
-        var startX = ganttBarPanel.date2x(startTime);
-        var endX = ganttBarPanel.date2x(endTime);
-        var midX = Math.round((startX + endX) / 2);
-        var ganttSize = ganttBarPanel.getSize();
-        var ganttMidX = Math.round(ganttSize.width / 2);
-        var surfaceWidth = ganttBarPanel.surface.width;
-
-        // Set axis start- and endDate so that the project fits into the ganttSize.width visible field
-        var factor = 1.0 * surfaceWidth / ganttSize.width;
-
-        ganttBarPanel.axisStartDate = new Date(startTime - (0.5 * factor) * (endTime - startTime) - oneDayMiliseconds);
-        me.senchaPreferenceStore.setPreference('axisStartTime', ganttBarPanel.axisStartDate.getTime());	   // persist
-        ganttBarPanel.axisEndDate =   new Date(endTime   + (0.5 * factor) * (endTime - startTime) + oneDayMiliseconds);
-        me.senchaPreferenceStore.setPreference('axisEndTime', ganttBarPanel.axisEndDate.getTime());	   // persist
-
-        var scrollX = Math.round((surfaceWidth -ganttSize.width) / 2);
-        var scrollableEl = ganttBarPanel.getEl();                       // Ext.dom.Element that enables scrolling
-        scrollableEl.setScrollLeft(scrollX);
-        me.senchaPreferenceStore.setPreference('scrollX', scrollX);	// write new scrollX as a default into a persistent preference
-
-        // Redraw before passing control back to the browser
-        ganttBarPanel.needsRedraw = true;
-
-        if (me.debug) console.log('GanttEditor.controller.GanttZoomController.zoomOnProject: Finished');
     },
 
 
@@ -249,9 +220,7 @@ Ext.define('GanttEditor.controller.GanttZoomController', {
         var me = this;
         if (me.debug) console.log('GanttEditor.controller.GanttZoomController.onButtonZoomCenter: Starting');
 
-        var ganttBarPanel = me.getGanttBarPanel();
         var ganttTreePanel = me.getGanttTreePanel();
-        var taskTreeStore = ganttTreePanel.getStore();
         
         // Is a task selected? Otherwise center around the entire project
         var selectionModel = ganttTreePanel.getSelectionModel();
@@ -259,8 +228,8 @@ Ext.define('GanttEditor.controller.GanttZoomController', {
         if (lastSelected) {
             me.zoomOnSelectedTask(lastSelected);
         } else {
-            me.zoomOnProject();
-	}
+            me.zoomOnEntireProject();
+        }
 
         if (me.debug) console.log('GanttEditor.controller.GanttZoomController.onButtonZoomCenter: Finished');
     }
