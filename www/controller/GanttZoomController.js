@@ -163,7 +163,14 @@ Ext.define('GanttEditor.controller.GanttZoomController', {
         if (me.debug) console.log('GanttEditor.controller.GanttZoomController.onButtonZoomOut: Starting');
         var ganttBarPanel = me.getGanttBarPanel();
 
-        ganttBarPanel.axisEndX = ganttBarPanel.axisEndX / me.zoomFactor;
+        var panelBox = ganttBarPanel.getBox();
+        var panelWidth = panelBox.width;
+
+	// Avoid zooming out more than panelWidth
+	var endX = ganttBarPanel.axisEndX / me.zoomFactor;
+	if (endX < panelWidth) endX = panelWidth;
+        ganttBarPanel.axisEndX = endX;
+
         me.getGanttBarPanel().needsRedraw = true;
         me.senchaPreferenceStore.setPreference('axisEndX', ganttBarPanel.axisEndX);        // Persist the new zoom parameters
 
