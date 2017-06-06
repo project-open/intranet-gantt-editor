@@ -693,6 +693,7 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
     drawDependencyMsp: function(dependencyModel, tooltipHtml) {
         var me = this;
         var s, color, startX, startY, endX, endY;
+	var objectPanelView = me.objectPanel.getView();                         // The "view" for the GridPanel with HTML elements            
 
         var fromId = dependencyModel.pred_id;
         var fromBBox = me.taskBBoxHash[fromId];					// We start drawing with the end of the first bar...
@@ -702,6 +703,13 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
         var toBBox = me.taskBBoxHash[toId];			                // .. and draw towards the start of the 2nd bar.
         var toModel = me.taskModelHash[toId]
         if (!fromBBox || !toBBox) { return; }
+	
+	// Double check for nodes that are in the cache, but that have just been hidden
+	// ToDo: Delete nodes from the cache when hiding branches in the tree
+        var fromNode = objectPanelView.getNode(fromModel);
+        var toNode = objectPanelView.getNode(toModel);
+	if (!fromNode || !toNode) { return; }
+
 
         s = me.arrowheadSize;
         startY = fromBBox.y + fromBBox.height/2;
