@@ -24,7 +24,6 @@ if {"" ne $main_project_parent_id} { set main_project_id "" }
 # Determine the permission of the user
 im_project_permissions $current_user_id $main_project_id view_p read_p write_p admin_p
 
-
 # Create a random ID for the gantt editor
 set gantt_editor_rand [expr {round(rand() * 100000000.0)}]
 set gantt_editor_id "gantt_editor_$gantt_editor_rand"

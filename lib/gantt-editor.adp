@@ -1,6 +1,5 @@
 <if "" eq @main_parent_id@ and "1" eq @read_p@>
-<div id="@gantt_editor_id@" style="overflow: hidden; -webkit-user-select: none; -moz-user-select: none; -khtml-user-select: none; -ms-user-select: none; ">
-
+<div id="@gantt_editor_id@" style="height: 600px; overflow: hidden; -webkit-user-select: none; -moz-user-select: none; -khtml-user-select: none; -ms-user-select: none; ">
 <!-- define the icons for the various sub-types of projects in the tree -->
 <style type="text/css">
     .icon-task      { background-image: url("/intranet/images/navbar_default/cog_go.png") !important; }
@@ -311,8 +310,7 @@ function launchGanttEditor(debug){
 	Ext.Msg.show({
 	    title: 'No tasks created yet',
 	    msg: 'Please click on the <img src="/intranet/images/navbar_default/add.png"> button above<br>in order to add a first task to your project.',
-	    height: 120,
-	    width: 400,
+	    height: 120, width: 400,
 	    buttons: Ext.Msg.OK,
 	    icon: Ext.Msg.INFO,
 	    modal: false
