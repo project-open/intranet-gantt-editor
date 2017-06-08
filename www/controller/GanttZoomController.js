@@ -14,6 +14,7 @@
  */
 Ext.define('GanttEditor.controller.GanttZoomController', {
     extend: 'Ext.app.Controller',
+    id: 'ganttZoomController',
     refs: [
         {ref: 'ganttBarPanel', selector: '#ganttBarPanel'},
         {ref: 'ganttTreePanel', selector: '#ganttTreePanel'}
@@ -239,8 +240,36 @@ Ext.define('GanttEditor.controller.GanttZoomController', {
         }
 
         if (me.debug) console.log('GanttEditor.controller.GanttZoomController.onButtonZoomCenter: Finished');
+    },
+
+
+    /**
+      * Somebody pressed the "Fullscreen" button...
+      * This function is called by the ResizeController.
+      */
+    onSwitchToFullScreen: function () {
+        var me = this;
+        if (me.debug) console.log('GanttEditor.controller.GanttZoomController.onSwitchToFullScreen: Starting');
+
+        var ganttBarPanel = me.getGanttBarPanel();
+        var panelBox = ganttBarPanel.getBox();
+        var panelWidth = panelBox.width;
+        var panelHeight = panelBox.height;
+
+	var surfaceWidth = ganttBarPanel.axisEndX;
+
+	if (surfaceWidth < panelWidth) {
+            ganttBarPanel.axisEndX = panelWidth;
+            ganttBarPanel.surface.setSize(panelWidth,panelHeight);
+
+	    // persist the changes
+            me.senchaPreferenceStore.setPreference('axisEndX', ganttBarPanel.axisEndX);
+            me.senchaPreferenceStore.setPreference('scrollX', 0);
+
+            ganttBarPanel.needsRedraw = true;                             // request a redraw
+	}
+
+        if (me.debug) console.log('GanttEditor.controller.GanttZoomController.onSwitchToFullScreen: Finished');
     }
-
-
 });
 

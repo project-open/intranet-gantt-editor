@@ -284,6 +284,7 @@ function launchGanttEditor(debug){
         senchaPreferenceStore: senchaPreferenceStore
     });
     ganttZoomController.init(this);
+    resizeController.ganttZoomController = ganttZoomController;
 
     // Create the panel showing properties of a task, but don't show it yet.
     var taskPropertyPanel = Ext.create("PO.view.gantt.GanttTaskPropertyPanel", {
