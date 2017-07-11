@@ -45,35 +45,44 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
     onTreeStoreUpdate: function(treeStore, model, operation, fieldsChanged, event) {
         var me = this;
         if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.onTreeStoreUpdate: Starting');
-        var buttonSave = Ext.getCmp('buttonSave');
+
+	var dirty = false;
         if (null != fieldsChanged) {
             fieldsChanged.forEach(function(fieldName) {
                 if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.onTreeStoreUpdate: Field changed='+fieldName);
                 switch (fieldName) {
                 case "start_date":
                     me.onStartDateChanged(treeStore, model, operation, event);
+		    dirty = true;
                     break;
                 case "end_date":
                     me.onEndDateChanged(treeStore, model, operation, event);
+		    dirty = true;
                     break;
                 case "planned_units":
 		    me.onPlannedUnitsChanged(treeStore, model, operation, event);
+		    dirty = true;
                     break;
                 case "parent_id":
 		    // Task has new parent - indentation or un-indentation
                     me.onStartDateChanged(treeStore, model, operation, event);
                     me.onEndDateChanged(treeStore, model, operation, event);
+		    dirty = true;
                     break;
                 case "leaf":
 		    // A task has changed from leaf to tree or reverse:
 		    // Don't do anything, this is handled with the "parent_id" field anyway
+		    dirty = true;
                     break;
                 }
             });
         }
 
-        me.ganttBarPanel.needsRedraw = true;					// Force a redraw
-        buttonSave.setDisabled(false);						// Enable "Save" button
+	if (dirty) {
+            me.ganttBarPanel.needsRedraw = true;					// Force a redraw
+            var buttonSave = Ext.getCmp('buttonSave');
+            buttonSave.setDisabled(false);						// Enable "Save" button
+	}
 
         if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.onTreeStoreUpdate: Finished');
     },
