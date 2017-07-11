@@ -342,8 +342,12 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
             selectionModel.select(newNode);
         }
 
+	// Redraw, renumber and enable save button
         me.treeRenumber();								// Update the tree's task numbering
         me.getGanttBarPanel().needsRedraw = true;					// Force delayed redraw
+        var buttonSave = Ext.getCmp('buttonSave');
+        buttonSave.setDisabled(false);						// Enable "Save" button
+
     },
 
     /**
