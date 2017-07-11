@@ -448,7 +448,6 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
         });
 
         // Rename duplicate task names
-        if (me.debug) console.log(duplicateHash);
         Object.keys(duplicateHash).forEach(function(key) {
             var modelList = duplicateHash[key];
             if (modelList.length > 1) {

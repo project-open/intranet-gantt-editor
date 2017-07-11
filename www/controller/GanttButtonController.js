@@ -106,7 +106,7 @@ Ext.define('GanttEditor.controller.GanttButtonController', {
      */
     onButtonSave: function() {
         var me = this;
-        if (me.debug) console.log('GanttButtonController.ButtonSave');
+        if (me.debug) console.log('GanttButtonController.ButtonSave: Starting');
 
 	// Make sure there are no duplicate tasks
 	me.ganttTreePanelController.treeRenumber();
@@ -140,6 +140,7 @@ Ext.define('GanttEditor.controller.GanttButtonController', {
         // Now block the "Save" button, unless some data are changed.
         var buttonSave = Ext.getCmp('buttonSave');
         buttonSave.setDisabled(true);
+        if (me.debug) console.log('GanttButtonController.ButtonSave: Finished');
     },
 
     /**
@@ -149,6 +150,7 @@ Ext.define('GanttEditor.controller.GanttButtonController', {
     onTaskTreeStoreUpdate: function(treeStore, model, action, affectedColumns, eOpts) {
         var me = this;
         if (me.debug) console.log('GanttButtonController.onTaskTreeStoreUpdate');
+	if (!affectedColumns || 0 == affectedColumns.length) return;
 
         // Check if read-only and abort in this case
         var readOnly = me.senchaPreferenceStore.getPreferenceBoolean('read_only',true);
