@@ -418,6 +418,8 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
 
         var startDate = PO.Utilities.pgToDate(start_date);
         var endDate = PO.Utilities.pgToDate(end_date);
+	if (!startDate) return; 						// skip if invalid for some reason...
+	if (!endDate) return;
         var startTime = startDate.getTime();
         var endTime = endDate.getTime();
 
