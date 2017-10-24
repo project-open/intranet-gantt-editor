@@ -108,13 +108,13 @@ Ext.define('GanttEditor.controller.GanttButtonController', {
         var me = this;
         if (me.debug) console.log('GanttButtonController.ButtonSave: Starting');
 
-	// Make sure there are no duplicate tasks
-	me.ganttTreePanelController.treeRenumber();
+        // Make sure there are no duplicate tasks
+        me.ganttTreePanelController.treeRenumber();
 
-	// Fix wrong milestone_p field
-	me.taskTreeStore.tree.root.eachChild(function(taskModel) {
-	    var milestoneP = taskModel.get('milestone_p');
-	    var m = milestoneP;
+        // Fix wrong milestone_p field
+        me.taskTreeStore.tree.root.eachChild(function(taskModel) {
+            var milestoneP = taskModel.get('milestone_p');
+            var m = milestoneP;
             switch (milestoneP) {
             case "true": m = 't'; break;
             case true: m = 't'; break;
@@ -122,12 +122,12 @@ Ext.define('GanttEditor.controller.GanttButtonController', {
             case false: m = 'f'; break;
             }
 
-	    if (milestoneP != m) {
-		if (me.debug) console.log('GanttButtonController.ButtonSave: Fixing milestone_p from "'+milestoneP+'" to "'+m+'"');
-		taskModel.set('milestone_p', 'f');
-	    }
+            if (milestoneP != m) {
+                if (me.debug) console.log('GanttButtonController.ButtonSave: Fixing milestone_p from "'+milestoneP+'" to "'+m+'"');
+                taskModel.set('milestone_p', 'f');
+            }
 
-	});
+        });
 
 
         me.taskTreeStore.save({
@@ -150,7 +150,7 @@ Ext.define('GanttEditor.controller.GanttButtonController', {
     onTaskTreeStoreUpdate: function(treeStore, model, action, affectedColumns, eOpts) {
         var me = this;
         if (me.debug) console.log('GanttButtonController.onTaskTreeStoreUpdate');
-	if (!affectedColumns || 0 == affectedColumns.length) return;
+        if (!affectedColumns || 0 == affectedColumns.length) return;
 
         // Check if read-only and abort in this case
         var readOnly = me.senchaPreferenceStore.getPreferenceBoolean('read_only',true);

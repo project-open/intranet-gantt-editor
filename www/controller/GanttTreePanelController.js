@@ -34,7 +34,7 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
             '#buttonAdd': { click: this.onButtonAdd},
             '#buttonDelete': { click: this.onButtonDelete},
 
-	    // Redraw GanttBars after changing the configuration
+            // Redraw GanttBars after changing the configuration
             '#config_menu_show_project_dependencies': { click: this.redrawGanttBarPanel},
             '#config_menu_show_project_assigned_resources': { click: this.redrawGanttBarPanel}
         });
@@ -57,26 +57,26 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
         var me = this;
         console.log('PO.controller.GanttTreePanelController.readOnlyWarning');
 
-	if (0 == write_project_p) {
+        if (0 == write_project_p) {
             Ext.Msg.alert("Read-Only Mode",
-		      "<nobr>You don't have write permissions on this project.</nobr><br>"+
-		      "<nobr>You won't be able to save your changes.</nobr><br>"+
-		      "Please contact the project manager and request write permissions." +
-		      "<br>&nbsp;<br>"
-	    );
+                      "<nobr>You don't have write permissions on this project.</nobr><br>"+
+                      "<nobr>You won't be able to save your changes.</nobr><br>"+
+                      "Please contact the project manager and request write permissions." +
+                      "<br>&nbsp;<br>"
+            );
 
-	} else {
+        } else {
             Ext.Msg.alert('This software is Beta',
-		      '<nobr>This software is in Beta state and contains a number of known</nobr><br>'+
-		      'and unknown issues (please see the "This is Beta") menu.<br> ' +
-		      '<br>' +
-		      'However, many users have asked for this feature and use this<br>' +
-		      'Gantt Editor already successfully, working around existing issues.<br> ' +
-		      '<br>' +
-		      'In order to start working with the Gantt Editor, please uncheck<br>' +
-		      'the Configuration -> Read Only option.<br>&nbsp;<br>'
-	    );
-	}
+                      '<nobr>This software is in Beta state and contains a number of known</nobr><br>'+
+                      'and unknown issues (please see the "This is Beta") menu.<br> ' +
+                      '<br>' +
+                      'However, many users have asked for this feature and use this<br>' +
+                      'Gantt Editor already successfully, working around existing issues.<br> ' +
+                      '<br>' +
+                      'In order to start working with the Gantt Editor, please uncheck<br>' +
+                      'the Configuration -> Read Only option.<br>&nbsp;<br>'
+            );
+        }
     },
 
     /**
@@ -134,9 +134,9 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
         var me = this;
         if (me.debug) console.log('GanttTreePanelController.onButtonIncreaseIndent');
 
-	// Check if read-only and abort in this case
-	var readOnly = me.senchaPreferenceStore.getPreferenceBoolean('read_only',true);
-	if (readOnly) { me.readOnlyWarning(); return; }
+        // Check if read-only and abort in this case
+        var readOnly = me.senchaPreferenceStore.getPreferenceBoolean('read_only',true);
+        if (readOnly) { me.readOnlyWarning(); return; }
 
         var ganttTreePanel = this.getGanttTreePanel();
         var selectionModel = ganttTreePanel.getSelectionModel();
@@ -154,16 +154,16 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
         prevNode.set('leaf', false);
         prevNode.appendChild(lastSelected);						// Add to the previous node as a child
         prevNode.expand();
-	var prevNodeId = ""+prevNode.get('id');
+        var prevNodeId = ""+prevNode.get('id');
 
-	// Set the parent_id of the indented item
-	lastSelected.set('parent_id', prevNodeId);					// This should trigger a Gantt re-schedule
+        // Set the parent_id of the indented item
+        lastSelected.set('parent_id', prevNodeId);					// This should trigger a Gantt re-schedule
 
         ganttTreePanel.getView().focusNode(lastSelected);				// Focus back on the task for keyboard commands
 
         me.treeRenumber(); 								// Update the tree's task numbering
         me.getGanttBarPanel().needsRedraw = true;					// Force delayed redraw
-	// ToDo: Re-schedule the tree
+        // ToDo: Re-schedule the tree
 
     },
 
@@ -174,9 +174,9 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
         var me = this;
         if (me.debug) console.log('GanttTreePanelController.onButtonReduceIndent');
 
-	// Check if read-only and abort in this case
-	var readOnly = me.senchaPreferenceStore.getPreferenceBoolean('read_only',true);
-	if (readOnly) { me.readOnlyWarning(); return; }
+        // Check if read-only and abort in this case
+        var readOnly = me.senchaPreferenceStore.getPreferenceBoolean('read_only',true);
+        if (readOnly) { me.readOnlyWarning(); return; }
 
         var ganttTreePanel = this.getGanttTreePanel();
         var selectionModel = ganttTreePanel.getSelectionModel();
@@ -208,9 +208,9 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
         var me = this;
         if (me.debug) console.log('PO.view.gantt.GanttTreePanelController.onButtonAdd: ');
 
-	// Check if read-only and abort in this case
-	var readOnly = me.senchaPreferenceStore.getPreferenceBoolean('read_only',true);
-	if (readOnly) { me.readOnlyWarning(); return; }
+        // Check if read-only and abort in this case
+        var readOnly = me.senchaPreferenceStore.getPreferenceBoolean('read_only',true);
+        if (readOnly) { me.readOnlyWarning(); return; }
 
         var ganttTreePanel = me.getGanttTreePanel();
         var rowEditing = ganttTreePanel.plugins[0];
@@ -259,7 +259,7 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
         r.set('material_id', ""+default_material_id);
         r.set('uom_id', ""+default_uom_id);
         r.set('project_name', 'New Task');
-	r.set('work', ""+8);
+        r.set('work', ""+8);
         r.set('start_date', new Date().toISOString().substring(0,10)+" 00:00:00");	// Indicates start of the day at 00:00:00
         r.set('end_date', new Date().toISOString().substring(0,10)+" 23:59:59");	// Same as start_date, but indicates 23:59:59
 
@@ -273,7 +273,7 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
                 r.set('id', object_id);
                 r.set('project_id', object_id_string);
                 r.set('task_id', object_id_string);
-		if ("" == r.get('project_nr')) r.set('project_nr', "task_"+object_id_string);
+                if ("" == r.get('project_nr')) r.set('project_nr', "task_"+object_id_string);
             },
             failure: function(response){
                 Ext.Msg.alert('Error retreiving object_id from server', 
@@ -302,9 +302,9 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
         var me = this;
         if (me.debug) console.log('PO.view.gantt.GanttTreePanelController.onButtonDelete: ');
 
-	// Check if read-only and abort in this case
-	var readOnly = me.senchaPreferenceStore.getPreferenceBoolean('read_only',true);
-	if (readOnly) { me.readOnlyWarning(); return; }
+        // Check if read-only and abort in this case
+        var readOnly = me.senchaPreferenceStore.getPreferenceBoolean('read_only',true);
+        if (readOnly) { me.readOnlyWarning(); return; }
 
         var ganttTreePanel = me.getGanttTreePanel();
         var rowEditing = ganttTreePanel.plugins[0];
@@ -342,7 +342,7 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
             selectionModel.select(newNode);
         }
 
-	// Redraw, renumber and enable save button
+        // Redraw, renumber and enable save button
         me.treeRenumber();								// Update the tree's task numbering
         me.getGanttBarPanel().needsRedraw = true;					// Force delayed redraw
         var buttonSave = Ext.getCmp('buttonSave');

@@ -45,12 +45,12 @@ Ext.define('GanttEditor.controller.GanttZoomController', {
             'scope': this
         });
 
-	// Check if there is a state stored from a previous session.
-	var persistedP = me.restoreFromPreferenceStore();
-	if (!persistedP) {
-	    // Otherwise show the entire project as a default
-	    me.zoomOnEntireProject();
-	}
+        // Check if there is a state stored from a previous session.
+        var persistedP = me.restoreFromPreferenceStore();
+        if (!persistedP) {
+            // Otherwise show the entire project as a default
+            me.zoomOnEntireProject();
+        }
 
         if (me.debug) console.log('GanttEditor.controller.GanttZoomController.init: Finished');
     },
@@ -65,7 +65,7 @@ Ext.define('GanttEditor.controller.GanttZoomController', {
         if (me.debug) console.log('GanttZoomController.restoreFromPreferenceStore: Started');
 
         var ganttBarPanel = me.getGanttBarPanel();
-	var persistedP = false;
+        var persistedP = false;
         me.senchaPreferenceStore.each(function(model) {
             var preferenceKey = model.get('preference_key');
             var preferenceValue = model.get('preference_value');
@@ -80,7 +80,7 @@ Ext.define('GanttEditor.controller.GanttZoomController', {
         });
 
         if (me.debug) console.log('GanttZoomController.restoreFromPreferenceStore: Finished');
-	return persistedP;
+        return persistedP;
     },
 
 
@@ -89,7 +89,7 @@ Ext.define('GanttEditor.controller.GanttZoomController', {
      * without scroll bar.
      */
     zoomOnEntireProject: function() {
-	var me = this;
+        var me = this;
 
         if (me.debug) console.log('GanttEditor.controller.GanttZoomController.zoomEntireProject: Started');
         var ganttBarPanel = me.getGanttBarPanel();
@@ -112,7 +112,7 @@ Ext.define('GanttEditor.controller.GanttZoomController', {
         ganttBarPanel.axisStartDate = new Date(reportStartTime - marginTime);
         ganttBarPanel.axisEndDate = new Date(reportEndTime + marginTime);
 
-	// persist the changes
+        // persist the changes
         me.senchaPreferenceStore.setPreference('axisStartTime', ganttBarPanel.axisStartDate.getTime());
         me.senchaPreferenceStore.setPreference('axisEndTime', ganttBarPanel.axisEndDate.getTime());
         me.senchaPreferenceStore.setPreference('axisEndX', ganttBarPanel.axisEndX);
@@ -167,9 +167,9 @@ Ext.define('GanttEditor.controller.GanttZoomController', {
         var panelBox = ganttBarPanel.getBox();
         var panelWidth = panelBox.width;
 
-	// Avoid zooming out more than panelWidth
-	var endX = ganttBarPanel.axisEndX / me.zoomFactor;
-	if (endX < panelWidth) endX = panelWidth;
+        // Avoid zooming out more than panelWidth
+        var endX = ganttBarPanel.axisEndX / me.zoomFactor;
+        if (endX < panelWidth) endX = panelWidth;
         ganttBarPanel.axisEndX = endX;
 
         me.getGanttBarPanel().needsRedraw = true;
@@ -256,18 +256,18 @@ Ext.define('GanttEditor.controller.GanttZoomController', {
         var panelWidth = panelBox.width;
         var panelHeight = panelBox.height;
 
-	var surfaceWidth = ganttBarPanel.axisEndX;
+        var surfaceWidth = ganttBarPanel.axisEndX;
 
-	if (surfaceWidth < panelWidth) {
+        if (surfaceWidth < panelWidth) {
             ganttBarPanel.axisEndX = panelWidth;
             ganttBarPanel.surface.setSize(panelWidth,panelHeight);
 
-	    // persist the changes
+            // persist the changes
             me.senchaPreferenceStore.setPreference('axisEndX', ganttBarPanel.axisEndX);
             me.senchaPreferenceStore.setPreference('scrollX', 0);
 
             ganttBarPanel.needsRedraw = true;                             // request a redraw
-	}
+        }
 
         if (me.debug) console.log('GanttEditor.controller.GanttZoomController.onSwitchToFullScreen: Finished');
     }
