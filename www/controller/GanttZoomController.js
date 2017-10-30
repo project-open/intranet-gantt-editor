@@ -11,6 +11,24 @@
  * Deal with zoom In/Out buttons, sizing the X axis according to the
  * project and centering the scroll bars to show the entire projects.
  * All related to the GanttBarPanel.
+ *
+ * Zoom is determined by the following variables of the GanttBarPanel
+ * (defined in AbstractGanttPanel):
+ * - axisStartX: Always 0, so this shouldn't be a variable, actually....
+ * - axisEndX: End of the axis in pixel terms. Determines the size of the drawing surface.
+ *   Increasing axixEndX has a zoom-in effect, and a scroll bar will appear if 
+ *   axisEndX > ganttBarPanel.width.
+ * - axisStartDate: Set to project_start_date minus a margin by default.
+ * - axisEndDate: Set to project_end_date plus a margin by default.
+ *   Start- and EndDate are set wider for zooming out of the project,
+ *   once axisEndX = GanttParPanel.width.
+ *
+ * 1. Decrease the size of the surface, until the surface has the size of the GanttBarPanel.
+ * 2. Set the size of the surface exactly to the size of the GanttBarPanel.
+ * 3. Now start changing axisStartDate and axisEndDate in order to increase the time
+ *    span shown with the surface.width pixels.
+ *
+ * Perform the opposed steps when zooming in.
  */
 Ext.define('GanttEditor.controller.GanttZoomController', {
     extend: 'Ext.app.Controller',
@@ -23,6 +41,8 @@ Ext.define('GanttEditor.controller.GanttZoomController', {
     debug: false,
     senchaPreferenceStore: null,			// preferences
     zoomFactor: 1.5,	   				// Fast or slow zooming? 2.0 is fast, 1.2 is very slow
+    zoomOnEntireProjectMarginFactor: 0.2,		// Margin to leave at the left and right
+    zoomOnEntireProjectMinMarginDays: 2,		// Minimum margin in days
 
     // ToDo: Do we need to update zooming after a resize?
 
@@ -105,9 +125,8 @@ Ext.define('GanttEditor.controller.GanttZoomController', {
         ganttBarPanel.axisStartX = 0;
         ganttBarPanel.axisEndX = panelWidth;
         ganttBarPanel.surface.setSize(panelWidth,panelHeight);
-        // space at the left and right of the Gantt Chart for DnD
-        var marginTime = (reportEndTime - reportStartTime) * 0.2;
-        var minMarginTime = 2.0 * oneDayMiliseconds;
+        var marginTime = (reportEndTime - reportStartTime) * me.zoomOnEntireProjectMarginFactor;   // space left and right
+        var minMarginTime = me.zoomOnEntireProjectMinMarginDays * oneDayMiliseconds;
         if (marginTime < minMarginTime) marginTime = minMarginTime;
         ganttBarPanel.axisStartDate = new Date(reportStartTime - marginTime);
         ganttBarPanel.axisEndDate = new Date(reportEndTime + marginTime);
@@ -122,8 +141,6 @@ Ext.define('GanttEditor.controller.GanttZoomController', {
 
         if (me.debug) console.log('GanttEditor.controller.GanttZoomController.zoomEntireProject: Finished');
     },
-
-
 
     /**
      * A user(!) has changed the horizontal scrolling by moving the scroll-bar.
@@ -141,23 +158,60 @@ Ext.define('GanttEditor.controller.GanttZoomController', {
 
     /**
      * Zoom In - The user has pressed the (+) button.
-     * Increase the size of the surface. That's all we really need for a zoom.
      */
     onButtonZoomIn: function() {
         var me = this;
         if (me.debug) console.log('GanttEditor.controller.GanttZoomController.onButtonZoomIn: Starting');
-
         var ganttBarPanel = me.getGanttBarPanel();
-        ganttBarPanel.axisEndX = me.zoomFactor * ganttBarPanel.axisEndX;
+
+        var oneDayMiliseconds = 24 * 3600 * 1000;
+        var panelBox = ganttBarPanel.getBox();
+        var panelWidth = panelBox.width;
+
+        // Calculate the duration of the diagram time axix
+        var reportStartTime = ganttBarPanel.reportStartDate.getTime();
+        var reportEndTime = ganttBarPanel.reportEndDate.getTime();
+        var marginTime = (reportEndTime - reportStartTime) * me.zoomOnEntireProjectMarginFactor;      // space at the left and right
+        var minMarginTime = me.zoomOnEntireProjectMinMarginDays * oneDayMiliseconds;
+        if (marginTime < minMarginTime) marginTime = minMarginTime;
+        reportStartTime = reportStartTime - marginTime;
+        reportEndTime = reportEndTime + marginTime;
+        var reportDurationTime = reportEndTime - reportStartTime;
+
+        // Calculate the duration of the Gantt axis in current zoom state
+        var ganttStartTime = ganttBarPanel.axisStartDate.getTime();
+        var ganttEndTime = ganttBarPanel.axisEndDate.getTime();
+        var ganttDurationTime = ganttEndTime - ganttStartTime;
+        var diffDays = Math.round(ganttDurationTime / oneDayMiliseconds / 6.0);
+        if (diffDays <= 1) diffDays = 1;
+        ganttStartTime = ganttStartTime + diffDays * oneDayMiliseconds;
+        ganttEndTime = ganttEndTime - diffDays * oneDayMiliseconds;
+
+        // Check if we are zoomed out in terms of time beyond the project duration.
+        // In this case we will narrow start- and endTime:
+        if (ganttDurationTime > reportDurationTime) {
+            // Undoing 3rd level of zoom - reduce the axisStartDate and axisEndDate
+            ganttBarPanel.axisStartDate = new Date(ganttStartTime);
+            ganttBarPanel.axisEndDate = new Date(ganttEndTime);
+            var newGanttDurationTime = ganttEndTime - ganttStartTime;
+        } else {
+            // Undoing 1. level of zoom
+            ganttBarPanel.axisEndX = me.zoomFactor * ganttBarPanel.axisEndX;
+            me.senchaPreferenceStore.setPreference('axisEndX', ganttBarPanel.axisEndX);        // Persist the new zoom parameters
+        }
+
+        // Unbalanced? Just zoom on the entire project then...
+        if (ganttStartTime < reportStartTime || ganttEndTime > reportEndTime) {
+            // me.zoomOnEntireProject();                                   // center and fit zoom.
+        }
+
         me.getGanttBarPanel().needsRedraw = true;
-        me.senchaPreferenceStore.setPreference('axisEndX', ganttBarPanel.axisEndX);        // Persist the new zoom parameters
 
         if (me.debug) console.log('GanttEditor.controller.GanttZoomController.onButtonZoomIn: Finished');
     },
 
     /**
-     * Zoom Out
-     * Decrease the size of the surface. That's all we have to do...
+     * Zoom Out - The user has pressed the (-) button.
      */
     onButtonZoomOut: function() {
         var me = this;
@@ -167,11 +221,36 @@ Ext.define('GanttEditor.controller.GanttZoomController', {
         var panelBox = ganttBarPanel.getBox();
         var panelWidth = panelBox.width;
 
-        // Avoid zooming out more than panelWidth
-        var endX = ganttBarPanel.axisEndX / me.zoomFactor;
-        if (endX < panelWidth) endX = panelWidth;
-        ganttBarPanel.axisEndX = endX;
+        // This is the check for the 3. zoom phase when we already reduced the
+        // size of the surface: The user wants to zoom out beyond the duration 
+        // of the project, so we have to change the axis start- and end-dates:
+        var zoomingBeyondSurface = false;
+        if (ganttBarPanel.axisEndX <= panelWidth) {
+            var startTime = ganttBarPanel.axisStartDate.getTime();
+            var endTime = ganttBarPanel.axisEndDate.getTime();
+            var diffDays = Math.round((endTime - startTime) / 24.0 / 3600.0 / 1000.0 / 3.0);
+            if (diffDays <= 1) diffDays = 1;
+            startTime = startTime - diffDays * 24.0 * 3600 * 1000;
+            endTime = endTime + diffDays * 24.0 * 3600 * 1000;
+            ganttBarPanel.axisStartDate = new Date(startTime);
+            ganttBarPanel.axisEndDate = new Date(endTime);
+            zoomingBeyondSurface = true;
+        }
 
+        // 1. level of zooming - try reducing the size of the surface area 
+        var endX = ganttBarPanel.axisEndX / me.zoomFactor;
+
+        // 2. level of zooming - we just reached the limit of the surface size.
+        if (endX < panelWidth) {
+            endX = panelWidth;
+            // center the project
+            if (!zoomingBeyondSurface) {
+                me.zoomOnEntireProject();
+            }
+        }
+
+        // Set the size of the axis and as a result the size of the drawing surface.
+        ganttBarPanel.axisEndX = endX;
         me.getGanttBarPanel().needsRedraw = true;
         me.senchaPreferenceStore.setPreference('axisEndX', ganttBarPanel.axisEndX);        // Persist the new zoom parameters
 
