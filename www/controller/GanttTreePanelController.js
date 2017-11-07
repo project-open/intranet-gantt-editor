@@ -250,7 +250,10 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
         if (appendP) {
             root.appendChild(rNode);							// Add the task at the end of the root
         } else {
-            lastSelectedParent.insertBefore(rNode, lastSelected);			// Insert into tree
+            // lastSelectedParent.insertBefore(rNode, lastSelected);			// Insert into tree
+            // lastSelectedParent.appendChild(rNode);           			// Insert into tree
+	    var index = lastSelectedParent.indexOf(lastSelected);			// Get the index of the last selected 
+	    lastSelectedParent.insertChild(index+1,rNode);
         }
 
         r.set('parent_id', ""+parent_id);

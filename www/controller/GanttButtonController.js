@@ -42,14 +42,14 @@ Ext.define('GanttEditor.controller.GanttButtonController', {
         });
 
         // Listen to changes in the selction model in order to enable/disable the "delete" button.
-        me.ganttTreePanel.on('selectionchange', this.onTreePanelSelectionChange, this);
+        me.ganttTreePanel.on('selectionchange', this.onTreePanelSelectionChange, me);
 
         // Listen to a click into the empty space below the tree in order to add a new task
         me.ganttTreePanel.on('containerclick', me.ganttTreePanel.onContainerClick, me.ganttTreePanel);
 
         // Listen to special keys
         me.ganttTreePanel.on('cellkeydown', this.onCellKeyDown, me.ganttTreePanel);
-        me.ganttTreePanel.on('beforecellkeydown', this.onBeforeCellKeyDown, me.ganttTreePanel);
+        me.ganttTreePanel.on('beforecellkeydown', this.onBeforeCellKeyDown, me);
 
         // Listen to vertical scroll events 
         var view = me.ganttTreePanel.getView();
@@ -221,12 +221,12 @@ Ext.define('GanttEditor.controller.GanttButtonController', {
     /**
      * Disable default tree key actions
      */
-    onBeforeCellKeyDown: function(me, htmlTd, cellIndex, record, htmlTr, rowIndex, e, eOpts ) {
+    onBeforeCellKeyDown: function(me, htmlTd, cellIndex, record, htmlTr, rowIndex, e, eOpts) {
         var me = this;
         var keyCode = e.getKey();
         var keyCtrl = e.ctrlKey;
         if (me.debug) console.log('GanttButtonController.onBeforeCellKeyDown: code='+keyCode+', ctrl='+keyCtrl);
-        var panel = this;
+        var panel = me.ganttTreePanel;
         switch (keyCode) {
         case 8:								// Backspace 8
             panel.onButtonDelete();
@@ -246,10 +246,10 @@ Ext.define('GanttEditor.controller.GanttButtonController', {
             }
             break;
         case 45:								// Insert 45
-            panel.onButtonAdd();
+	    me.ganttTreePanelController.onButtonAdd();
             break;
         case 46:								// Delete 46
-            panel.onButtonDelete();
+            me.ganttTreePanelController.onButtonDelete();
             break;
         }
         return true;							// Enable default TreePanel actions for keys

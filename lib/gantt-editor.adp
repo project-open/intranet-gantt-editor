@@ -114,7 +114,7 @@ function launchGanttEditor(debug){
         items: [{
             key: 'read_only',
             text: 'Read Only (Beta version - use with caution!)',
-            checked: true
+            checked: false
         }, {
 	    id: 'config_menu_show_project_dependencies',
             key: 'show_project_dependencies', 
