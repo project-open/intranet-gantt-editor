@@ -46,11 +46,16 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
         var me = this;
         if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.onTreeStoreUpdate: Starting');
 
+        me.suspendEvents();
         var dirty = false;
         if (null != fieldsChanged) {
             fieldsChanged.forEach(function(fieldName) {
                 if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.onTreeStoreUpdate: Field changed='+fieldName);
                 switch (fieldName) {
+                case "assignees":
+                    me.onAssigneesChanged(treeStore, model, operation, event);
+                    dirty = true;
+                    break;
                 case "start_date":
                     me.onStartDateChanged(treeStore, model, operation, event);
                     dirty = true;
@@ -77,6 +82,7 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
                 }
             });
         }
+        me.resumeEvents();
 
         if (dirty) {
             me.ganttBarPanel.needsRedraw = true;					// Force a redraw
@@ -98,6 +104,10 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
         var parent = model.parentNode;
         if (!parent) return;
 
+        // Check planned units vs. assigned resources
+        me.checkTaskLength(treeStore, model);
+
+
         // Calculate the sum of planned units of all nodes below parent
         var plannedUnits = 0.0;
         parent.eachChild(function(sibling) {
@@ -113,6 +123,22 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
         }
         if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.onPlannedUnitsChanged: Finished');
     },
+
+
+    /**
+     * The assignees of a task has changed.
+     * Check if the length of the task is still valid.
+     */
+    onAssigneesChanged: function(treeStore, model, operation, event) {
+        var me = this;
+        if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.onAssigneesChanged: Starting');
+
+        // Check planned units vs. assigned resources
+        me.checkTaskLength(treeStore, model);
+
+        if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.onAssigneesChanged: Finished');
+    },
+
 
 
     /**
@@ -194,6 +220,59 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
 
         if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.onEndDateChanged: Finished');
     },
+
+
+    /**
+     * Check the planned units vs. assigned resources percentage.
+     * Then follow the ResourceCalendar to calculate the new end_date
+     */
+    checkTaskLength: function(treeStore, model) {
+        var me = this;
+        if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.checkTaskLength:: Starting');
+        
+        var startDate = PO.Utilities.pgToDate(model.get('start_date'));
+        if (!startDate) { return; }						// No date - no duration...
+        var startTime = startDate.getTime();
+        var endDate = PO.Utilities.pgToDate(model.get('end_date'));
+        if (!endDate) { return; }						// No date - no duration...
+        var assignees = model.get('assignees');
+        var plannedUnits = model.get('planned_units');
+        if (0 == plannedUnits) { return; }					// No units - no duration...
+        if (!plannedUnits) { return; }						// No units - no duration...
+
+        // Calculate the percent assigned in total
+        var assignedPercent = 0.0
+        assignees.forEach(function(assig) {
+            assignedPercent = assignedPercent + assig.percent
+        });
+        if (0 == assignedPercent) { return; }					// No assignments - "manually scheduled" task
+
+        // Calculate the duration of the task in hours
+        var durationHours = plannedUnits * 100.0 / assignedPercent;
+        
+        // Now calculate the new endDate based on a 9:00 - 13:00, 14:00 - 18:00 work calendar
+        var durationDays = Math.round(0.5 + durationHours / 8.0);
+
+        // Adjust the durationDays by weekends in the period
+        var endTime = startTime;
+        var i = 0;
+        while (i < durationDays) {
+            var day = new Date(endTime);
+            if (day.getDay() == 6 || day.getDay() == 0) { 
+                endTime = endTime + 1000 * 3600 * 24;
+                continue;
+            }
+            endTime = endTime + 1000 * 3600 * 24;
+            i = i + 1;
+        }
+
+        endDate = new Date(endTime);
+        endDateString = endDate.toISOString().substring(0,10);
+        model.set('end_date', endDateString);
+
+        if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.checkTaskLength:: Finished');
+    },
+
 
     /**
      * Make sure endDate is after startDate
