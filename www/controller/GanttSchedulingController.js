@@ -119,6 +119,7 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
 
         // Check if we have to update the parent
         if (parseFloat(parent.get('planned_units')) != plannedUnits) {
+            if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.onPlannedUnitsChanged: Setting parent.planned_units='+plannedUnits);
             parent.set('planned_units', ""+plannedUnits);	                    // This will call this event recursively
         }
         if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.onPlannedUnitsChanged: Finished');
@@ -152,7 +153,10 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
 
         // Check for manually entered date. startDates start at 00:00:00 at night:
         var myStartDate = model.get('start_date');
-        if (myStartDate.length == 10) { model.set('start_date', myStartDate + " 00:00:00"); }
+        if (myStartDate.length == 10) { 
+            if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.onStartDateChanged: Adding " 00:00:00" to start_date='+myStartDate);
+            model.set('start_date', myStartDate + " 00:00:00"); 
+        }
 
         var parent = model.parentNode;						// 
         if (!parent) return;
@@ -191,8 +195,11 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
         if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.onEndDateChanged: Starting');
 
         // Check for manually entered date. endDates end at 23:59:59 at night:
-        var myStartDate = model.get('start_date');
-        if (myStartDate.length == 10) { model.set('start_date', myStartDate + " 23:59:59"); }
+        var myEndDate = model.get('end_date');
+        if (myEndDate.length == 10) { 
+            if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.onEndDateChanged: Adding " 00:00:00" to end_date='+myEndDate);
+            model.set('end_date', myEndDate + " 23:59:59"); 
+        }
 
         var parent = model.parentNode;
         if (!parent) return;
@@ -232,7 +239,7 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
         
         var startDate = PO.Utilities.pgToDate(model.get('start_date'));
         if (!startDate) { return; }						// No date - no duration...
-        var startTime = startDate.getTime();
+        startDate.setHours(0,0,0,0);
         var endDate = PO.Utilities.pgToDate(model.get('end_date'));
         if (!endDate) { return; }						// No date - no duration...
         var assignees = model.get('assignees');
@@ -250,27 +257,29 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
         // Calculate the duration of the task in hours
         var durationHours = plannedUnits * 100.0 / assignedPercent;
         
-        // Now calculate the new endDate based on a 9:00 - 13:00, 14:00 - 18:00 work calendar
-        var durationDays = Math.round(0.5 + durationHours / 8.0);
-
-        // Adjust the durationDays by weekends in the period
+        // Adjust the time period, so that the effective hours >= durationHours
+        var startTime = startDate.getTime();
         var endTime = startTime;
-        var i = 0;
-        while (i < durationDays) {
+        var hours = 0.0;							// we start at 23:59 of the startDay...
+        while (hours < durationHours) {
             var day = new Date(endTime);
-            if (day.getDay() == 6 || day.getDay() == 0) { 
-                endTime = endTime + 1000 * 3600 * 24;
-                continue;
+            var dayOfWeek = day.getDay();
+            if (dayOfWeek == 6 || dayOfWeek == 0) { 
+                // Weekend - just skip the day
+            } else {
+                // Weekday - add hours
+                hours = hours + 8;
             }
             endTime = endTime + 1000 * 3600 * 24;
-            i = i + 1;
         }
 
-        endDate = new Date(endTime);
-        endDateString = endDate.toISOString().substring(0,10);
+        endDate = new Date(endTime - 1000 * 3600 * 24);
+        endDateString = PO.Utilities.dateToPg(endDate);
+        endDateString = endDateString.substring(0,10) + ' 23:59:59';
+        if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.checkTaskLength: end_date='+endDateString);
         model.set('end_date', endDateString);
 
-        if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.checkTaskLength:: Finished');
+        if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.checkTaskLength: Finished');
     },
 
 
@@ -292,6 +301,7 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
                 endTime = startTime + 1000 * 3600 * 24;
                 endDate = new Date(endTime);
                 endDateString = endDate.toISOString().substring(0,10);
+                if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.checkStartEndDateConstraint: end_date=' + endDateString + ' - making sure end_date is after startDate');
                 model.set('end_date', endDateString);
             }
         }
