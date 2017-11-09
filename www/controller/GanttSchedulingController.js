@@ -86,7 +86,7 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
         // me.resumeEvents();
 
         if (dirty) {
-	    me.checkBrokenDependencies(treeStore);
+	    me.checkBrokenDependencies();
 
             me.ganttBarPanel.needsRedraw = true;					// Force a redraw
             var buttonSave = Ext.getCmp('buttonSave');
@@ -141,6 +141,20 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
         me.checkTaskLength(treeStore, model);
 
         if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.onAssigneesChanged: Finished');
+    },
+
+
+    /**
+     * The assignees of a task has changed.
+     * Check if the length of the task is still valid.
+     */
+    onCreateDependency: function(dependencyModel) {
+        var me = this;
+        if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.onCreateDependency: Starting');
+
+        me.checkBrokenDependencies();
+
+        if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.onCreateDependency: Finished');
     },
 
 
@@ -238,9 +252,10 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
     /**
      * Check if there are dependencies in the tree which are broken.
      */
-    checkBrokenDependencies: function(treeStore) {
+    checkBrokenDependencies: function() {
         var me = this;
         if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.checkBrokenDependencies: Starting');
+	var treeStore = me.taskTreeStore;
 
 	// Iterate through all children and draw dependencies
 	var rootNode = treeStore.getRootNode();
@@ -249,7 +264,7 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
             if (!predecessors instanceof Array) return;
             for (var i = 0, len = predecessors.length; i < len; i++) {
 		var dependencyModel = predecessors[i];
-		me.checkBrokenDependency(treeStore,dependencyModel);
+		me.checkBrokenDependency(dependencyModel);
             }
         });
         if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.checkBrokenDependencies: Finished');
@@ -258,10 +273,11 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
     /**
      * Check if a dependency is broken.
      */
-    checkBrokenDependency: function(treeStore, dependencyModel) {
+    checkBrokenDependency: function(dependencyModel) {
         var me = this;
         if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.checkBrokenDependency: Starting');
 
+	var treeStore = me.taskTreeStore;
 	var taskModelHash = me.ganttBarPanel.taskModelHash;
 
 	var fromId = dependencyModel.pred_id;

@@ -21,6 +21,8 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
         'Ext.layout.component.Draw'
     ],
 
+    ganttSchedulingController: null,						// set later
+
     debug: false,
     taskBBoxHash: {},								// Hash array from object_ids -> Start/end point
     taskModelHash: {},								// Start and end date of tasks
@@ -346,6 +348,7 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
         toTaskModel.setDirty();							// above just modified array, so we need to notify
 
         me.needsRedraw = true;
+	me.ganttSchedulingController.onCreateDependency(dependency);
 
         if (me.debug) console.log('GanttEditor.view.GanttBarPanel.onCreateDependency: Finished');
     },
