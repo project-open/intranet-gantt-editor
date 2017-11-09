@@ -46,7 +46,7 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
         var me = this;
         if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.onTreeStoreUpdate: Starting');
 
-        me.suspendEvents();
+        // me.suspendEvents();
         var dirty = false;
         if (null != fieldsChanged) {
             fieldsChanged.forEach(function(fieldName) {
@@ -82,9 +82,12 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
                 }
             });
         }
-        me.resumeEvents();
+
+        // me.resumeEvents();
 
         if (dirty) {
+	    me.checkBrokenDependencies(treeStore);
+
             me.ganttBarPanel.needsRedraw = true;					// Force a redraw
             var buttonSave = Ext.getCmp('buttonSave');
             buttonSave.setDisabled(false);						// Enable "Save" button
@@ -182,6 +185,9 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
 
         me.checkStartEndDateConstraint(treeStore, model);			// check start < end constraint
 
+        // Check planned units vs. assigned resources
+        me.checkTaskLength(treeStore, model);
+
         if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.onStartDateChanged: Finished');
     },
 
@@ -228,6 +234,66 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
         if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.onEndDateChanged: Finished');
     },
 
+
+    /**
+     * Check if there are dependencies in the tree which are broken.
+     */
+    checkBrokenDependencies: function(treeStore) {
+        var me = this;
+        if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.checkBrokenDependencies: Starting');
+
+	// Iterate through all children and draw dependencies
+	var rootNode = treeStore.getRootNode();
+        rootNode.cascadeBy(function(project) {
+            var predecessors = project.get('predecessors');
+            if (!predecessors instanceof Array) return;
+            for (var i = 0, len = predecessors.length; i < len; i++) {
+		var dependencyModel = predecessors[i];
+		me.checkBrokenDependency(treeStore,dependencyModel);
+            }
+        });
+        if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.checkBrokenDependencies: Finished');
+    },
+
+    /**
+     * Check if a dependency is broken.
+     */
+    checkBrokenDependency: function(treeStore, dependencyModel) {
+        var me = this;
+        if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.checkBrokenDependency: Starting');
+
+	var taskModelHash = me.ganttBarPanel.taskModelHash;
+
+	var fromId = dependencyModel.pred_id;
+        var fromModel = taskModelHash[fromId];
+        var toId = dependencyModel.succ_id;
+        var toModel = taskModelHash[toId];
+
+        // We can get dependencies from other projects.
+        // These are not in the taskModelHash, so just skip these
+        if (undefined === fromModel || undefined === toModel) { 
+            if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.checkBrokenDependency: Dependency from other project: Skipping');
+            return; 
+        }
+
+        var predEndDate = PO.Utilities.pgToDate(fromModel.get('end_date'));
+        var succStartDate = PO.Utilities.pgToDate(toModel.get('start_date'));
+
+	if (predEndDate.getTime() > succStartDate.getTime()) {
+	    // Broken end-start constraint
+
+            if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.checkBrokenDependency: Setting start_date of successor: '+predEndDate);
+
+	    var endDatePG = new Date(predEndDate.getTime());
+            endDatePG.setHours(0,0,0,0);
+	    var endTimePG = endDatePG.getTime() + 1000 * 3600 * 24;
+	    endDatePG = new Date(endTimePG);
+	    toModel.set('start_date', PO.Utilities.dateToPg(endDatePG));
+
+	}
+
+        if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.checkBrokenDependency: Finished');
+    },
 
     /**
      * Check the planned units vs. assigned resources percentage.
