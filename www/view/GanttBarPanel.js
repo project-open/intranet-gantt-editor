@@ -605,6 +605,24 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
             }
         }
 
+	// Draw invoices above Gantt bar
+        var invoices = project.get('invoices'); 				// Array of {id, cost_name, cost_type_id, cost_type}
+	if (!!invoices && invoices instanceof Array && invoices.length > 0) {
+	    var imageWidth = 19;
+	    var ctr = 0;
+	    invoices.forEach(function(invoice) {
+		var prefix = invoice.cost_type.substring(0,1).toLowerCase();
+		var effectiveDate = new Date(invoice.effective_date);
+		var invoiceX = me.date2x(effectiveDate);
+		var invoiceBar = surface.add({
+                    type: 'image', x: invoiceX, y: y-h, width: imageWidth, height: 13,
+		    src: "/intranet/images/"+prefix+".gif",
+                    listeners: { mousedown: function() { window.open('/intranet-invoices/view?invoice_id='+invoice.id); } }
+		}).show(true);
+		ctr++;
+	    });
+	}
+
         // Add a drag-and-drop configuration to all spriteBars (bar, supertask and milestone)
         // in order to allow them to act as both source and target of inter-task dependencies.
         spriteBar.dndConfig = {							// Drag-and-drop configuration
