@@ -71,6 +71,15 @@ var write_project_p = parseInt('@write_p@');					// 0 or 1
  * browser.
  */
 function launchGanttEditor(debug){
+
+    // Deal with state
+    var stateProvider = Ext.create('PO.class.PreferenceStateProvider', {
+        url: window.location.pathname + window.location.search
+    });
+    Ext.state.Manager.setProvider(new Ext.state.CookieProvider());
+    // Ext.state.Manager.setProvider(new Ext.state.LocalStorageProvider());
+    // Ext.state.Manager.setProvider(stateProvider);
+
     var taskTreeStore = Ext.StoreManager.get('taskTreeStore');
     var senchaPreferenceStore = Ext.StoreManager.get('senchaPreferenceStore');
     var oneDayMiliseconds = 24 * 3600 * 1000;
@@ -110,18 +119,18 @@ function launchGanttEditor(debug){
     var configMenu = Ext.create('PO.view.menu.ConfigMenu', {
         debug: debug,
         id: 'configMenu',
-	senchaPreferenceStore: senchaPreferenceStore,
+        senchaPreferenceStore: senchaPreferenceStore,
         items: [{
             key: 'read_only',
             text: 'Read Only (Beta version - use with caution!)',
             checked: false
         }, {
-	    id: 'config_menu_show_project_dependencies',
+            id: 'config_menu_show_project_dependencies',
             key: 'show_project_dependencies', 
             text: 'Show Project Dependencies', 
             checked: true
         },  {
-	    id: 'config_menu_show_project_assigned_resources',
+            id: 'config_menu_show_project_assigned_resources',
             key: 'show_project_assigned_resources', 
             text: 'Show Project Assigned Resources', 
             checked: true
@@ -289,8 +298,8 @@ function launchGanttEditor(debug){
     // Create the panel showing properties of a task, but don't show it yet.
     var taskPropertyPanel = Ext.create("PO.view.gantt.GanttTaskPropertyPanel", {
         debug: true,
-	senchaPreferenceStore: senchaPreferenceStore,
-	ganttTreePanelController: ganttTreePanelController
+        senchaPreferenceStore: senchaPreferenceStore,
+        ganttTreePanelController: ganttTreePanelController
     });
     taskPropertyPanel.hide();
 
@@ -309,14 +318,14 @@ function launchGanttEditor(debug){
     var numTasks = 0;
     taskTreeStore.tree.root.eachChild(function() { numTasks = numTasks + 1; });
     if (0 == numTasks) {
-	Ext.Msg.show({
-	    title: 'No tasks created yet',
-	    msg: 'Please click on the <img src="/intranet/images/navbar_default/add.png"> button above<br>in order to add a first task to your project.',
-	    height: 120, width: 400,
-	    buttons: Ext.Msg.OK,
-	    icon: Ext.Msg.INFO,
-	    modal: false
-	});
+        Ext.Msg.show({
+            title: 'No tasks created yet',
+            msg: 'Please click on the <img src="/intranet/images/navbar_default/add.png"> button above<br>in order to add a first task to your project.',
+            height: 120, width: 400,
+            buttons: Ext.Msg.OK,
+            icon: Ext.Msg.INFO,
+            modal: false
+        });
     }
 
 };
@@ -334,10 +343,9 @@ Ext.onReady(function() {
     var debug = true;
 
     /* ***********************************************************************
-     * State
+     * 
      *********************************************************************** */
-    // Deal with state
-    Ext.state.Manager.setProvider(new Ext.state.CookieProvider());
+
     var taskTreeStore = Ext.create('PO.store.timesheet.TaskTreeStore');
     var senchaPreferenceStore = Ext.create('PO.store.user.SenchaPreferenceStore');
     var taskStatusStore = Ext.create('PO.store.timesheet.TaskStatusStore');
