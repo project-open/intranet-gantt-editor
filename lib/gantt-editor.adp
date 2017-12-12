@@ -223,6 +223,9 @@ function launchGanttEditor(debug){
         region: 'west',
         store: taskTreeStore
     });
+    // Work around columns messed up after state change
+    ganttTreePanel.headerCt.onColumnsChanged();
+    ganttTreePanel.view.refresh();
 
     var ganttTreePanelController = Ext.create('GanttEditor.controller.GanttTreePanelController', {
         ganttTreePanel: ganttTreePanel,
@@ -327,7 +330,8 @@ function launchGanttEditor(debug){
             icon: Ext.Msg.INFO,
             modal: false
         });
-    }
+    };
+
 
 };
 
