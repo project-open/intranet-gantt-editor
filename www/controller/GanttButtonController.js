@@ -131,6 +131,10 @@ Ext.define('GanttEditor.controller.GanttButtonController', {
 
 
         me.taskTreeStore.save({
+            success: function(batch, context) {
+		// work around issues in grid.panel that red "dirty" corners are not removed
+		me.taskTreeStore.tree.root.eachChild(function(taskModel) { taskModel.commit(); });
+            },
             failure: function(batch, context) { 
                 var msg = batch.proxy.reader.jsonData.message;
                 if (!msg) msg = 'undefined error';
