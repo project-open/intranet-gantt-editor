@@ -77,9 +77,9 @@ function launchGanttEditor(debug){
 	debug: true,
         url: window.location.pathname + window.location.search
     });
-    // Ext.state.Manager.setProvider(stateProvider);
+    Ext.state.Manager.setProvider(stateProvider);
+    // Ext.state.Manager.setProvider(new Ext.state.CookieProvider());
     // Ext.state.Manager.setProvider(new Ext.state.LocalStorageProvider());
-    Ext.state.Manager.setProvider(new Ext.state.CookieProvider());
 
     var taskTreeStore = Ext.StoreManager.get('taskTreeStore');
     var senchaPreferenceStore = Ext.StoreManager.get('senchaPreferenceStore');
