@@ -74,11 +74,12 @@ function launchGanttEditor(debug){
 
     // Deal with state
     var stateProvider = Ext.create('PO.class.PreferenceStateProvider', {
+	debug: true,
         url: window.location.pathname + window.location.search
     });
-    Ext.state.Manager.setProvider(new Ext.state.CookieProvider());
-    // Ext.state.Manager.setProvider(new Ext.state.LocalStorageProvider());
     // Ext.state.Manager.setProvider(stateProvider);
+    // Ext.state.Manager.setProvider(new Ext.state.LocalStorageProvider());
+    Ext.state.Manager.setProvider(new Ext.state.CookieProvider());
 
     var taskTreeStore = Ext.StoreManager.get('taskTreeStore');
     var senchaPreferenceStore = Ext.StoreManager.get('senchaPreferenceStore');
@@ -340,7 +341,7 @@ function launchGanttEditor(debug){
 Ext.onReady(function() {
     Ext.QuickTips.init();							// No idea why this is necessary, but it is...
     Ext.getDoc().on('contextmenu', function(ev) { ev.preventDefault(); });  // Disable Right-click context menu on browser background
-    var debug = true;
+    var debug = false;
 
     /* ***********************************************************************
      * 
