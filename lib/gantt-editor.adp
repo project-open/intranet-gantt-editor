@@ -31,6 +31,7 @@ Ext.require([
     'GanttEditor.controller.GanttZoomController',
     'GanttEditor.controller.GanttSchedulingController',
     'GanttEditor.view.GanttBarPanel',
+    'GanttEditor.store.AbsenceAssignmentStore',
     'PO.Utilities',
     'PO.class.PreferenceStateProvider',
     'PO.controller.ResizeController',
@@ -38,6 +39,8 @@ Ext.require([
     'PO.model.timesheet.TimesheetTask',
     'PO.model.timesheet.Material',
     'PO.model.timesheet.CostCenter',
+    'PO.model.user.SenchaPreference',
+    'PO.model.user.User',
     'PO.store.CategoryStore',
     'PO.store.group.GroupStore',
     'PO.store.timesheet.TaskTreeStore',
@@ -126,6 +129,11 @@ function launchGanttEditor(debug){
             text: 'Read Only (Beta version - use with caution!)',
             checked: false
         }, {
+            id: 'config_menu_show_cross_project_overassignments',
+            key: 'show_project_cross_project_overassignments', 
+            text: 'Show Cross-Project Overassignments', 
+            checked: true
+        }, {
             id: 'config_menu_show_project_dependencies',
             key: 'show_project_dependencies', 
             text: 'Show Project Dependencies', 
@@ -137,42 +145,6 @@ function launchGanttEditor(debug){
             checked: true
         }]
     });
-
-    /* ***********************************************************************
-     * Scheduling Menu
-     *********************************************************************** */
-    var schedulingMenuOnItemCheck = function(item, checked){
-        if (me.debug) console.log('schedulingMenuOnItemCheck: item.id='+item.id);
-        senchaPreferenceStore.setPreference(item.id, checked);
-    }
-
-    var schedulingMenu = Ext.create('Ext.menu.Menu', {
-        id: 'schedulingMenu',
-        debug: debug,
-        style: {overflow: 'visible'},						// For the Combo popup
-        items: [{
-            xtype: 'menucheckitem',
-            text: 'Manual Scheduling',
-            checked: true,
-            handler: function(a,b,c) {
-                if (this.checked) { return; }
-                this.setChecked(true);
-            }
-        }, {
-            xtype: 'menucheckitem',
-            text: 'Single-Project Scheduling',
-            disabled: true,
-            checked: false,
-            handler: function() { }
-        }, {
-            xtype: 'menucheckitem',
-            text: 'Multi-Project Scheduling',
-            disabled: true,
-            checked: false,
-            handler: function() { }
-        }]
-    });
-
 
     /**
      * GanttButtonPanel
@@ -208,7 +180,6 @@ function launchGanttEditor(debug){
             { icon: gifPath+'zoom.png', tooltip: 'Center', id: 'buttonZoomCenter'}, 
             { icon: gifPath+'zoom_out.png', tooltip: 'Zoom out of time axis', id: 'buttonZoomOut'}, 
             '->', 
-            { text: 'Scheduling', icon: gifPath+'clock.png', menu: schedulingMenu}, 
             { text: 'Configuration', icon: gifPath+'wrench.png', menu: configMenu}, 
             { text: 'Help', icon: gifPath+'help.png', menu: helpMenu}, 
             { text: 'This is Beta!', icon: gifPath+'bug.png', menu: alphaMenu}
@@ -359,6 +330,7 @@ Ext.onReady(function() {
     var projectMemberStore = Ext.create('PO.store.user.UserStore', {storeId: 'projectMemberStore'});
     var userStore = Ext.create('PO.store.user.UserStore', {storeId: 'userStore'});
     var groupStore = Ext.create('PO.store.group.GroupStore', {storeId: 'groupStore'});
+    var absenceAssignmentStore = Ext.create('GanttEditor.store.AbsenceAssignmentStore', {storeId: 'absenceAssignmentStore'});
 
     // Store Coodinator starts app after all stores have been loaded:
     var coordinator = Ext.create('PO.controller.StoreLoadCoordinator', {
@@ -370,7 +342,8 @@ Ext.onReady(function() {
             'taskCostCenterStore',
             'senchaPreferenceStore',
             'projectMemberStore',
-            'groupStore'
+            'groupStore',
+            'absenceAssignmentStore'
         ],
         listeners: {
             load: function() {
@@ -388,6 +361,18 @@ Ext.onReady(function() {
     groupStore.load({								// Just the list of groups
         callback: function() {
             if (debug) console.log('PO.store.group.GroupStore: loaded');
+        }
+    });
+
+    // Load a store with user absences and assignments to other projects
+    absenceAssignmentStore.getProxy().extraParams = { 
+	report_code: 'rest_project_member_assignments_absences',
+	format: 'json',
+	main_project_id: @project_id@
+    };
+    absenceAssignmentStore.load({						// absences and assignments to other projects
+        callback: function() {
+            if (debug) console.log('GanttEditor.store.AbsenceAssignmentStore: loaded');
         }
     });
 

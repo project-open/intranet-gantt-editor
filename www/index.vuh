@@ -1,0 +1,43 @@
+# /packages/intranet-gantt-editor/www/index.vuh
+#
+# Copyright (C) 2003 - 2017 ]project-open[
+#
+# All rights reserved. Please check
+# http://www.project-open.com/license/ for details.
+
+
+# ---------------------------------------------------------------
+# Defaults & Security
+# ---------------------------------------------------------------
+
+# Get parameters
+set user_id [auth::require_login]
+set server_root [acs_root_dir]
+
+global tcl_platform
+set platform $tcl_platform(platform)
+
+# ---------------------------------------------------------------
+# Parse the URL information
+# ---------------------------------------------------------------
+
+# This index.vuh file will receive all calls to the /sencha-core/ 
+# url for file that don't exist
+
+# Get the entire URL and decompose
+set url [ns_conn url]
+
+set url_pieces [split $url "/"]
+# set url_file [lindex $url_pieces 2]
+# set url_file_ext [lindex [split $url_file "."] 1]
+
+set url_file [join [lrange $url_pieces 2 end] "/"]
+set url_file_body [lindex [split $url_file "."] 0]
+
+set params [list]
+set adp_file "/packages/intranet-gantt-editor/www/${url_file_body}"
+#ad_return_complaint 1 $adp_file
+
+set result [ad_parse_template -params $params $adp_file]
+doc_return 200 "application/javascript" $result
+ad_script_abort
