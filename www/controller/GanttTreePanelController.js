@@ -424,6 +424,7 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
         var rootNode = taskTreeStore.getRootNode();					// Get the absolute root
         var sortOrder = 0;
         var duplicateHash = {};
+	var last_wbs = [];
 
         // Iterate through all children of the root node and check if they are visible
         rootNode.cascadeBy(function(model) {
@@ -443,13 +444,31 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
 
             // Fix the parent_id reference to the tasks's parent node
             var parent = model.parentNode;
+	    var parent_wbs = "";
             if (!!parent) {
                 var parentId = ""+parent.get('id');
                 var parent_id = ""+model.get('parent_id');
                 if (parentId != parent_id && 0 != sortOrder && "root" != parentId) {
                     model.set('parent_id', parentId);
                 }
+
+		// Get the WBS code from the parent node
+		parent_wbs = parent.get('project_wbs');
             }
+
+	    // Recalculate the WBS code
+	    var depth = model.getDepth()-1;
+	    if (depth >= 0) {
+		var last_wbs_slice = last_wbs.slice(0,depth+1);
+		while (last_wbs_slice.length <= depth) {
+		    last_wbs_slice.push(0);
+		}
+		var last_wbs_digit = last_wbs_slice[depth];
+		last_wbs_slice[depth] = last_wbs_digit + 1;
+		last_wbs = last_wbs_slice;
+		var wbs = last_wbs.join('.');
+		model.set('project_wbs', wbs);
+	    }
 
             sortOrder++;
         });
