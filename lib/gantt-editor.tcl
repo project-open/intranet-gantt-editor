@@ -20,7 +20,6 @@ set main_project_id $project_id; # project_id may be overwritten by SQLs below
 set main_project_parent_id [db_string mppi "select parent_id from im_projects where project_id = :main_project_id" -default ""]
 if {"" ne $main_project_parent_id} { set main_project_id "" }
 
-
 # Determine the permission of the user
 im_project_permissions $current_user_id $main_project_id view_p read_p write_p admin_p
 
@@ -28,9 +27,13 @@ im_project_permissions $current_user_id $main_project_id view_p read_p write_p a
 set gantt_editor_rand [expr {round(rand() * 100000000.0)}]
 set gantt_editor_id "gantt_editor_$gantt_editor_rand"
 
+# Limit the size of a project to 20 years, in order to avoid performance
+# issues that can break the entire system...
+set max_project_years [parameter::get_from_package_key -package_key "intranet-gantt-editor" -parameter MaxProjectYears -default "20"]
+
 
 db_1row project_info "
-select	max(end_date) as report_end_date,
+select	least(max(end_date), min(start_date + '$max_project_years years'::interval)) as report_end_date,
 	min(start_date) as report_start_date,
 	(select parent_id from im_projects where project_id = :project_id) as main_parent_id
 from	(

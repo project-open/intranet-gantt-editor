@@ -27,7 +27,7 @@
         <callbacks>
         </callbacks>
         <parameters>
-        <!-- No version parameters -->
+            <parameter scope="instance" datatype="number"  min_n_values="1" max_n_values="1" name="MaxProjectYears" default="" description="Maximum duration of a project in years. Otherwise there may be performance issues in the GanttEditor. Default is 20."/>
         </parameters>
 
     </version>
