@@ -632,11 +632,11 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
 			if (width < 0) { width = 1; }
 
 			var assigneeBar = surface.add({
-                	    type: 'rect', x: startX, y: y-3, width: width, height: h+6, radius: 0,
+                	    type: 'rect', x: startX, y: y-4, width: width, height: h+8, radius: 0,
                 	    fill: 'red',
-                	    opacity: 0.2,
+                	    opacity: 0.1,
                 	    'stroke-width': 1,
-                	    zIndex: 100							// Neutral zIndex - in the middle
+                	    zIndex: -1000						// Neutral zIndex - in the middle
 			}).show(true);
 
 			var type = absence.get('object_type');
