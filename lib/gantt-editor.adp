@@ -354,15 +354,10 @@ Ext.onReady(function() {
         }
     });
 
-    taskStatusStore.load();
-    taskMaterialStore.load();
-    taskCostCenterStore.load();
-
-    groupStore.load({								// Just the list of groups
-        callback: function() {
-            if (debug) console.log('PO.store.group.GroupStore: loaded');
-        }
-    });
+    taskStatusStore.load({callback: function(r, op, success) { if (!success) PO.Utilities.reportStoreError("TaskStatusStore", op); }});
+    taskMaterialStore.load({callback: function(r, op, success) { if (!success) PO.Utilities.reportStoreError("TaskMaterialStore", op); }});
+    taskCostCenterStore.load({callback: function(r, op, success) { if (!success) PO.Utilities.reportStoreError("TaskCostCenterStore", op); }});
+    groupStore.load({callback: function(r, op, success) { if (!success) PO.Utilities.reportStoreError("GroupStore", op); }});
 
     // Load a store with user absences and assignments to other projects
     absenceAssignmentStore.getProxy().extraParams = { 
@@ -370,11 +365,8 @@ Ext.onReady(function() {
 	format: 'json',
 	main_project_id: @project_id@
     };
-    absenceAssignmentStore.load({						// absences and assignments to other projects
-        callback: function() {
-            if (debug) console.log('GanttEditor.store.AbsenceAssignmentStore: loaded');
-        }
-    });
+    absenceAssignmentStore.load({callback: function(r, op, success) { if (!success) PO.Utilities.reportStoreError("AbsenceAssignmentStore", op); }});
+
 
     // Get the list of users assigned to the main project
     // or any of it's tasks or tickets
@@ -390,7 +382,7 @@ Ext.onReady(function() {
                         r.object_id_one = sub_p.project_id	\
         )"
     };
-    projectMemberStore.load();
+    projectMemberStore.load({callback: function(r, op, success) { if (!success) PO.Utilities.reportStoreError("ProjectMemberStore", op); }});
 
     // Load stores that need parameters
     taskTreeStore.getProxy().extraParams = { project_id: @project_id@ };
@@ -399,24 +391,26 @@ Ext.onReady(function() {
             var me = this;
             if (debug) console.log('PO.store.timesheet.TaskTreeStore: loaded');
 
-            var mainProjectNode = records[0];
-            me.setRootNode(mainProjectNode);
+	    if (!success) {
+		PO.Utilities.reportStoreError("TaskTreeStore", operation);
+		return;
+	    }
+
+	    var mainProjectNode = records[0];
+	    me.setRootNode(mainProjectNode);
         }
     });
 
     // User preferences
-    senchaPreferenceStore.load({						// Preferences for the GanttEditor
-        callback: function() {
-            if (debug) console.log('PO.store.user.SenchaPreferenceStore: loaded');
-        }
-    });
+    senchaPreferenceStore.load({callback: function(r, op, success) { if (!success) PO.Utilities.reportStoreError("UserPreferenceStore", op); }});
+
 
     // User store - load last, because this can take some while. Load only Employees.
     userStore.getProxy().extraParams = { 
         format: 'json',
         query: "user_id in (select object_id_two from acs_rels where object_id_one in (select group_id from groups where group_name = 'Employees'))"
     };
-    userStore.load();
+    userStore.load({callback: function(r, op, success) { if (!success) PO.Utilities.reportStoreError("UserStore", op); }});
    
 });
 </script>
