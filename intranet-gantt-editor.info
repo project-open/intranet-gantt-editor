@@ -15,6 +15,7 @@
         <summary>Gantt editor</summary>
         <release-date>2016-11-15</release-date>
         <vendor url="http://www.project-open.com/">]project-open[</vendor>
+	<license>]project-open[ Free License (FL)</license>
         <description format="text/plain">Sencha implementation of a Gantt editor similar to ProjectLibre and MS-Project.</description>
         <maturity>0</maturity>
 
