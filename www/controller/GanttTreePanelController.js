@@ -252,8 +252,8 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
         } else {
             // lastSelectedParent.insertBefore(rNode, lastSelected);			// Insert into tree
             // lastSelectedParent.appendChild(rNode);           			// Insert into tree
-	    var index = lastSelectedParent.indexOf(lastSelected);			// Get the index of the last selected 
-	    lastSelectedParent.insertChild(index+1,rNode);
+            var index = lastSelectedParent.indexOf(lastSelected);			// Get the index of the last selected 
+            lastSelectedParent.insertChild(index+1,rNode);
         }
 
         r.set('parent_id', ""+parent_id);
@@ -292,6 +292,12 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
         selectionModel.deselectAll();
         selectionModel.select([rNode]);
         rowEditing.startEdit(rNode, 0);
+
+	// select/Highlight the name of the newly created task in order to speedup entering new tasks manually
+	var columnHeader = rowEditing.context.column;
+	var ed = rowEditing.getEditor(rNode, columnHeader);
+	var inputEl = ed.field.inputEl;
+	inputEl.dom.select();
 
         me.treeRenumber();								// Update the tree's task numbering
         me.getGanttBarPanel().needsRedraw = true;					// Force delayed redraw
@@ -424,7 +430,7 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
         var rootNode = taskTreeStore.getRootNode();					// Get the absolute root
         var sortOrder = 0;
         var duplicateHash = {};
-	var last_wbs = [];
+        var last_wbs = [];
 
         // Iterate through all children of the root node and check if they are visible
         rootNode.cascadeBy(function(model) {
@@ -444,7 +450,7 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
 
             // Fix the parent_id reference to the tasks's parent node
             var parent = model.parentNode;
-	    var parent_wbs = "";
+            var parent_wbs = "";
             if (!!parent) {
                 var parentId = ""+parent.get('id');
                 var parent_id = ""+model.get('parent_id');
@@ -452,23 +458,23 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
                     model.set('parent_id', parentId);
                 }
 
-		// Get the WBS code from the parent node
-		parent_wbs = parent.get('project_wbs');
+        	// Get the WBS code from the parent node
+        	parent_wbs = parent.get('project_wbs');
             }
 
-	    // Recalculate the WBS code
-	    var depth = model.getDepth()-1;
-	    if (depth >= 0) {
-		var last_wbs_slice = last_wbs.slice(0,depth+1);
-		while (last_wbs_slice.length <= depth) {
-		    last_wbs_slice.push(0);
-		}
-		var last_wbs_digit = last_wbs_slice[depth];
-		last_wbs_slice[depth] = last_wbs_digit + 1;
-		last_wbs = last_wbs_slice;
-		var wbs = last_wbs.join('.');
-		model.set('project_wbs', wbs);
-	    }
+            // Recalculate the WBS code
+            var depth = model.getDepth()-1;
+            if (depth >= 0) {
+        	var last_wbs_slice = last_wbs.slice(0,depth+1);
+        	while (last_wbs_slice.length <= depth) {
+        	    last_wbs_slice.push(0);
+        	}
+        	var last_wbs_digit = last_wbs_slice[depth];
+        	last_wbs_slice[depth] = last_wbs_digit + 1;
+        	last_wbs = last_wbs_slice;
+        	var wbs = last_wbs.join('.');
+        	model.set('project_wbs', wbs);
+            }
 
             sortOrder++;
         });
