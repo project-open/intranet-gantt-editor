@@ -181,8 +181,8 @@ function launchGanttEditor(debug){
             { icon: gifPath+'zoom_out.png', tooltip: 'Zoom out of time axis', id: 'buttonZoomOut'}, 
             '->', 
             { text: 'Configuration', icon: gifPath+'wrench.png', menu: configMenu}, 
-            { text: 'Help', icon: gifPath+'help.png', menu: helpMenu}, 
-            { text: 'This is Beta!', icon: gifPath+'bug.png', menu: alphaMenu}
+            { text: 'Help', icon: gifPath+'help.png', menu: helpMenu}
+            //,{ text: 'This is Beta!', icon: gifPath+'bug.png', menu: alphaMenu}
         ]
     });
 
