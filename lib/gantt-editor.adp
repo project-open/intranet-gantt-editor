@@ -161,7 +161,7 @@ function launchGanttEditor(debug){
         tbar: [
             { icon: gifPath+'lock.png', tooltip: 'Read-only - you can not save changes', id: 'buttonLock', disabled: true}, 
             { icon: gifPath+'disk.png', tooltip: '<nobr>Save the project to the &#93;po&#91; backend</nobr>', id: 'buttonSave', disabled: true}, 
-            { icon: gifPath+'arrow_refresh.png', tooltip: 'Reload project data from ]po[ backend, discarding changes', id: 'buttonReload'}, 
+            // { icon: gifPath+'arrow_refresh.png', tooltip: 'Reload project data from ]po[ backend, discarding changes', id: 'buttonReload'}, 
             { icon: gifPath+'arrow_out.png', tooltip: 'Maximize the editor &nbsp;', id: 'buttonMaximize'}, 
             { icon: gifPath+'arrow_in.png', tooltip: 'Restore default editor size &nbsp;', id: 'buttonMinimize', hidden: true},
             { xtype: 'tbseparator' }, 
