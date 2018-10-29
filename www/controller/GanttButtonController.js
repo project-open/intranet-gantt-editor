@@ -137,7 +137,7 @@ Ext.define('GanttEditor.controller.GanttButtonController', {
             },
             failure: function(batch, context) { 
                 var msg = batch.proxy.reader.jsonData.message;
-                if (!msg) msg = 'undefined error';
+                if (!msg) msg = 'Error message not available';
                 PO.Utilities.reportError("onButtonSave", 'Server error while saving: '+msg);
             }
         });
