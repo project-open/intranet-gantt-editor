@@ -125,11 +125,14 @@ function launchGanttEditor(debug){
         debug: debug,
         id: 'configMenu',
         senchaPreferenceStore: senchaPreferenceStore,
-        items: [{
+        items: [
+/*	{
             key: 'read_only',
             text: 'Read Only (Beta version - use with caution!)',
             checked: false
-        }, {
+        }, 
+*/
+	{
             id: 'config_menu_show_cross_project_overassignments',
             key: 'show_project_cross_project_overassignments', 
             text: 'Show Cross-Project Overassignments', 
@@ -144,6 +147,16 @@ function launchGanttEditor(debug){
             key: 'show_project_assigned_resources', 
             text: 'Show Project Assigned Resources', 
             checked: true
+        },  {
+            id: 'config_menu_show_percent_done_bar',
+            key: 'show_percent_done_bar', 
+            text: 'Show "Done %" Gantt Bars', 
+            checked: false
+        },  {
+            id: 'config_menu_show_logged_hours_bar',
+            key: 'show_logged_hours_bar', 
+            text: 'Show "Logged Hours %" on Gantt Bars', 
+            checked: false
         },  {
             id: 'config_menu_show_project_findocs',
             key: 'show_project_findocs', 

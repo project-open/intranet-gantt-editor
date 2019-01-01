@@ -135,8 +135,8 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
         if (me.debug) console.log('GanttTreePanelController.onButtonIncreaseIndent');
 
         // Check if read-only and abort in this case
-        var readOnly = me.senchaPreferenceStore.getPreferenceBoolean('read_only',true);
-        if (readOnly) { me.readOnlyWarning(); return; }
+        // var readOnly = me.senchaPreferenceStore.getPreferenceBoolean('read_only',true);
+        // if (readOnly) { me.readOnlyWarning(); return; }
 
         var ganttTreePanel = this.getGanttTreePanel();
         var selectionModel = ganttTreePanel.getSelectionModel();
@@ -175,8 +175,8 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
         if (me.debug) console.log('GanttTreePanelController.onButtonReduceIndent');
 
         // Check if read-only and abort in this case
-        var readOnly = me.senchaPreferenceStore.getPreferenceBoolean('read_only',true);
-        if (readOnly) { me.readOnlyWarning(); return; }
+        // var readOnly = me.senchaPreferenceStore.getPreferenceBoolean('read_only',true);
+        // if (readOnly) { me.readOnlyWarning(); return; }
 
         var ganttTreePanel = this.getGanttTreePanel();
         var selectionModel = ganttTreePanel.getSelectionModel();
@@ -209,8 +209,8 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
         if (me.debug) console.log('PO.view.gantt.GanttTreePanelController.onButtonAdd: ');
 
         // Check if read-only and abort in this case
-        var readOnly = me.senchaPreferenceStore.getPreferenceBoolean('read_only',true);
-        if (readOnly) { me.readOnlyWarning(); return; }
+        // var readOnly = me.senchaPreferenceStore.getPreferenceBoolean('read_only',true);
+        // if (readOnly) { me.readOnlyWarning(); return; }
 
         var ganttTreePanel = me.getGanttTreePanel();
         var rowEditing = ganttTreePanel.plugins[0];
@@ -312,8 +312,8 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
         if (me.debug) console.log('PO.view.gantt.GanttTreePanelController.onButtonDelete: ');
 
         // Check if read-only and abort in this case
-        var readOnly = me.senchaPreferenceStore.getPreferenceBoolean('read_only',true);
-        if (readOnly) { me.readOnlyWarning(); return; }
+        // var readOnly = me.senchaPreferenceStore.getPreferenceBoolean('read_only',true);
+        // if (readOnly) { me.readOnlyWarning(); return; }
 
         var ganttTreePanel = me.getGanttTreePanel();
         var rowEditing = ganttTreePanel.plugins[0];

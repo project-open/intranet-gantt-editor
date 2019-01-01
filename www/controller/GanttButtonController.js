@@ -156,6 +156,7 @@ Ext.define('GanttEditor.controller.GanttButtonController', {
         if (me.debug) console.log('GanttButtonController.onTaskTreeStoreUpdate');
         if (!affectedColumns || 0 == affectedColumns.length) return;
 
+/*
         // Check if read-only and abort in this case
         var readOnly = me.senchaPreferenceStore.getPreferenceBoolean('read_only',true);
         if (readOnly) {
@@ -175,6 +176,7 @@ Ext.define('GanttEditor.controller.GanttButtonController', {
                 return; 
             }
         }
+*/
 
         // Enable the Save button
         var buttonSave = Ext.getCmp('buttonSave');

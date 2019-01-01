@@ -38,12 +38,13 @@ Ext.define('GanttEditor.controller.GanttConfigController', {
     onConfigClick: function(menu, item, e, eOpts) {
 	var me = this;
         if (me.debug) console.log('GanttEditor.controller.GanttConfigController.onConfigClick: Starting');
-	switch (item.id) {
-	case 'config_menu_show_project_findocs': 
-	    
+
 	    // Redraw immediately
 	    me.ganttBarPanel.needsRedraw = true;
 	    me.ganttBarPanel.redraw();
+
+	switch (item.id) {
+	case 'config_menu_show_project_findocs':    
 	    break;
 	}
         if (me.debug) console.log('GanttEditor.controller.GanttConfigController.onConfigClick: Finished');
