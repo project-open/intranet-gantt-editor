@@ -156,12 +156,12 @@ function launchGanttEditor(debug){
             id: 'config_menu_show_logged_hours_bar',
             key: 'show_logged_hours_bar', 
             text: 'Show "Logged Hours %" on Gantt Bars', 
-            checked: false
+            checked: true
         },  {
             id: 'config_menu_show_project_findocs',
             key: 'show_project_findocs', 
             text: 'Show Project Financial Documents', 
-            checked: false
+            checked: true
         }]
     });
 

@@ -417,22 +417,27 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
         // if (me.debug) { if (me.debug) console.log('PO.view.gantt.GanttBarPanel.drawProjectBar: Starting'); }
 
         var surface = me.surface;
-        var project_name = project.get('project_name');
+        var taskName = project.get('project_name');
         var percentCompleted = parseFloat(project.get('percent_completed'));
         var predecessors = project.get('predecessors');
         var assignees = project.get('assignees');				// Array of {id, percent, name, email, initials}
-        var start_date, end_date;
         var absenceAssignmentStore = Ext.StoreManager.get('absenceAssignmentStore');
+        var plannedHours = parseFloat(project.get('planned_units')); if (isNaN(plannedHours)) plannedHours = 0.0;
+        var loggedHours = parseFloat(project.get('reported_hours_cache')); if (isNaN(loggedHours)) loggedHours = 0.0;
+	var percentLogged = 0; if (plannedHours > 0) percentLogged = 100.0 * loggedHours / plannedHours;
+	var workDone = plannedHours * percentCompleted / 100.0;
+
+        var startDate, endDate;
 
         // Get start- and end date (look at parents if necessary...)
         var p = project;
-        while ("" == (start_date = p.get('start_date')) && !!p.parentNode) { p = p.parentNode;}
+        while ("" == (startDate = p.get('start_date')) && !!p.parentNode) { p = p.parentNode;}
         var p = project;
-        while ("" == (end_date = p.get('end_date')) && !!p.parentNode) { p = p.parentNode; }
-        if ("" == start_date || "" == end_date) { return; }
+        while ("" == (endDate = p.get('end_date')) && !!p.parentNode) { p = p.parentNode; }
+        if ("" == startDate || "" == endDate) { return; }
 
-        var startDate = PO.Utilities.pgToDate(start_date);
-        var endDate = PO.Utilities.pgToDate(end_date);
+        var startDate = PO.Utilities.pgToDate(startDate);
+        var endDate = PO.Utilities.pgToDate(endDate);
         if (!startDate) return; 						// skip if invalid for some reason...
         if (!endDate) return;
         var startTime = startDate.getTime();
@@ -519,50 +524,95 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
                 }
             };
 
+	    var tooltipBaseHtml = ""+
+		"<table cellspacing=0 cellpadding=1>"+
+		"<tr><td>work planned:</td><td colspan=2>"+plannedHours+" hours</td></tr>"+
+		"<tr><td>work done:</td><td>"+workDone+" hours</td><td>= "+percentCompleted+"%</td></tr>"+
+		"<tr><td>hours logged:</td><td>"+loggedHours+" hours</td><td>= "+percentLogged+"%</td></tr>"+
+		"</table>";
+
+
+
             // Percent_complete bar on top of the Gantt bar:
             // Allows for special DnD affecting only %done.
-            var opacity = 0.0;
-            if (isNaN(percentCompleted)) percentCompleted = 0;
-            if (percentCompleted > 0.0) opacity = 1.0;
-            var percentW = w*percentCompleted/100;
-            if (percentW < 2) percentW = 2;
+            var drawPercentCompleted = me.preferenceStore.getPreferenceBoolean('show_percent_done_bar', true);
+            if (drawPercentCompleted) {
+		var opacity = 0.0;
+		if (isNaN(percentCompleted)) percentCompleted = 0;
+		if (percentCompleted > 0.0) opacity = 1.0;
+		var percentW = w*percentCompleted/100;
+		if (percentW < 2) percentW = 2;
 
-            var spriteBarPercent = surface.add({
-                type: 'rect', x: x, y: y+2, width: percentW, height: (h-6)/2,
-                stroke: 'black',
-                fill: 'black',
-                'stroke-width': 0.0,
-                zIndex: 20,
-                opacity: opacity
-            }).show(true);
+		var spriteBarPercent = surface.add({
+                    type: 'rect', x: x, y: y+2, width: percentW, height: (h-6)/2,
+                    stroke: 'black',
+                    fill: 'black',
+                    'stroke-width': 0.0,
+                    zIndex: 20,
+                    opacity: opacity
+		}).show(true);
 
-            var spriteBarPercentHandle = surface.add({
-                type: 'rect', x: x+percentW-4, y: y, width: 6, height: h,	// -8: Draw handle left of the resize handle above
-                stroke: 'red',
-                fill: 'red',
-                opacity: 0.0,
-                zIndex: 40,
-                style: { cursor: 'col-resize' }					// Set special cursor shape ("column resize")
-            }).show(true);
+		var tooltipHtml = "<b>Work Done: "+percentCompleted+"%</b>"+tooltipBaseHtml;
+		Ext.create("Ext.tip.ToolTip", { target: spriteBarPercent.el, width: 300, html: tooltipHtml, hideDelay: 5000 });
 
-            spriteBarPercentHandle.dndConfig = {
-                model: project,							// Store the task information for the sprite
-                baseSprite: spriteBarPercent,
-                projectSprite: spriteBar,
-                dragAction: function(panel, e, diff, dndConfig) {
-                    if (me.debug) console.log('PO.view.gantt.GanttBarPanel.drawProjectBar.spriteBarPercent.dragAction:');
-                    var baseBBox = panel.dndBaseSprite.getBBox();
-                    var shadow = panel.dndShadowSprite;
-                    shadow.setAttributes({
-                        width: baseBBox.width + diff[0]
-                    }).show(true);
-                },
-                dropAction: function(panel, e, diff, dndConfig) {
-                    if (me.debug) console.log('PO.view.gantt.GanttBarPanel.drawProjectBar.spriteBarPercent.dropAction:');
-                    var shadow = panel.dndShadowSprite;
-                    me.onProjectPercentResize(dndConfig.projectSprite, shadow);	// Changing end-date to match x coo
-                }
-            };
+
+		
+/* 2019-01-01 fraber: Disable the DnD option to resize the percent_completed bar
+		var spriteBarPercentHandle = surface.add({
+                    type: 'rect', x: x+percentW-4, y: y, width: 6, height: h,	// -8: Draw handle left of the resize handle above
+                    stroke: 'red',
+                    fill: 'red',
+                    opacity: 0.0,
+                    zIndex: 40,
+                    style: { cursor: 'col-resize' }					// Set special cursor shape ("column resize")
+		}).show(true);
+
+		spriteBarPercentHandle.dndConfig = {
+                    model: project,							// Store the task information for the sprite
+                    baseSprite: spriteBarPercent,
+                    projectSprite: spriteBar,
+                    dragAction: function(panel, e, diff, dndConfig) {
+			if (me.debug) console.log('PO.view.gantt.GanttBarPanel.drawProjectBar.spriteBarPercent.dragAction:');
+			var baseBBox = panel.dndBaseSprite.getBBox();
+			var shadow = panel.dndShadowSprite;
+			shadow.setAttributes({
+                            width: baseBBox.width + diff[0]
+			}).show(true);
+                    },
+                    dropAction: function(panel, e, diff, dndConfig) {
+			if (me.debug) console.log('PO.view.gantt.GanttBarPanel.drawProjectBar.spriteBarPercent.dropAction:');
+			var shadow = panel.dndShadowSprite;
+			me.onProjectPercentResize(dndConfig.projectSprite, shadow);	// Changing end-date to match x coo
+                    }
+		}
+*/
+	    } // end drawPercentCompleted
+
+            // Percent_complete bar on top of the Gantt bar:
+            // Allows for special DnD affecting only %done.
+            var drawLoggedHoursBar = me.preferenceStore.getPreferenceBoolean('show_logged_hours_bar', true);
+            if (drawLoggedHoursBar) {
+		var opacity = 0.0;
+		if (percentLogged > 0.0) opacity = 1.0;
+		var percentW = w*percentLogged/100;
+		if (percentW < 2) percentW = 2;
+		var color = 'blue';
+		if (percentLogged > percentCompleted) 
+		    color = 'red';
+
+		var spriteBarLoggedHours = surface.add({
+                    type: 'rect', x: x, y: y+2+(h-6)/2+2, width: percentW, height: (h-6)/2,
+                    stroke: color,
+                    fill: color,
+                    'stroke-width': 0.0,
+                    zIndex: 20,
+                    opacity: opacity
+		}).show(true);
+
+		var tooltipHtml = "<b>Hours Logged: "+loggedHours+" hours</b>"+tooltipBaseHtml;
+		Ext.create("Ext.tip.ToolTip", { target: spriteBarLoggedHours.el, width: 300, html: tooltipHtml, hideDelay: 5000 });
+	    }
+
         }
 
         // ---------------------------------------------------------------
@@ -626,10 +676,10 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
                 absenceAssignmentStore.each(function(absence) {
                     var userId = parseInt(absence.get('user_id'));
                     if (assigneeId == userId) {
-                        var start_date = absence.get('start_date').substring(0,10);
-                        var end_date = absence.get('end_date').substring(0,10);
-                        var startX = me.date2x(new Date(start_date));
-                        var endX = me.date2x(new Date(end_date));
+                        var startDate = absence.get('start_date').substring(0,10);
+                        var endDate = absence.get('end_date').substring(0,10);
+                        var startX = me.date2x(new Date(startDate));
+                        var endX = me.date2x(new Date(endDate));
                         
                         // Skip if not overlapping with Gantt bar
                         if (startX > x + w) return;				// starts after the end of the Gantt bar
@@ -677,7 +727,7 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
                             target: assigneeBar.el, 
                             width: 250, 
                             html: absenceHtml,
-                            hideDelay: 1000 
+                            hideDelay: 2000 
                         });
                     }
                 });            
@@ -869,7 +919,7 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
                 + 'L '+ (endX)      + ', ' + (endY)
         }).show(true);
         arrowLine.dependencyModel = dependencyModel;
-        Ext.create("Ext.tip.ToolTip", { target: arrowLine.el, width: 250, html: tooltipHtml, hideDelay: 1000 });
+        Ext.create("Ext.tip.ToolTip", { target: arrowLine.el, width: 250, html: tooltipHtml, hideDelay: 2000 });
 
         // Draw the arrow head (filled)
         var arrowHead = me.surface.add({
@@ -884,7 +934,7 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
                 + 'L '+ (endX)   + ', ' + (endY)
         }).show(true);
         arrowHead.dependencyModel = dependencyModel;
-        Ext.create("Ext.tip.ToolTip", { target: arrowHead.el, width: 250, html: tooltipHtml, hideDelay: 1000 });
+        Ext.create("Ext.tip.ToolTip", { target: arrowHead.el, width: 250, html: tooltipHtml, hideDelay: 2000 });
 
 
         if (me.debug) console.log('GanttEditor.view.GanttBarPanel.drawTaskDependency: Finished');
