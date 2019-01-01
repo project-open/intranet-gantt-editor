@@ -27,6 +27,7 @@ Ext.require([
     'Ext.tree.*',
     'Ext.ux.CheckColumn',
     'GanttEditor.controller.GanttButtonController',
+    'GanttEditor.controller.GanttConfigController',
     'GanttEditor.controller.GanttTreePanelController',
     'GanttEditor.controller.GanttZoomController',
     'GanttEditor.controller.GanttSchedulingController',
@@ -143,8 +144,14 @@ function launchGanttEditor(debug){
             key: 'show_project_assigned_resources', 
             text: 'Show Project Assigned Resources', 
             checked: true
+        },  {
+            id: 'config_menu_show_project_findocs',
+            key: 'show_project_findocs', 
+            text: 'Show Project Financial Documents', 
+            checked: false
         }]
     });
+
 
     /**
      * GanttButtonPanel
@@ -261,6 +268,16 @@ function launchGanttEditor(debug){
         ganttTreePanelController: ganttTreePanelController
     });
     ganttButtonController.init(this).onLaunch(this);
+
+    // Controller for handling configuration options
+    var ganttConfigController = Ext.create('GanttEditor.controller.GanttConfigController', {
+        debug: debug,
+	configMenu: configMenu,
+        senchaPreferenceStore: senchaPreferenceStore,
+	ganttBarPanel: ganttBarPanel
+    });
+    ganttConfigController.init(this);
+
 
     // Controller for Zoom in/out, scrolling and  centering
     var ganttZoomController = Ext.create('GanttEditor.controller.GanttZoomController', {

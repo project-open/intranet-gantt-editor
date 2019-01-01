@@ -685,31 +685,34 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
 }
 
         // ---------------------------------------------------------------
-        // Draw invoices above Gantt bar
-        var invoices = project.get('invoices'); 				// Array of {id, cost_name, cost_type_id, cost_type}
-        if (!!invoices && invoices instanceof Array && invoices.length > 0) {
-            var imageWidth = 19;
-            var busyX = {};
-            invoices.forEach(function(invoice) {
-                var prefix = invoice.cost_type.substring(0,1).toLowerCase();
-                var effectiveDate = new Date(invoice.effective_date);
-                var invoiceX = me.date2x(effectiveDate);
+        // Draw financial documents above Gantt bar
+        var drawFinDocs = me.preferenceStore.getPreferenceBoolean('show_project_findocs', true);
+        if (drawFinDocs) {
+            var invoices = project.get('invoices'); 				// Array of {id, cost_name, cost_type_id, cost_type}
+            if (!!invoices && invoices instanceof Array && invoices.length > 0) {
+		var imageWidth = 19;
+		var busyX = {};
+		invoices.forEach(function(invoice) {
+                    var prefix = invoice.cost_type.substring(0,1).toLowerCase();
+                    var effectiveDate = new Date(invoice.effective_date);
+                    var invoiceX = me.date2x(effectiveDate);
 
-                // Make sure multiple invoices appear beside each other
-                var pos = Math.round(invoiceX / imageWidth);
-                while (pos in busyX) {
-                    invoiceX = invoiceX + imageWidth;
+                    // Make sure multiple invoices appear beside each other
                     var pos = Math.round(invoiceX / imageWidth);
-                }
-                busyX[pos] = pos;						// mark as busy
+                    while (pos in busyX) {
+			invoiceX = invoiceX + imageWidth;
+			var pos = Math.round(invoiceX / imageWidth);
+                    }
+                    busyX[pos] = pos;						// mark as busy
 
-                var invoiceBar = surface.add({
-                    type: 'image', x: invoiceX, y: y-h, width: imageWidth, height: 13,
-                    src: "/intranet/images/"+prefix+".gif",
-                    listeners: { mousedown: function() { window.open('/intranet-invoices/view?invoice_id='+invoice.id); } }
-                }).show(true);
-            });
-        }
+                    var invoiceBar = surface.add({
+			type: 'image', x: invoiceX, y: y-h, width: imageWidth, height: 13,
+			src: "/intranet/images/"+prefix+".gif",
+			listeners: { mousedown: function() { window.open('/intranet-invoices/view?invoice_id='+invoice.id); } }
+                    }).show(true);
+		});
+            }
+	}
 
         // Add a drag-and-drop configuration to all spriteBars (bar, supertask and milestone)
         // in order to allow them to act as both source and target of inter-task dependencies.
