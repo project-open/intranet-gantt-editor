@@ -113,6 +113,7 @@ Ext.define('GanttEditor.controller.GanttButtonController', {
 
         // Fix wrong milestone_p field
         me.taskTreeStore.tree.root.eachChild(function(taskModel) {
+
             var milestoneP = taskModel.get('milestone_p');
             var m = milestoneP;
             switch (milestoneP) {
@@ -124,7 +125,21 @@ Ext.define('GanttEditor.controller.GanttButtonController', {
 
             if (milestoneP != m) {
                 if (me.debug) console.log('GanttButtonController.ButtonSave: Fixing milestone_p from "'+milestoneP+'" to "'+m+'"');
-                taskModel.set('milestone_p', 'f');
+                taskModel.set('milestone_p', m);
+            }
+
+            var effortDrivenP = taskModel.get('effort_driven_p');
+            var m = effortDrivenP;
+            switch (effortDrivenP) {
+            case "true": m = 't'; break;
+            case true: m = 't'; break;
+            case "false": m = 'f'; break;
+            case false: m = 'f'; break;
+            }
+
+            if (effortDrivenP != m) {
+                if (me.debug) console.log('GanttButtonController.ButtonSave: Fixing effort_driven_p from "'+effortDrivenP+'" to "'+m+'"');
+                taskModel.set('effort_driven_p', m);
             }
 
         });
