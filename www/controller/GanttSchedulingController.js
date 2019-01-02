@@ -137,8 +137,19 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
         var me = this;
         if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.onAssigneesChanged: Starting');
 
-        // Check planned units vs. assigned resources
-        me.checkTaskLength(treeStore, model);
+        var effortDrivenType = parseInt(model.get('effort_driven_type_id'));
+        if (isNaN(effortDrivenType)) effortDrivenType = 9722;    // !!! set to default
+        switch (effortDrivenType) {
+        case 9720:     // Fixed Units
+            me.checkTaskLength(treeStore, model);            // adjust the length of the task
+            break;
+        case 9721:     // Fixed Duration
+            me.checkAssignedResources(treeStore, model);                 // adjust the percentage of the assigned resources
+            break;
+        case 9722:     // Fixed Work
+            me.checkTaskLength(treeStore, model);            // adjust the length of the task
+            break;
+        }
 
         if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.onAssigneesChanged: Finished');
     },
@@ -263,8 +274,8 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
             var predecessors = project.get('predecessors');
             if (!predecessors instanceof Array) return;
             for (var i = 0, len = predecessors.length; i < len; i++) {
-        	var dependencyModel = predecessors[i];
-        	me.checkBrokenDependency(dependencyModel);
+                var dependencyModel = predecessors[i];
+                me.checkBrokenDependency(dependencyModel);
             }
         });
         if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.checkBrokenDependencies: Finished');
@@ -292,8 +303,8 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
             return; 
         }
 
-	var fromEndDate = fromModel.get('end_date');
-	var toStartDate = toModel.get('start_date');
+        var fromEndDate = fromModel.get('end_date');
+        var toStartDate = toModel.get('start_date');
         var predEndDate = PO.Utilities.pgToDate(fromEndDate);
         var succStartDate = PO.Utilities.pgToDate(toStartDate);
 
@@ -362,6 +373,57 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
         endDateString = endDateString.substring(0,10) + ' 23:59:59';
         if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.checkTaskLength: end_date='+endDateString);
         model.set('end_date', endDateString);
+
+        if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.checkTaskLength: Finished');
+    },
+
+
+    /**
+     * Check that the assigned resources correspond to duration and planned units.
+     * Then adapt assignment percentage uniformly.
+     */
+    checkAssignedResources: function(treeStore, model) {
+        var me = this;
+        if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.checkTaskLength:: Starting');
+        
+        var startDate = PO.Utilities.pgToDate(model.get('start_date')); if (!startDate) return; // No date - no duration...
+        startDate.setHours(0,0,0,0);
+        var endDate = PO.Utilities.pgToDate(model.get('end_date')); if (!endDate) return;	// No date - no duration...
+        var assignees = model.get('assignees');
+        var plannedUnits = model.get('planned_units'); if (!plannedUnits || 0 == plannedUnits) return;  // No units - no duration...
+
+        // Calculate the percent assigned in total
+        var assignedPercent = 0.0
+        assignees.forEach(function(assig) {
+            assignedPercent = assignedPercent + assig.percent
+        });
+        if (0 == assignedPercent) { return; }					// No assignments - nothing to fix
+
+        // Calculate the number of working time between start- and end-date
+        var startTime = startDate.getTime();
+        var endTime = endDate.getTime();
+        var workHours = 0.0;							// we start at 23:59 of the startDay...
+        var now = startTime;
+        while (now < endTime) {
+            var day = new Date(now);
+            var dayOfWeek = day.getDay();
+            if (dayOfWeek == 6 || dayOfWeek == 0) { 
+                // Weekend - just skip the day
+            } else {
+                // Weekday - add hours
+                workHours = workHours + 8;
+            }
+            now = now + 1000 * 3600 * 24;
+        }
+
+        // Calculate the total resources that need to be assigned
+        var assignedPercentNew = 100.0 * plannedUnits / workHours;
+        var assignmentFactor = assignedPercentNew / assignedPercent;
+
+        // Fix each assignment by the same factor
+        assignees.forEach(function(assig) {
+            assig.percent = Math.round(10.0 * assig.percent * assignmentFactor) / 10.0;
+        });
 
         if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.checkTaskLength: Finished');
     },
