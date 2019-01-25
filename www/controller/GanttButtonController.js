@@ -21,6 +21,7 @@ Ext.define('GanttEditor.controller.GanttButtonController', {
     resizeController: null,
     senchaPreferenceStore: null,
     ganttTreePanelController: null,
+    buttonSave: null,							// 
 
     refs: [
         { ref: 'ganttTreePanel', selector: '#ganttTreePanel' }
@@ -60,6 +61,7 @@ Ext.define('GanttEditor.controller.GanttButtonController', {
 
         // write_project_p is a global variable defined in gantt-editor.adp
         var buttonSave = Ext.getCmp('buttonSave');
+        me.buttonSave = buttonSave;
         var buttonLock = Ext.getCmp('buttonLock');
         if (1 == write_project_p) {
             buttonSave.show();
@@ -96,8 +98,8 @@ Ext.define('GanttEditor.controller.GanttButtonController', {
     onButtonReload: function() {
         var me = this;
         if (me.debug) console.log('GanttButtonController.ButtonReload');
-        var buttonSave = Ext.getCmp('buttonSave');
-        buttonSave.setDisabled(true);
+        // var buttonSave = Ext.getCmp('buttonSave');
+        me.buttonSave.setDisabled(true);
     },
 
     /**
@@ -158,8 +160,8 @@ Ext.define('GanttEditor.controller.GanttButtonController', {
             }
         });
         // Now block the "Save" button, unless some data are changed.
-        var buttonSave = Ext.getCmp('buttonSave');
-        buttonSave.setDisabled(true);
+	// var buttonSave = Ext.getCmp('buttonSave');
+        me.buttonSave.setDisabled(true);
         if (me.debug) console.log('GanttButtonController.ButtonSave: Finished');
     },
 
@@ -195,8 +197,8 @@ Ext.define('GanttEditor.controller.GanttButtonController', {
 */
 
         // Enable the Save button
-        var buttonSave = Ext.getCmp('buttonSave');
-        buttonSave.setDisabled(false);					// Allow to "save" changes
+        // var buttonSave = Ext.getCmp('buttonSave');
+        me.buttonSave.setDisabled(false);					// Allow to "save" changes
 
         // ToDo: This isn't always the case...
         me.ganttBarPanel.needsRedraw = true;				// Tell the ganttBarPanel to redraw with the next frame
