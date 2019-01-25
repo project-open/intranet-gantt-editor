@@ -109,6 +109,7 @@ Ext.define('GanttEditor.controller.GanttButtonController', {
         if (me.debug) console.log('GanttButtonController.ButtonSave: Starting');
 
         // Make sure there are no duplicate tasks
+        me.ganttTreePanelController.treeRenumberStoreOldValues();			// Remember the current values of WBS field
         me.ganttTreePanelController.treeRenumber();
 
         // Fix wrong milestone_p field

@@ -147,8 +147,9 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
         var lastSelectedIndex = lastSelectedParent.indexOf(lastSelected);
         var prevNodeIndex = lastSelectedIndex -1;
         if (prevNodeIndex < 0) { return; }						// We can't indent the root element
-
         var prevNode = lastSelectedParent.getChildAt(prevNodeIndex);
+
+        me.treeRenumberStoreOldValues();     						// Remember the current values of WBS field
 
         // Add the item as a child of the prevNode
         prevNode.set('leaf', false);
@@ -186,6 +187,11 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
         var lastSelectedParentParent = lastSelectedParent.parentNode;
         if (null == lastSelectedParentParent) { return; }				// We can't indent the root element
         var lastSelectedParentIndex = lastSelectedParentParent.indexOf(lastSelectedParent);
+
+	// Baseline the old WBS values
+        me.treeRenumberStoreOldValues();     						// Remember the current values of WBS field
+
+	// Move the child
         lastSelectedParentParent.insertChild(lastSelectedParentIndex+1, lastSelected);
 
         // Check if the parent has now become a leaf
@@ -216,6 +222,8 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
         var rowEditing = ganttTreePanel.plugins[0];
         var taskTreeStore = ganttTreePanel.getStore();
         var root = taskTreeStore.getRootNode();
+        me.treeRenumberStoreOldValues();     						// Remember the current values of WBS field
+
 
         rowEditing.cancelEdit();
         var selectionModel = ganttTreePanel.getSelectionModel();
@@ -293,11 +301,11 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
         selectionModel.select([rNode]);
         rowEditing.startEdit(rNode, 0);
 
-	// select/Highlight the name of the newly created task in order to speedup entering new tasks manually
-	var columnHeader = rowEditing.context.column;
-	var ed = rowEditing.getEditor(rNode, columnHeader);
-	var inputEl = ed.field.inputEl;
-	inputEl.dom.select();
+        // select/Highlight the name of the newly created task in order to speedup entering new tasks manually
+        var columnHeader = rowEditing.context.column;
+        var ed = rowEditing.getEditor(rNode, columnHeader);
+        var inputEl = ed.field.inputEl;
+        inputEl.dom.select();
 
         me.treeRenumber();								// Update the tree's task numbering
         me.getGanttBarPanel().needsRedraw = true;					// Force delayed redraw
@@ -322,6 +330,7 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
         var lastSelected = selectionModel.getLastSelected();
         var lastSelectedParent = lastSelected.parentNode;
         var lastSelectedIndex = lastSelectedParent.indexOf(lastSelected);
+        me.treeRenumberStoreOldValues();     						// Remember the current values of WBS field
 
         rowEditing.cancelEdit();
 
@@ -385,6 +394,7 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
 
         var records = data.records; 							// tasks dropped into new position
         var parent = null;
+        me.treeRenumberStoreOldValues();     						// Remember the current values of WBS field
 
         // Update the parent_id of the task
         switch (dropPosition) {
@@ -416,15 +426,76 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
 
 
     /**
+     * Before updating the WBS numbers in treeRenumber,
+     * we need to store the old values baseline in order
+     * to check if they were manually modified.
+     */
+    treeRenumberStoreOldValues: function() {
+        var me = this;
+        if (me.debug) console.log('PO.controller.GanttTreePanelController.treeRenumberStoreOldValues: Starting');
+
+        var ganttTreePanel = me.getGanttTreePanel();
+        var taskTreeStore = ganttTreePanel.getStore();
+        var rootNode = taskTreeStore.getRootNode();					// Get the absolute root
+        var sortOrder = 0;
+        var last_wbs = [];
+
+        // Iterate through all children of the root node and check if they are visible
+        rootNode.cascadeBy(function(model) {
+            
+            // Fix the parent_id reference to the tasks's parent node
+            var parent = model.parentNode;
+            var parent_wbs = "";
+            if (!!parent) {
+                var parentId = ""+parent.get('id');
+                var parent_id = ""+model.get('parent_id');
+                if (parentId != parent_id && 0 != sortOrder && "root" != parentId) {
+                    model.set('parent_id', parentId);
+                }
+
+                // Get the WBS code from the parent node
+                parent_wbs = parent.get('project_wbs');
+            }
+
+            // Recalculate the WBS code
+            var depth = model.getDepth()-1;
+            if (depth >= 0) {
+                var last_wbs_slice = last_wbs.slice(0,depth+1);
+                while (last_wbs_slice.length <= depth) {
+                    last_wbs_slice.push(0);
+                }
+                var last_wbs_digit = last_wbs_slice[depth];
+                last_wbs_slice[depth] = last_wbs_digit + 1;
+                last_wbs = last_wbs_slice;
+                var wbs = last_wbs.join('.');
+
+		// Store this as the old autmatic WBS
+		// into a field outside the normal model
+                model.data.project_wbs_old_automatic = wbs;
+            }
+
+            sortOrder++;
+        });
+
+
+        if (me.debug) console.log('PO.controller.GanttTreePanelController.treeRenumberStoreOldValues: Finished');
+    },
+
+    /**
      * Update the numbering of the Gantt tasks after a 
      * change that affects the ordering including 
      * drag-and-drop events.
+     *
+     * Please note that this function expects that you
+     * run treeRenumberStoreOldValues() before you
+     * actually performed a tree change. This is necessary
+     * in order to detect manual changes in the WBS,
+     * which should be preserved.
      */
     treeRenumber: function() {
         var me = this;
         if (me.debug) console.log('PO.controller.GanttTreePanelController.treeRenumber: Starting');
 
-        var ganttBarPanel = me.getGanttBarPanel();
         var ganttTreePanel = me.getGanttTreePanel();
         var taskTreeStore = ganttTreePanel.getStore();
         var rootNode = taskTreeStore.getRootNode();					// Get the absolute root
@@ -458,22 +529,37 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
                     model.set('parent_id', parentId);
                 }
 
-        	// Get the WBS code from the parent node
-        	parent_wbs = parent.get('project_wbs');
+                // Get the WBS code from the parent node
+                parent_wbs = parent.get('project_wbs');
             }
 
             // Recalculate the WBS code
             var depth = model.getDepth()-1;
             if (depth >= 0) {
-        	var last_wbs_slice = last_wbs.slice(0,depth+1);
-        	while (last_wbs_slice.length <= depth) {
-        	    last_wbs_slice.push(0);
-        	}
-        	var last_wbs_digit = last_wbs_slice[depth];
-        	last_wbs_slice[depth] = last_wbs_digit + 1;
-        	last_wbs = last_wbs_slice;
-        	var wbs = last_wbs.join('.');
-        	model.set('project_wbs', wbs);
+                var last_wbs_slice = last_wbs.slice(0,depth+1);
+                while (last_wbs_slice.length <= depth) {
+                    last_wbs_slice.push(0);
+                }
+                var last_wbs_digit = last_wbs_slice[depth];
+                last_wbs_slice[depth] = last_wbs_digit + 1;
+                last_wbs = last_wbs_slice;
+
+                var newWbs = last_wbs.join('.');
+                var curWbs = model.get('project_wbs');
+                var automaticWbsBeforeAction = model.data.project_wbs_old_automatic;
+		if (!automaticWbsBeforeAction) automaticWbsBeforeAction = "";
+
+		// No change? Then just skip...
+		if (newWbs === curWbs) return;
+
+		// Preserve manual changes to the WBS. Only update the WBS if the
+		// previous value was generated automatically.
+		var manualChangeP = (curWbs !== automaticWbsBeforeAction);
+		if ("" === curWbs) manualChangeP = false;			// No WBS yet, probably a new task
+		if ("" === automaticWbsBeforeAction) manualChangeP = false;	// Some inconsistency, shouldn't appear...
+		if (!manualChangeP) {
+                    model.set('project_wbs', newWbs);
+		}
             }
 
             sortOrder++;
