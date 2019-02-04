@@ -138,7 +138,12 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
         if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.onAssigneesChanged: Starting');
 
         var effortDrivenType = parseInt(model.get('effort_driven_type_id'));
-        if (isNaN(effortDrivenType)) effortDrivenType = 9722;    // !!! set to default
+        if (isNaN(effortDrivenType)) {
+	    effortDrivenType = parseInt(default_effort_driven_type_id);    // Default is "Fixed Work" = 9722
+	}
+        if (isNaN(effortDrivenType)) effortDrivenType = 9722;    // Default is "Fixed Work" = 9722
+	alert(effortDrivenType);
+
         switch (effortDrivenType) {
         case 9720:     // Fixed Units
             me.checkTaskLength(treeStore, model);            // adjust the length of the task

@@ -65,6 +65,7 @@ Ext.require([
 var default_material_id = parseInt('@default_material_id@');			// "Default" material
 var default_cost_center_id = parseInt('@default_cost_center_id@');		// "The Company" cost-center
 var default_uom_id = parseInt('@default_uom_id@');				// "Hour" default Unit of Measure
+var default_effort_driven_type_id = parseInt('@default_effort_driven_type_id@'); // "Fixed Effort" as default
 var write_project_p = parseInt('@write_p@');					// 0 or 1
 
 

@@ -50,3 +50,6 @@ from	(
 set default_material_id [im_material_default_material_id]
 set default_cost_center_id [im_cost_center_company]
 set default_uom_id [im_uom_hour]
+
+# 9722 = 'Fixed Work' is the default effort_driven_type
+set default_effort_driven_type_id [parameter::get_from_package_key -package_key "intranet-ganttproject" -parameter "DefaultEffortDrivenTypeId" -default "9722"]
