@@ -142,7 +142,6 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
 	    effortDrivenType = parseInt(default_effort_driven_type_id);    // Default is "Fixed Work" = 9722
 	}
         if (isNaN(effortDrivenType)) effortDrivenType = 9722;    // Default is "Fixed Work" = 9722
-	alert(effortDrivenType);
 
         switch (effortDrivenType) {
         case 9720:     // Fixed Units
