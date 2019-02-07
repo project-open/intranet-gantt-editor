@@ -273,6 +273,7 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
         r.set('work', ""+8);
         r.set('start_date', new Date().toISOString().substring(0,10)+" 00:00:00");	// Indicates start of the day at 00:00:00
         r.set('end_date', new Date().toISOString().substring(0,10)+" 23:59:59");	// Same as start_date, but indicates 23:59:59
+        r.set('effort_driven_type_id', ""+default_effort_driven_type_id);
 
         // Get a server-side object_id for the task
         Ext.Ajax.request({
