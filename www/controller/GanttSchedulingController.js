@@ -46,6 +46,9 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
         var me = this;
         if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.onTreeStoreUpdate: Starting');
 
+	// Check for loops in the dependencies
+	// me.checkCyclicDependencies();
+
         // me.suspendEvents();
         var dirty = false;
         if (null != fieldsChanged) {
@@ -432,7 +435,6 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
         if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.checkTaskLength: Finished');
     },
 
-
     /**
      * Make sure endDate is after startDate
      */
@@ -457,6 +459,196 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
         }
 
         if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.checkStartEndDateConstraint: Finished');
+    },
+
+
+    /**
+     * Finds a node in a tree by a custom function.
+     * @param {Object} node The node to start searching.
+     * @param {Function} fn A function which must return true if the passed Node is the required Node.
+     * @param {Object} [scope] The scope (this reference) in which the function is executed. Defaults to the Node being tested.
+     * @return {Ext.data.NodeInterface} The found child or null if none was found
+     */
+    findNodeBy : function(node, fn, scope) {
+        // Check if the result is the node itself
+        var n = node;
+        if (fn.call(scope || n, n) === true) { return n; }
+
+        // Search the children
+        var me = this;
+        var cs = node.childNodes,
+        len = cs.length,
+        i = 0, res;
+        
+        for (; i < len; i++) {
+            n = cs[i];
+            res = me.findNodeBy(n, fn, scope);
+            if (res !== null) { return res; }
+        }        
+        return null;
+    },
+
+
+    /**
+     * Check for cyclic dependencies in the project plan.
+     * First initialize transPreds and transSuccs hashes
+     * of transitive predecessors and successors with the
+     * direct preds/succs of the project activity.
+     *
+     * Then use an iterative search to find the successors
+     * of successors and predecessors of preds etc.
+     */
+    checkCyclicDependencies: function() {
+        var me = this;
+        if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.checkCyclicDependencies: Starting');
+
+        // Iterate through all nodes
+        var treeStore = me.taskTreeStore;
+        var rootNode = treeStore.getRootNode();
+
+        // Loop through all activities and create a transPreds transitive predecessors hash
+        rootNode.cascadeBy(function(project) {
+            var predecessors = project.get('predecessors');
+            if (!predecessors instanceof Array) return;
+
+            // Initialize with the list of direct predecessors
+            for (var i = 0, len = predecessors.length; i < len; i++) {
+                var dependencyModel = predecessors[i];
+
+                var predId = ''+dependencyModel.pred_id;		// a string!
+                var predModel = me.findNodeBy(rootNode, function() {return (''+this.get('id') === predId);}, null);
+                if (!predModel) { alert("PredModel not found for: "+predId); }
+
+                var succId = ''+dependencyModel.succ_id;		// a string!
+                var succModel = me.findNodeBy(rootNode, function() { return (''+this.get('id') === succId);}, null);
+                if (!succModel) { alert("SuccModel not found for: "+succId); }
+
+                var transPreds = succModel.transPreds;
+                if (!transPreds) {
+                    transPreds = {};
+                    succModel.transPreds = transPreds;
+                }
+                transPreds[predId] = predModel;
+
+                var transSuccs = predModel.transSuccs;
+                if (!transSuccs) {
+                    transSuccs = {};
+                    predModel.transSuccs = transSuccs;
+                }
+                transSuccs[succId] = succModel;
+            }
+        });
+
+
+        // Calculate the transitive predecessors:
+        // Loop through all activities and add the predecessors of their predecessors to the hash.
+        var loopP = true;
+        var cyclicLoopP = false;
+        while (loopP && !cyclicLoopP) {
+            loopP = false;
+
+            // Loop throught all nodes in the tree (activities)
+            rootNode.cascadeBy(function(project) {
+                var projectId = ''+project.get('id');
+
+                if ("18233" === projectId || "18234" === projectId || "18235" === projectId || "18236" === projectId || "18237" === projectId || "18238" === projectId) {
+                    console.log('found');
+                }
+
+                // Loop through all predecessors of the node
+                var transPreds = project.transPreds;
+                for (var id in transPreds) {
+
+                    // Now loop through the prececessors preds
+                    // and add them to the project's preds
+                    var predModel = transPreds[id];
+                    var predPreds = predModel.transPreds;
+                    for (var predPredId in predPreds) {
+                        if (!transPreds[predPredId]) {		// check if the attribute already exists
+                            loopP = true;			// keep on looping...
+                            var predPredModel = predPreds[predPredId];
+                            transPreds[predPredId] = predPredModel;
+                            if (projectId === predPredId) {
+                                // We've found a loop. We found the ID of the object
+                                // itself in the list of it's predecessors
+                                alert('Cyclic dependency with '+predPredId);
+                                cyclicLoopP = true;
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+
+        // Calculate the transitive successors:
+        // Loop through all activities and add the successors of their successors
+        var loopP = true;
+        var cyclicLoopP = false;
+        while (loopP && !cyclicLoopP) {
+            loopP = false;
+
+            // Loop throught all nodes in the tree (activities)
+            rootNode.cascadeBy(function(project) {
+                var projectId = ''+project.get('id');
+
+                if ("18233" === projectId || "18234" === projectId || "18235" === projectId || "18236" === projectId || "18237" === projectId || "18238" === projectId) {
+                    console.log('found');
+                }
+
+                // Loop through all succecessors of the node
+                var transSuccs = project.transSuccs;
+                for (var id in transSuccs) {
+
+                    // Now loop through the successors succs
+                    // and add them to the project's succs
+                    var succModel = transSuccs[id];
+                    var succSuccs = succModel.transSuccs;
+                    for (var succSuccId in succSuccs) {
+                        if (!transSuccs[succSuccId]) {		// check if the attribute already exists
+                            loopP = true;			// keep on looping...
+                            var succSuccModel = succSuccs[succSuccId];
+                            transSuccs[succSuccId] = succSuccModel;
+                            if (projectId === succSuccId) {
+                                // We've found a loop. We found the ID of the object
+                                // itself in the list of it's succecessors
+                                alert('Cyclic dependency with '+succSuccId);
+                                cyclicLoopP = true;
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+
+        // Loop through all nodes and check for parents in the list of prececessors
+        rootNode.cascadeBy(function(project) {
+            var transPreds = project.transPreds;
+            var transSuccs = project.transSuccs;
+            var parentNode = project.parentNode;
+            if (!parentNode) return;
+            var parentId = ''+parentNode.get('id');
+            if ("root" === parentId) return;
+
+            // Check all predecessors if we can find a parent in it
+            for (predId in transPreds) {
+                if (predId === parentId) {
+                    alert('Found parentId='+parentId+' in predecessors of id='+project.get('id'));
+                }
+            }
+
+            // Check all successors if we can find a parent in it
+            for (succId in transSuccs) {
+                if (succId === parentId) {
+                    alert('Found parentId='+parentId+' in succecessors of id='+project.get('id'));
+                }
+            }
+
+        });
+
+        if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.checkCyclicDependencies: Finished');
     }
+
 
 });
