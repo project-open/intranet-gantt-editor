@@ -311,7 +311,7 @@ function launchGanttEditor(debug){
 
     // Deal with changes of Gantt data and perform scheduling
     var ganttSchedulingController = Ext.create('GanttEditor.controller.GanttSchedulingController', {
-        debug: debug,
+        debug: true,
         'taskTreeStore': taskTreeStore,
         'ganttBarPanel': ganttBarPanel,
         'ganttTreePanel': ganttTreePanel
