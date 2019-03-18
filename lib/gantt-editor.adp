@@ -428,6 +428,7 @@ Ext.onReady(function() {
 	    }
 
 	    var mainProjectNode = records[0];
+	    mainProjectNode.set('sort_order','0');
 	    me.setRootNode(mainProjectNode);
         }
     });
