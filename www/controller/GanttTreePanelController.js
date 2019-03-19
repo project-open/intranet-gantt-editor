@@ -188,10 +188,10 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
         if (null == lastSelectedParentParent) { return; }				// We can't indent the root element
         var lastSelectedParentIndex = lastSelectedParentParent.indexOf(lastSelectedParent);
 
-	// Baseline the old WBS values
+        // Baseline the old WBS values
         me.treeRenumberStoreOldValues();     						// Remember the current values of WBS field
 
-	// Move the child
+        // Move the child
         lastSelectedParentParent.insertChild(lastSelectedParentIndex+1, lastSelected);
 
         // Check if the parent has now become a leaf
@@ -470,8 +470,8 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
                 last_wbs = last_wbs_slice;
                 var wbs = last_wbs.join('.');
 
-		// Store this as the old autmatic WBS
-		// into a field outside the normal model
+                // Store this as the old autmatic WBS
+                // into a field outside the normal model
                 model.data.project_wbs_old_automatic = wbs;
             }
 
@@ -548,19 +548,20 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
                 var newWbs = last_wbs.join('.');
                 var curWbs = model.get('project_wbs');
                 var automaticWbsBeforeAction = model.data.project_wbs_old_automatic;
-		if (!automaticWbsBeforeAction) automaticWbsBeforeAction = "";
+                if (!automaticWbsBeforeAction) automaticWbsBeforeAction = "";
 
-		// No change? Then just skip...
-		if (newWbs === curWbs) return;
+                // No change? Then just skip...
+                if (!(newWbs === curWbs)) {
+                    // Preserve manual changes to the WBS. Only update the WBS if the
+                    // previous value was generated automatically.
+                    var manualChangeP = (curWbs !== automaticWbsBeforeAction);
+                    if ("" === curWbs) manualChangeP = false;			// No WBS yet, probably a new task
+                    if ("" === automaticWbsBeforeAction) manualChangeP = false;	// Some inconsistency, shouldn't appear...
+                    if (!manualChangeP) {
+                        model.set('project_wbs', newWbs);
+                    }
+                }
 
-		// Preserve manual changes to the WBS. Only update the WBS if the
-		// previous value was generated automatically.
-		var manualChangeP = (curWbs !== automaticWbsBeforeAction);
-		if ("" === curWbs) manualChangeP = false;			// No WBS yet, probably a new task
-		if ("" === automaticWbsBeforeAction) manualChangeP = false;	// Some inconsistency, shouldn't appear...
-		if (!manualChangeP) {
-                    model.set('project_wbs', newWbs);
-		}
             }
 
             sortOrder++;
