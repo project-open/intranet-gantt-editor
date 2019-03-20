@@ -29,6 +29,7 @@
         </callbacks>
         <parameters>
             <parameter scope="instance" datatype="number"  min_n_values="1" max_n_values="1" name="MaxProjectYears" default="" description="Maximum duration of a project in years. Otherwise there may be performance issues in the GanttEditor. Default is 20."/>
+            <parameter scope="instance" datatype="string"  min_n_values="1" max_n_values="1" name="DebugHash" default="default 0" description="Defines debugging output from GanttEditor in TCL list format, using the IDs of the GanttEditor objects. Example: 'default 0 ganttSchedulingController 1' will disable debugging in general, but show debugging output for the GanttSchedulingController. Default is 'default 0' for production systems without debugging."/>
         </parameters>
 
     </version>
