@@ -79,7 +79,7 @@ function launchGanttEditor(debug){
 
     // Deal with state
     var stateProvider = Ext.create('PO.class.PreferenceStateProvider', {
-	debug: false,
+	debug: getDebug('stateProvider'),
         url: window.location.pathname + window.location.search
     });
     Ext.state.Manager.setProvider(stateProvider);
@@ -97,7 +97,7 @@ function launchGanttEditor(debug){
      *********************************************************************** */
     var helpMenu = Ext.create('PO.view.menu.HelpMenu', {
         id: 'helpMenu',
-        debug: debug,
+        debug: getDebug('helpMenu'),
         style: {overflow: 'visible'},						// For the Combo popup
         store: Ext.create('Ext.data.Store', { fields: ['text', 'url'], data: [
             {text: 'Gantt Editor Home', url: 'http://www.project-open.com/en/package-intranet-gantt-editor'}
@@ -113,7 +113,7 @@ function launchGanttEditor(debug){
     var alphaMenu = Ext.create('PO.view.menu.AlphaMenu', {
         id: 'alphaMenu',
         alphaComponent: 'Gantt Editor',
-        debug: debug,
+        debug: getDebug('alphaMenu'),
         style: {overflow: 'visible'},						// For the Combo popup
         slaId: 1478943,					        		// ID of the ]po[ "PD Gantt Editor" project
         ticketStatusId: 30000							// "Open" and sub-states
@@ -123,7 +123,7 @@ function launchGanttEditor(debug){
      * Config Menu
      *********************************************************************** */
     var configMenu = Ext.create('PO.view.menu.ConfigMenu', {
-        debug: debug,
+        debug: getDebug('configMenu'),
         id: 'configMenu',
         senchaPreferenceStore: senchaPreferenceStore,
         items: [
@@ -210,7 +210,7 @@ function launchGanttEditor(debug){
     // Left-hand side task tree
     var ganttTreePanel = Ext.create('PO.view.gantt.GanttTreePanel', {
         id: 'ganttTreePanel',
-        debug: debug,
+        debug: getDebug('ganttTreePanel'),
         width: 500,
         region: 'west',
         store: taskTreeStore
@@ -222,7 +222,7 @@ function launchGanttEditor(debug){
     var ganttTreePanelController = Ext.create('GanttEditor.controller.GanttTreePanelController', {
         ganttTreePanel: ganttTreePanel,
         senchaPreferenceStore: senchaPreferenceStore,
-        debug: debug
+        debug: getDebug('ganttTreePanelController')
     });
     ganttTreePanelController.init(this);
 
@@ -234,7 +234,7 @@ function launchGanttEditor(debug){
         id: 'ganttBarPanel',
         cls: 'extjs-panel',
         region: 'center',
-        debug: false,
+        debug: getDebug('ganttBarPanel'),
         reportStartDate: reportStartDate,					// start and end of first and last task in the project
         reportEndDate: reportEndDate,
         overflowX: 'scroll',							// Allows for horizontal scrolling, but not vertical
@@ -251,7 +251,7 @@ function launchGanttEditor(debug){
 
     // Outer Gantt editor jointing the two parts (TreePanel + Draw)
     var ganttPanelContainer = Ext.create('PO.view.gantt_editor.GanttButtonPanel', {
-        debug: debug,
+        debug: getDebug('ganttPanelContainer'),
         resizable: true,							// Add handles to the panel, so the user can change size
         items: [
             ganttTreePanel,
@@ -262,7 +262,7 @@ function launchGanttEditor(debug){
 
     // Contoller to handle size and resizing related events
     var resizeController = Ext.create('PO.controller.ResizeController', {
-        debug: debug,
+        debug: getDebug('resizeController'),
         redrawPanel: ganttBarPanel,						// panel with redraw() function and needsRedraw variable
         renderDiv: renderDiv,							// container of outerContainer
         outerContainer: ganttPanelContainer					// outermost panel with resize border
@@ -272,7 +272,7 @@ function launchGanttEditor(debug){
 
     // Controller that deals with button events.
     var ganttButtonController = Ext.create('GanttEditor.controller.GanttButtonController', {
-        debug: debug,
+        debug: getDebug('ganttButtonController'),
         ganttPanelContainer: ganttPanelContainer,
         ganttTreePanel: ganttTreePanel,
         ganttBarPanel: ganttBarPanel,
@@ -285,7 +285,7 @@ function launchGanttEditor(debug){
 
     // Controller for handling configuration options
     var ganttConfigController = Ext.create('GanttEditor.controller.GanttConfigController', {
-        debug: debug,
+        debug: getDebug('ganttConfigController'),
 	configMenu: configMenu,
         senchaPreferenceStore: senchaPreferenceStore,
 	ganttBarPanel: ganttBarPanel
@@ -295,7 +295,7 @@ function launchGanttEditor(debug){
 
     // Controller for Zoom in/out, scrolling and  centering
     var ganttZoomController = Ext.create('GanttEditor.controller.GanttZoomController', {
-        debug: debug,
+        debug: getDebug('ganttZoomController'),
         senchaPreferenceStore: senchaPreferenceStore
     });
     ganttZoomController.init(this);
@@ -303,7 +303,7 @@ function launchGanttEditor(debug){
 
     // Create the panel showing properties of a task, but don't show it yet.
     var taskPropertyPanel = Ext.create("PO.view.gantt.GanttTaskPropertyPanel", {
-        debug: true,
+        debug: getDebug('taskPropertyPanel'),
         senchaPreferenceStore: senchaPreferenceStore,
         ganttTreePanelController: ganttTreePanelController
     });
@@ -311,7 +311,7 @@ function launchGanttEditor(debug){
 
     // Deal with changes of Gantt data and perform scheduling
     var ganttSchedulingController = Ext.create('GanttEditor.controller.GanttSchedulingController', {
-        debug: true,
+        debug: getDebug('ganttSchedulingController'),
         'taskTreeStore': taskTreeStore,
         'ganttBarPanel': ganttBarPanel,
         'ganttTreePanel': ganttTreePanel
@@ -332,8 +332,21 @@ function launchGanttEditor(debug){
             modal: false
         });
     };
+};
 
 
+var debugHash = @debug_json;noquote@;
+function getDebug(id) {
+    // Check for a debug setting for the specific Id
+    var debug = parseInt(debugHash[id]);
+    if (!isNaN(debug)) return debug;
+
+    // Use the default debug
+    debug = parseInt(debugHash['default']);
+    if (!isNaN(debug)) return debug;
+
+    // invalid configuration - enable debug
+    return 1;
 };
 
 
@@ -346,7 +359,7 @@ function launchGanttEditor(debug){
 Ext.onReady(function() {
     Ext.QuickTips.init();							// No idea why this is necessary, but it is...
     Ext.getDoc().on('contextmenu', function(ev) { ev.preventDefault(); });  // Disable Right-click context menu on browser background
-    var debug = false;
+    var debug = getDebug('default');
 
     /* ***********************************************************************
      * 
@@ -364,7 +377,7 @@ Ext.onReady(function() {
 
     // Store Coodinator starts app after all stores have been loaded:
     var coordinator = Ext.create('PO.controller.StoreLoadCoordinator', {
-        debug: debug,
+        debug: getDebug('storeLoadCoordinator'),
         stores: [
             'taskTreeStore',
             'taskStatusStore',
