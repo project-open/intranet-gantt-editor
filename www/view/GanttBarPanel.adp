@@ -338,9 +338,9 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
         if (me.debug) console.log('PO.view.gantt.GanttBarPanel.onCreateDependency: Starting: '+fromTaskModel.get('id')+' -> '+toTaskModel.get('id'));
 
         // Try connecting the two tasks via a task dependency
-        var fromTaskId = fromTaskModel.get('task_id');				// String value!
+        var fromTaskId = fromTaskModel.get('id');				// String value!
         if (null == fromTaskId) return;						// Something went wrong...
-        var toTaskId = toTaskModel.get('task_id');				// String value!
+        var toTaskId = toTaskModel.get('id');					// String value!
         if (null == toTaskId) return; 						// Something went wrong...
         if (fromTaskId == toTaskId) return;					// No dependency on itself...
 
@@ -356,8 +356,16 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
         if ("" == dependencies) { dependencies = []; }
         dependencies.push(dependency);
         toTaskModel.set('predecessors', dependencies);
-        toTaskModel.setDirty();							// above just modified array, so we need to notify
 
+        // Check for cyclic dependencies with new dependency
+        var cyclicP = me.ganttSchedulingController.checkCyclicDependencies(false);	// Check for cyclic dependencies
+        if (cyclicP) {
+            // Found cyclic structure: Delete the new dependency again
+            me.ganttSchedulingController.checkCyclicDependenciesDelete(true, fromTaskId, toTaskId);
+            alert('onCreateDependency: You are not allowed to create a cyclic dependency');    
+        }
+
+        toTaskModel.setDirty();							// above just modified array, so we need to notify
         me.needsRedraw = true;
         me.ganttSchedulingController.onCreateDependency(dependency);
 
@@ -374,6 +382,11 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
         if (!me.needsRedraw) { return; }					// Lazy redraw: set only if a redraw is really necessary
         if (undefined === me.surface) { return; }				// Don't redraw when still initializing
         
+        var sched = me.ganttSchedulingController;
+        if (!!sched) {
+            sched.onRedraw(me);							// Cleanup cyclic dependencies
+        }
+
         // Get the root of the ganttTree
         var ganttTreeView = me.objectPanel.getView();
         var rootNode = me.objectStore.getRootNode();
@@ -424,8 +437,8 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
         var absenceAssignmentStore = Ext.StoreManager.get('absenceAssignmentStore');
         var plannedHours = parseFloat(project.get('planned_units')); if (isNaN(plannedHours)) plannedHours = 0.0;
         var loggedHours = parseFloat(project.get('reported_hours_cache')); if (isNaN(loggedHours)) loggedHours = 0.0;
-	var percentLogged = 0; if (plannedHours > 0) percentLogged = 100.0 * loggedHours / plannedHours;
-	var workDone = plannedHours * percentCompleted / 100.0;
+        var percentLogged = 0; if (plannedHours > 0) percentLogged = 100.0 * loggedHours / plannedHours;
+        var workDone = plannedHours * percentCompleted / 100.0;
 
         var startDate, endDate;
 
@@ -524,12 +537,12 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
                 }
             };
 
-	    var tooltipBaseHtml = ""+
-		"<table cellspacing=0 cellpadding=1>"+
-		"<tr><td>work planned:</td><td colspan=2>"+plannedHours+" hours</td></tr>"+
-		"<tr><td>work done:</td><td>"+workDone+" hours</td><td>= "+percentCompleted+"%</td></tr>"+
-		"<tr><td>hours logged:</td><td>"+loggedHours+" hours</td><td>= "+percentLogged+"%</td></tr>"+
-		"</table>";
+            var tooltipBaseHtml = ""+
+                "<table cellspacing=0 cellpadding=1>"+
+                "<tr><td>work planned:</td><td colspan=2>"+plannedHours+" hours</td></tr>"+
+                "<tr><td>work done:</td><td>"+workDone+" hours</td><td>= "+percentCompleted+"%</td></tr>"+
+                "<tr><td>hours logged:</td><td>"+loggedHours+" hours</td><td>= "+percentLogged+"%</td></tr>"+
+                "</table>";
 
 
 
@@ -537,81 +550,50 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
             // Allows for special DnD affecting only %done.
             var drawPercentCompleted = me.preferenceStore.getPreferenceBoolean('show_percent_done_bar', true);
             if (drawPercentCompleted) {
-		var opacity = 0.0;
-		if (isNaN(percentCompleted)) percentCompleted = 0;
-		if (percentCompleted > 0.0) opacity = 1.0;
-		var percentW = w*percentCompleted/100;
-		if (percentW < 2) percentW = 2;
+                var opacity = 0.0;
+                if (isNaN(percentCompleted)) percentCompleted = 0;
+                if (percentCompleted > 0.0) opacity = 1.0;
+                var percentW = w*percentCompleted/100;
+                if (percentW < 2) percentW = 2;
 
-		var spriteBarPercent = surface.add({
+                var spriteBarPercent = surface.add({
                     type: 'rect', x: x, y: y+2, width: percentW, height: (h-6)/2,
                     stroke: 'black',
                     fill: 'black',
                     'stroke-width': 0.0,
                     zIndex: 20,
                     opacity: opacity
-		}).show(true);
+                }).show(true);
 
-		var tooltipHtml = "<b>Work Done: "+percentCompleted+"%</b>"+tooltipBaseHtml;
-		Ext.create("Ext.tip.ToolTip", { target: spriteBarPercent.el, width: 300, html: tooltipHtml, hideDelay: 5000 });
+                var tooltipHtml = "<b>Work Done: "+percentCompleted+"%</b>"+tooltipBaseHtml;
+                Ext.create("Ext.tip.ToolTip", { target: spriteBarPercent.el, width: 300, html: tooltipHtml, hideDelay: 5000 });
 
-
-		
-/* 2019-01-01 fraber: Disable the DnD option to resize the percent_completed bar
-		var spriteBarPercentHandle = surface.add({
-                    type: 'rect', x: x+percentW-4, y: y, width: 6, height: h,	// -8: Draw handle left of the resize handle above
-                    stroke: 'red',
-                    fill: 'red',
-                    opacity: 0.0,
-                    zIndex: 40,
-                    style: { cursor: 'col-resize' }					// Set special cursor shape ("column resize")
-		}).show(true);
-
-		spriteBarPercentHandle.dndConfig = {
-                    model: project,							// Store the task information for the sprite
-                    baseSprite: spriteBarPercent,
-                    projectSprite: spriteBar,
-                    dragAction: function(panel, e, diff, dndConfig) {
-			if (me.debug) console.log('PO.view.gantt.GanttBarPanel.drawProjectBar.spriteBarPercent.dragAction:');
-			var baseBBox = panel.dndBaseSprite.getBBox();
-			var shadow = panel.dndShadowSprite;
-			shadow.setAttributes({
-                            width: baseBBox.width + diff[0]
-			}).show(true);
-                    },
-                    dropAction: function(panel, e, diff, dndConfig) {
-			if (me.debug) console.log('PO.view.gantt.GanttBarPanel.drawProjectBar.spriteBarPercent.dropAction:');
-			var shadow = panel.dndShadowSprite;
-			me.onProjectPercentResize(dndConfig.projectSprite, shadow);	// Changing end-date to match x coo
-                    }
-		}
-*/
-	    } // end drawPercentCompleted
+            } // end drawPercentCompleted
 
             // Percent_complete bar on top of the Gantt bar:
             // Allows for special DnD affecting only %done.
             var drawLoggedHoursBar = me.preferenceStore.getPreferenceBoolean('show_logged_hours_bar', true);
             if (drawLoggedHoursBar) {
-		var opacity = 0.0;
-		if (percentLogged > 0.0) opacity = 1.0;
-		var percentW = w*percentLogged/100;
-		if (percentW < 2) percentW = 2;
-		var color = 'blue';
-		if (percentLogged > percentCompleted) 
-		    color = 'red';
+                var opacity = 0.0;
+                if (percentLogged > 0.0) opacity = 1.0;
+                var percentW = w*percentLogged/100;
+                if (percentW < 2) percentW = 2;
+                var color = 'blue';
+                if (percentLogged > percentCompleted) 
+                    color = 'red';
 
-		var spriteBarLoggedHours = surface.add({
+                var spriteBarLoggedHours = surface.add({
                     type: 'rect', x: x, y: y+2+(h-6)/2+2, width: percentW, height: (h-6)/2,
                     stroke: color,
                     fill: color,
                     'stroke-width': 0.0,
                     zIndex: 20,
                     opacity: opacity
-		}).show(true);
+                }).show(true);
 
-		var tooltipHtml = "<b>Hours Logged: "+loggedHours+" hours</b>"+tooltipBaseHtml;
-		Ext.create("Ext.tip.ToolTip", { target: spriteBarLoggedHours.el, width: 300, html: tooltipHtml, hideDelay: 5000 });
-	    }
+                var tooltipHtml = "<b>Hours Logged: "+loggedHours+" hours</b>"+tooltipBaseHtml;
+                Ext.create("Ext.tip.ToolTip", { target: spriteBarLoggedHours.el, width: 300, html: tooltipHtml, hideDelay: 5000 });
+            }
 
         }
 
@@ -670,7 +652,9 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
 
         // ---------------------------------------------------------------
         // Draw indication of user absence or assignment
-        if (me.preferenceStore.getPreferenceBoolean('show_project_cross_project_overassignments', true)) {
+
+        var drawOverassignments = me.preferenceStore.getPreferenceBoolean('show_project_cross_project_overassignments', true);
+        if (drawOverassignments && !project.hasChildNodes()) {
             assignees.forEach(function(assigneeModel) {
                 var assigneeId = assigneeModel.user_id;
                 absenceAssignmentStore.each(function(absence) {
@@ -740,9 +724,9 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
         if (drawFinDocs) {
             var invoices = project.get('invoices'); 				// Array of {id, cost_name, cost_type_id, cost_type}
             if (!!invoices && invoices instanceof Array && invoices.length > 0) {
-		var imageWidth = 19;
-		var busyX = {};
-		invoices.forEach(function(invoice) {
+                var imageWidth = 19;
+                var busyX = {};
+                invoices.forEach(function(invoice) {
                     var prefix = invoice.cost_type.substring(0,1).toLowerCase();
                     var effectiveDate = new Date(invoice.effective_date);
                     var invoiceX = me.date2x(effectiveDate);
@@ -750,19 +734,19 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
                     // Make sure multiple invoices appear beside each other
                     var pos = Math.round(invoiceX / imageWidth);
                     while (pos in busyX) {
-			invoiceX = invoiceX + imageWidth;
-			var pos = Math.round(invoiceX / imageWidth);
+                	invoiceX = invoiceX + imageWidth;
+                	var pos = Math.round(invoiceX / imageWidth);
                     }
                     busyX[pos] = pos;						// mark as busy
 
                     var invoiceBar = surface.add({
-			type: 'image', x: invoiceX, y: y-h, width: imageWidth, height: 13,
-			src: "/intranet/images/"+prefix+".gif",
-			listeners: { mousedown: function() { window.open('/intranet-invoices/view?invoice_id='+invoice.id); } }
+                	type: 'image', x: invoiceX, y: y-h, width: imageWidth, height: 13,
+                	src: "/intranet/images/"+prefix+".gif",
+                	listeners: { mousedown: function() { window.open('/intranet-invoices/view?invoice_id='+invoice.id); } }
                     }).show(true);
-		});
+                });
             }
-	}
+        }
 
         // Add a drag-and-drop configuration to all spriteBars (bar, supertask and milestone)
         // in order to allow them to act as both source and target of inter-task dependencies.
