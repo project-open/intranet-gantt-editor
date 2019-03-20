@@ -79,7 +79,7 @@ function launchGanttEditor(debug){
 
     // Deal with state
     var stateProvider = Ext.create('PO.class.PreferenceStateProvider', {
-	debug: true,
+	debug: false,
         url: window.location.pathname + window.location.search
     });
     Ext.state.Manager.setProvider(stateProvider);
@@ -318,7 +318,6 @@ function launchGanttEditor(debug){
     });
     ganttBarPanel.ganttSchedulingController = ganttSchedulingController;
     ganttSchedulingController.init(this).onLaunch(this);
-
     
     // Create a warning if there are no tasks in the project
     var numTasks = 0;
