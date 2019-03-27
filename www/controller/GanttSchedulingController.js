@@ -811,7 +811,7 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
 
         // Iterate through all nodes until we reach the end of successor chains
         var iterationCount = 0;
-        while (changedNodes.length > 0 && iterationCount < 100) {
+        while (changedNodes.length > 0) {
             iterationCount++;
             var changedNode = changedNodes.shift();					// Get and remove the first element from stack
             var nodeId = ''+changedNode.get('id');
