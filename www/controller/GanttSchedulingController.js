@@ -86,9 +86,6 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
         me.resumeEvents();
 
         if (dirty) {
-            // me.schedule();
-            // Schedule is initiated by next redraw
-
             me.ganttBarPanel.needsRedraw = true;					// Force a redraw
 
             var buttonSave = Ext.getCmp('buttonSave');
@@ -172,8 +169,7 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
         var me = this;
         if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.onCreateDependency: Starting');
 
-        // me.schedule();
-        // schedule is initiated by next redraw()
+        // sched initiated by next redraw()
 
         if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.onCreateDependency: Finished');
     },
@@ -182,6 +178,10 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
     /**
      * Check the planned units vs. assigned resources percentage.
      * Then follow the ResourceCalendar to calculate the new end_date.
+     *
+     * This function should only be called after changing work, 
+     * assignments or duration of the task, not as part of the
+     * sched.
      *
      * Returns true if we had to modify the task, false otherwise
      */
@@ -202,7 +202,7 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
         assignees.forEach(function(assig) {
             assignedPercent = assignedPercent + assig.percent
         });
-        if (0 == assignedPercent) { return false; }					// No assignments - "manually scheduled" task
+        if (0 == assignedPercent) { return false; }					// No assignments - "manually sched" task
 
         var durationHours = plannedUnits * 100.0 / assignedPercent;			// Calculate the duration of the task in hours
         
@@ -216,8 +216,7 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
             if (dayOfWeek == 6 || dayOfWeek == 0) { 
                 // Weekend - just skip the day
             } else {
-                // Weekday - add hours
-                hours = hours + 8;
+                hours = hours + 8;							// Weekday - add hours
             }
             endTime = endTime + 1000 * 3600 * 24;
         }
@@ -350,25 +349,13 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
         if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.onRedraw: Starting');
 
         var fixP = true;				// Yes, fix any issue
-        var cyclicP = false;
-        
-        // Initialize directPreds, directSuccs and transParents
-        cyclicP = cyclicP || me.checkCyclicDependenciesInit(fixP);
-
-        // Check for invalid parents being part of direct preds or succs
-        cyclicP = cyclicP || me.checkCyclicDependenciesParents(fixP);
-
-        // Don't check for transitive closures, because this
-        // causes an infinite loop - Check for invalid parents being part of direct preds or succs
-        // cyclicP = cyclicP || me.checkCyclicDependenciesTransClosure(fixP);
-
-        // Fix schedule constraints
-        me.schedule();
-
+        me.checkCyclicDependenciesInit(fixP);		// Initialize directPreds, directSuccs and transParents
+        me.checkCyclicDependenciesParents(fixP);	// Check for invalid parents being part of direct preds or succs
+        me.schedule();					// Fix schedule constraints
 
         if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.onRedraw: Finished');
-        return cyclicP;
     },
+
 
     /* **************************************************************************************
         Check Cyclic Dependencies
@@ -396,23 +383,23 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
 
         // --------------------------------------------------------------------------------
         // Initialize entire tree data-structures
-        rootNode.cascadeBy(function(project) {
-            project.directPreds = {};
-            project.directSuccs = {};
-            project.transParents = {};
-            delete project.transPreds;
-            delete project.transSuccs;
+        rootNode.cascadeBy(function(task) {
+            task.directPreds = {};
+            task.directSuccs = {};
+            task.transParents = {};
+            delete task.transPreds;
+            delete task.transSuccs;
         });
 
         // --------------------------------------------------------------------------------
-        // Loop through all activities and create direct preds and succs hashes
-        rootNode.cascadeBy(function(project) {
+        // Loop through all tasks and create direct preds and succs hashes
+        rootNode.cascadeBy(function(task) {
 
             // Calculate transitive parents
-            var parentModel = project.parentNode;
+            var parentModel = task.parentNode;
             while (parentModel) {
                 var parentId = ''+parentModel.get('id');
-                project.transParents[parentId] = parentModel;
+                task.transParents[parentId] = parentModel;
                 parentModel = parentModel.parentNode;		// Move up one level...
             }
 
@@ -420,7 +407,7 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
             var repeatP = true;
             while (repeatP) {
                 repeatP = false;
-                var predecessors = project.get('predecessors');
+                var predecessors = task.get('predecessors');
                 if (!predecessors instanceof Array) return;
                 for (var i = 0, len = predecessors.length; i < len; i++) {
                     var dependencyModel = predecessors[i];
@@ -459,20 +446,20 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
         var cyclicP = false;
 
         // --------------------------------------------------------------------------------
-        // Loop through all activities and check direct preds and succs for being in the node's parents
-        rootNode.cascadeBy(function(project) {
-            var projectId = ''+project.get('id');
-            for (var predId in project.directPreds) {
-                if (project.transParents[predId]) {
+        // Loop through all tasks and check direct preds and succs for being in the node's parents
+        rootNode.cascadeBy(function(task) {
+            var taskId = ''+task.get('id');
+            for (var predId in task.directPreds) {
+                if (task.transParents[predId]) {
                     // alert('found pred in partnets');
-                    me.checkCyclicDependenciesDelete(fixP, predId, projectId);	    // Delete the offending dependency
+                    me.checkCyclicDependenciesDelete(fixP, predId, taskId);	    // Delete the offending dependency
                     var cyclicP = true;
                 }
             }
-            for (var succId in project.directSuccs) {
-                if (project.transParents[succId]) {
+            for (var succId in task.directSuccs) {
+                if (task.transParents[succId]) {
                     // alert('found succ in partnets');
-                    me.checkCyclicDependenciesDelete(fixP, projectId, succId);	    // Delete the offending dependency
+                    me.checkCyclicDependenciesDelete(fixP, taskId, succId);	    // Delete the offending dependency
                     var cyclicP = true;
                 }
             }
@@ -497,9 +484,9 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
 
         // --------------------------------------------------------------------------------
         // Search for dependencies from predId to succId and delete
-        rootNode.cascadeBy(function(project) {
-            var projectId = ''+project.get('id');
-            var predecessors = project.get('predecessors');
+        rootNode.cascadeBy(function(task) {
+            var taskId = ''+task.get('id');
+            var predecessors = task.get('predecessors');
             if (!predecessors instanceof Array) return;
 
             var repeatP = true;
@@ -511,9 +498,9 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
                     var succ_id = ''+dependencyModel.succ_id;
                     if (''+predId === ''+pred_id && ''+succId === ''+succ_id) {
                         predecessors.splice(i,1);				// Remove dependency
-                        project.set('predecessors', predecessors);		// Update project
+                        task.set('predecessors', predecessors);		// Update task
                         console.log('PO.controller.gantt_editor.GanttSchedulingController.checkCyclicDependenciesDelete: '+
-                                    'Deleting predecessor on project='+projectId+': '+predId+' -> '+succId);
+                                    'Deleting predecessor on task='+taskId+': '+predId+' -> '+succId);
                         repeatP = true;
                         break;
                     }
@@ -561,25 +548,25 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
 
         // --------------------------------------------------------------------------------
         // Copy the direct preds/succs to the transitive preds/succs data structures
-        rootNode.cascadeBy(function(project) {
-            project.transPreds = {};
-            for (var pred in project.directPreds) project.transPreds[pred] = project.directPreds[pred];
+        rootNode.cascadeBy(function(task) {
+            task.transPreds = {};
+            for (var pred in task.directPreds) task.transPreds[pred] = task.directPreds[pred];
 
-            project.transSuccs = {};
-            for (var succ in project.directSuccs) project.transSuccs[succ] = project.directSuccs[succ];
+            task.transSuccs = {};
+            for (var succ in task.directSuccs) task.transSuccs[succ] = task.directSuccs[succ];
         });
 
 
         // Calculate the transitive predecessors:
-        // Loop through all activities and add the predecessors of their predecessors to the hashes
+        // Loop through all tasks and add the predecessors of their predecessors to the hashes
         var loopP = true;
         while (loopP && !cyclicP) {
             loopP = false;
-            rootNode.cascadeBy(function(project) {             // Loop throught all nodes in the tree (activities)
-                var projectId = ''+project.get('id');
-                var transPreds = project.transPreds;
+            rootNode.cascadeBy(function(task) {             // Loop throught all nodes in the tree (tasks)
+                var taskId = ''+task.get('id');
+                var transPreds = task.transPreds;
                 for (var id in transPreds) {
-                    // Loop through the prececessors preds and add them to the project's preds
+                    // Loop through the prececessors preds and add them to the task's preds
                     var predModel = transPreds[id];
                     var predPreds = predModel.transPreds;
                     for (var predPredId in predPreds) {
@@ -588,7 +575,7 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
                             var predPredModel = predPreds[predPredId];
                             transPreds[predPredId] = predPredModel;
                             // Found the ID of the object in the list of it's predecessors?
-                            if (projectId === predPredId) cyclicP = true;
+                            if (taskId === predPredId) cyclicP = true;
                         }
                     }
                 }
@@ -596,15 +583,15 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
         }
 
         // Calculate the transitive successors:
-        // Loop through all activities and add the successors of their successors
+        // Loop through all tasks and add the successors of their successors
         var loopP = true;
         while (loopP && !cyclicP) {
             loopP = false;
-            rootNode.cascadeBy(function(project) {            // Loop throught all nodes in the tree (activities)
-                var projectId = ''+project.get('id');
-                var transSuccs = project.transSuccs;
+            rootNode.cascadeBy(function(task) {            // Loop throught all nodes in the tree (tasks)
+                var taskId = ''+task.get('id');
+                var transSuccs = task.transSuccs;
                 for (var id in transSuccs) {                // Loop through all succecessors of the node
-                    // Loop through the successors succs and add them to the project's succs
+                    // Loop through the successors succs and add them to the task's succs
                     var succModel = transSuccs[id];
                     if (!succModel) {
                         alert('checkCyclicDependenciesTransClosure: succModel not found for Id='+id);
@@ -618,7 +605,7 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
                             var succSuccModel = succSuccs[succSuccId];
                             transSuccs[succSuccId] = succSuccModel;
                             // Found the ID of the object in the list of it's succecessors?
-                            if (projectId === succSuccId) cyclicP = true;
+                            if (taskId === succSuccId) cyclicP = true;
                         }
                     }
                 }
@@ -658,65 +645,39 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
         return cyclicP;
     },
 
+
     /* **************************************************************************************
+
         Scheduling
+
     ************************************************************************************** */
-
-    /**
-     * Get the list of all leaf activities that have no predecessors.
-     * (Should we exclude non-Gantt activities like tickets or SCRUM phases?)
-     */
-    scheduleStartList: function() {
-        var me = this;
-        if (me.debug > 1) console.log('PO.controller.gantt_editor.GanttSchedulingController.scheduleStartList: Starting');
-        var treeStore = me.taskTreeStore;
-        var rootNode = treeStore.getRootNode();
-
-        var startActivities = [];
-        rootNode.cascadeBy(function(project) {             // Loop throught all nodes in the tree (activities)
-            var projectId = ''+project.get('id');
-            var leafP = !project.hasChildNodes();
-            var predecessors = project.get('predecessors');
-            if (!predecessors instanceof Array) return;
-            var projectTypeId = parseInt(project.get('project_type_id'));
-            var taskP = (projectTypeId == 100 || projectTypeId == 2501);	// Task or GanttProject
-
-                startActivities.push(project);
-            if (taskP && leafP && 0 == predecessors.length) {
-            }
-        });
-
-        if (me.debug > 1) console.log('PO.controller.gantt_editor.GanttSchedulingController.scheduleStartList: Finished');
-        return startActivities;
-    },
-
 
 
     /**
      * Check the planned units vs. assigned resources percentage.
      * Then follow the ResourceCalendar to calculate the new end_date.
      *
-     * Returns true if we had to modify the task, false otherwise
+     * Returns an array of changed nodes.
      */
     scheduleTaskDuration: function(treeStore, model) {
         var me = this;
         if (me.debug > 1) console.log('PO.controller.gantt_editor.GanttSchedulingController.scheduleTaskDuration: Starting');
-        if (model.hasChildNodes()) { alert('scheduleTaskDuration: Called with summary task'); return; }
+        if (model.hasChildNodes()) { return []; }
 
-        var previousStartDate = PO.Utilities.pgToDate(model.get('start_date')); if (!previousStartDate) { return false; }
+        var previousStartDate = PO.Utilities.pgToDate(model.get('start_date')); if (!previousStartDate) { return []; }
         previousStartDate.setHours(0,0,0,0);
-        var previousEndDate = PO.Utilities.pgToDate(model.get('end_date')); if (!previousEndDate) { return false; }
+        var previousEndDate = PO.Utilities.pgToDate(model.get('end_date')); if (!previousEndDate) { return []; }
         var assignees = model.get('assignees');
         var plannedUnits = model.get('planned_units');
-        if (0 == plannedUnits) { return false; }					// No units - no duration...
-        if (!plannedUnits) { return false; }						// No units - no duration...
+        if (0 == plannedUnits) { return []; }					// No units - no duration...
+        if (!plannedUnits) { return []; }						// No units - no duration...
 
         // Calculate the percent assigned in total
         var assignedPercent = 0.0
         assignees.forEach(function(assig) {
             assignedPercent = assignedPercent + assig.percent
         });
-        if (0 == assignedPercent) { return false; }					// No assignments - "manually scheduled" task
+        if (0 == assignedPercent) { return []; }					// No assignments - "manually scheduled" task
 
         var durationHours = plannedUnits * 100.0 / assignedPercent;			// Calculate the duration of the task in hours
         
@@ -730,14 +691,13 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
             if (dayOfWeek == 6 || dayOfWeek == 0) { 
                 // Weekend - just skip the day
             } else {
-                // Weekday - add hours
-                hours = hours + 8;
+                hours = hours + 8;							// Weekday - add hours
             }
             endTime = endTime + 1000 * 3600 * 24;
         }
         endTime = endTime - 1000 * 3600 * 24;						// ]po[ sematics: zero time => 1 day
 
-        if (endTime == previousEndTime) return false;					// skip if no change
+        if (endTime == previousEndTime) return [];					// skip if no change
 
         // Write the new endDate into model
         endDate = new Date(endTime);
@@ -747,36 +707,18 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
         model.set('end_date', endDateString);
 
         if (me.debug > 1) console.log('PO.controller.gantt_editor.GanttSchedulingController.scheduleTaskDuration: Finished');
-        return true;
+        return [model];
     },
-
-
-    /**
-     * Make sure task or summary is moved correctly after a pred.
-     */
-    scheduleAfter: function(treeStore, pred, succ) {
-        var me = this;
-        if (me.debug > 1) console.log('PO.controller.gantt_editor.GanttSchedulingController.scheduleAfter: Starting');
-
-	var changedP = false;
-	if (succ.hasChildren()) {
-	    changedP = scheduleSummaryAfter(treeStore, pred, succ);
-	} else {
-	    changedP = scheduleTaskAfter(treeStore, pred, succ);
-	}
-
-        if (me.debug > 1) console.log('PO.controller.gantt_editor.GanttSchedulingController.scheduleAfter: Finished');
-        return changedP;
-    },
-
 
     /**
      * Check that node is after the pred.
      * Otherwise set the start_date of node to the end_date of pred.
+     *
+     * Returns an array of changed nodes.
      */
-    scheduleTaskAfter: function(treeStore, pred, succ) {
+    scheduleTaskToTask: function(treeStore, pred, succ) {
         var me = this;
-        if (me.debug > 1) console.log('PO.controller.gantt_editor.GanttSchedulingController.scheduleTaskAfter: Starting');
+        if (me.debug > 1) console.log('PO.controller.gantt_editor.GanttSchedulingController.scheduleTaskToTask: Starting');
 
         var predStartDate = PO.Utilities.pgToDate(pred.get('start_date')); if (!predStartDate) { return false; }
         var predEndDate = PO.Utilities.pgToDate(pred.get('end_date'));  if (!predEndDate) { return false; }
@@ -784,217 +726,108 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
         var succEndDate = PO.Utilities.pgToDate(succ.get('end_date')); if (!succEndDate) { return false; }
 
         // If the start of succ is before the end of pred...
-        var changedP = false;
+        var changedNodes = [];
         var diff = predEndDate.getTime() - succStartDate.getTime();			// start of succ earlier than end of pred
+
         if (diff > 0) {
-            var newStartDate = new Date(succStartDate.getTime() + diff);		// Add diff to the start and end of succ
-            var newEndDate = new Date(succEndDate.getTime() + diff);
+            // Round the diff to the next hour and check if the difference is max. 1 minute
+            var diffRoundedByHour = Math.round(diff / (3600.0 * 1000.0)) * (3600.0 * 1000.0);
+            if (Math.abs(diff - diffRoundedByHour) <= 60.0 * 1000.0) {
+                diff = diffRoundedByHour;						// The difference is less then a minute
+            }
+
+            var newSuccStartDate = new Date(succStartDate.getTime() + diff);		// Add diff to the start and end of succ
+            var newSuccEndDate = new Date(succEndDate.getTime() + diff);
 
             // Write the new dates to succ
-            var startDateString = PO.Utilities.dateToPg(newStartDate);
-            var endDateString = PO.Utilities.dateToPg(newEndDate);
-            if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.scheduleTaskAfter: start_date='+startDateString+', end_date='+endDateString);
+            var startDateString = PO.Utilities.dateToPg(newSuccStartDate);
+            var endDateString = PO.Utilities.dateToPg(newSuccEndDate);
+            if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.scheduleTaskToTask: start_date='+startDateString+', end_date='+endDateString);
             succ.set('start_date', startDateString);
             succ.set('end_date', endDateString);
-            var changedP = true
+            changedNodes.push(succ);
         }
 
-        if (me.debug > 1) console.log('PO.controller.gantt_editor.GanttSchedulingController.scheduleTaskAfter: Finished');
-        return changedP;
+        if (me.debug > 1) console.log('PO.controller.gantt_editor.GanttSchedulingController.scheduleTaskToTask: Finished');
+        return changedNodes;
     },
 
 
-    /**
-     * Check that summary.start_date is after pred.end_date
-     */
-    scheduleSummaryAfter: function(treeStore, pred, succSummary) {
-        var me = this;
-        if (me.debug > 1) console.log('PO.controller.gantt_editor.GanttSchedulingController.scheduleTaskAfter: Starting');
-
-        var predEndDate = PO.Utilities.pgToDate(pred.get('end_date'));  if (!predEndDate) { return false; }
-        var succSummaryStartDate = PO.Utilities.pgToDate(succSummary.get('start_date')); if (!succSummaryStartDate) { return false; }
-
-        var changedP = false;
-        var diff = predEndDate.getTime() - succSummaryStartDate.getTime();
-        if (diff > 0) {
-            var newStartDate = new Date(succSummaryStartDate.getTime() + diff);
-            // don't move the succSummary.end_date. That's done by it's sub-tasks.
-
-            // Write the new dates to succSummary
-            var startDateString = PO.Utilities.dateToPg(newStartDate);
-            if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.scheduleTaskAfter: start_date='+startDateString);
-            succSummary.set('start_date', startDateString);
-            var changedP = true
-        }
-
-        if (me.debug > 1) console.log('PO.controller.gantt_editor.GanttSchedulingController.scheduleTaskAfter: Finished');
-        return changedP;
-    },
-
 
     /**
-     * Check that all children of a summary task start after the summary's start_date
+     * Make sure a task or summary is moved correctly after a pred task or summary.
+     *
+     * Returns an array of changed nodes.
      */
-    scheduleChildAfterSummaryStartDate: function(treeStore, summary, child) {
+    scheduleXToY: function(treeStore, pred, succ) {
         var me = this;
-        if (me.debug > 1) console.log('PO.controller.gantt_editor.GanttSchedulingController.scheduleChildAfterSummaryStartDate: Starting');
+        if (me.debug > 1) console.log('PO.controller.gantt_editor.GanttSchedulingController.scheduleAfter: Starting');
 
-        var summaryStartDate = PO.Utilities.pgToDate(summary.get('start_date')); if (!summaryStartDate) { return false; }
-        var childStartDate = PO.Utilities.pgToDate(child.get('start_date')); if (!childStartDate) { return false; }
-        var childEndDate = PO.Utilities.pgToDate(child.get('end_date')); if (!childEndDate) { return false; }
+        var changedNodes = [];
+        pred.cascadeBy(function(predChild) {
+            if (predChild.hasChildNodes()) return;				// only relation between leaf tasks
+            succ.cascadeBy(function(succChild) {
+                if (succChild.hasChildNodes()) return;				// only relation between leaf tasks
 
-        // If the start of child is before the end of summary...
-        var changedP = false;
-        var diff = summaryStartDate.getTime() - childStartDate.getTime();			// start of child earlier than end of summary
-        if (diff > 0) {
-            var newStartDate = new Date(childStartDate.getTime() + diff);		// Add diff to the start and end of child
-            var newEndDate = new Date(childEndDate.getTime() + diff);
+                var nodes = me.scheduleTaskToTask(treeStore, predChild, succChild);
+                for (var i = 0; i < nodes.length; i++) changedNodes.push(nodes[i]);
 
-            // Write the new dates to child
-            var startDateString = PO.Utilities.dateToPg(newStartDate);
-            var endDateString = PO.Utilities.dateToPg(newEndDate);
-            if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.scheduleChildAfterSummaryStartDate: start_date='+startDateString+', end_date='+endDateString);
-            child.set('start_date', startDateString);
-            child.set('end_date', endDateString);
-            var changedP = true
-        }
+            });
+        });
 
-        if (me.debug > 1) console.log('PO.controller.gantt_editor.GanttSchedulingController.scheduleChildAfterSummaryStartDate: Finished');
-        return changedP;
-    },
-
-
-    /**
-     * Make sure the end_date of a summary task is after the last child.
-     */
-    scheduleSummaryTaskEndAfterChild: function(treeStore, pred, summary) {
-        var me = this;
-        if (me.debug > 1) console.log('PO.controller.gantt_editor.GanttSchedulingController.scheduleSummaryTaskEndAfterChild: Starting');
-
-        var predEndDate = PO.Utilities.pgToDate(pred.get('end_date')); if (!predEndDate) { return false; }
-        var summaryEndDate = PO.Utilities.pgToDate(summary.get('end_date')); if (!summaryEndDate) { return false; }
-
-        // If the start of node is before the end of pred...
-        var changedP = false;
-        var diff = predEndDate.getTime() - summaryEndDate.getTime();			// start of node earlier than end of pred
-        if (diff > 0) {
-            var newEndDate = predEndDate;
-            var endDateString = PO.Utilities.dateToPg(newEndDate);
-            if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.scheduleSummaryTaskEndAfterChild: '+
-                        'end_date='+endDateString);
-            summary.set('end_date', endDateString);
-            changedP = true;
-        }
-
-        if (me.debug > 1) console.log('PO.controller.gantt_editor.GanttSchedulingController.scheduleSummaryTaskEndAfterChild: Finished');
-        return changedP;
+        if (me.debug > 1) console.log('PO.controller.gantt_editor.GanttSchedulingController.scheduleAfter: Finished');
+        return changedNodes;
     },
 
     /**
      * Fix constraints in the schedule
      *
-     * - Activities with work and assignees set need to have matching
+     * - Tasks with work and assignees set need to have matching
      *   duration and assignments.
      * - Parents start and end with their first and last task respectively
-     * - Activities with a predecessors start after the end of the predecessor
+     * - Tasks with a predecessors start after the end of the predecessor
      *
      * Constraints:
      * Instead of "scheduling", we really just check that no constraints
      * are broken and adjust the network:
-     * - Finish-End relationships between activities of various levels
+     * - Finish-End relationships between tasks of various levels
      * - Summary vs. sub-task. 
-     * - !! what about dependency from sub-task to summary=?
+     * - what about dependency from sub-task to summary=?
      *
-     * Algorithm:
-     * - Start off with a list of unconstraint leaf activities
-     * - Iterate through the list and follow the direct successors of each task:
-     *     - !!
      */
     schedule: function() {
         var me = this;
         if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.schedule: Starting');
         var startTime = new Date().getTime();
 
-        // Initialize cyclic dependencies
-        me.checkCyclicDependenciesInit();
-
         var treeStore = me.taskTreeStore;
         var rootNode = treeStore.getRootNode();
         me.suspendEvents(false);
         treeStore.suspendEvents(false);
 
-        // Get the list of all leaf activities that have no predecessors
-        var nodes = me.scheduleStartList();
-        console.log(nodes);
+        // Initialize with the list of all tasks in the tree
+        var changedNodes = [];
+        rootNode.cascadeBy(function(task) { changedNodes.push(task); });
 
         // Iterate through all nodes until we reach the end of successor chains
         var iterationCount = 0;
-        while (nodes.length > 0 && iterationCount < 100) {
+        while (changedNodes.length > 0 && iterationCount < 100) {
             iterationCount++;
-            var nodeModel = nodes.shift();					// Get and remove the first element from stack
-            var nodeId = ''+nodeModel.get('id');
+            var changedNode = changedNodes.shift();					// Get and remove the first element from stack
+            var nodeId = ''+changedNode.get('id');
             if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.schedule: '+
-                'Iteration='+iterationCount+': Checking id='+nodeId+', name='+nodeModel.get('project_name'));
+                'Iteration='+iterationCount+': Checking id='+nodeId+', name='+changedNode.get('project_name'));
 
-            // --------------------------------------------------------
-            // Perform basic checks on the new node
-            //
-            var changedP = false;
-            if (!nodeModel.hasChildNodes()) {
-                // A leaf "basic" task
-                // Check for formula: Duration = Work / Assignments
-                changedP = me.scheduleTaskDuration(treeStore, nodeModel);		// adjust the length of the task
-                
-            } else {
-                // A summary task with children
-                // Summary activities don't need to be checked for duration...
-                // However, we need to make sure that all child.start_date are after the start of the summary task
-                nodeModel.cascadeBy(function(child) {				// Loop throught all children
-                    // Move child after node.start_date
-                    var childChangedP = me.scheduleChildAfterSummaryStartDate(treeStore, nodeModel, child);
-                    if (childChangedP) 
-                        nodes.push(child);				// check all children
-                });
-            }
+            // Perform basic check on the new node
+            me.scheduleTaskDuration(treeStore, changedNode);		// adjust the length of the task
 
-            // --------------------------------------------------------
-            // Ensure the end-date of parent summary tasks
-            // Only execute if changedP?
-            var parentModel = nodeModel.parentNode;
-            while (parentModel) {
-                // Make sure summary end_date after child end_date
-                var changedP = me.scheduleSummaryTaskEndAfterChild(treeStore, nodeModel, parentModel);
-                if (changedP) 
-                    nodes.push(parentModel);
-                parentModel = parentModel.parentNode;		// Move up one level...
-            }
-            
-            // --------------------------------------------------------
             // Loop through all direct successors
-            var directSuccs = nodeModel.directSuccs;
+            var directSuccs = changedNode.directSuccs;
             for (var succId in directSuccs) {
                 var succModel = directSuccs[succId];
-
-                if (!succModel.hasChildNodes()) {				// Check if this is a summary task
-                    // This is a leaf task
-                    changedP = me.scheduleTaskAfter(treeStore, nodeModel, succModel);	// make sure succModel is after nodeModel
-                    if (changedP) 
-                        nodes.push(succModel);			// continue scheduling with this task
-                } else {
-                    // This is a summary task
-                    succModel.cascadeBy(function(succChildModel) {		// Loop throught all children
-                        changedP = me.scheduleSummaryAfter(treeStore, nodeModel, succChildModel); // make sure succModel is after nodeModel
-                        if (changedP) {
-			    me.scheduleAfter(treeStore, nodeModel, succModel);
-                            nodes.push(succChildModel);		// continue scheduling with this task
-			}
-                    });
-                }
+                nodes = me.scheduleXToY(treeStore, changedNode, succModel);
+                for (var i = 0; i < nodes.length; i++) changedNodes.push(nodes[i]);
             }
-
-            // me.ganttBarPanel.undrawProjectBar(nodeModel);
-            // me.ganttBarPanel.drawProjectBar(nodeModel);
-
         }
 
         // Move summary.start_date and summary.end_date to fit children.
