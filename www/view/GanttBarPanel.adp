@@ -30,6 +30,7 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
     arrowheadSize: 5,
 
     needsRedraw: false,								// Set this instead of initiating a redraw()
+    needsReschedule: false,							// Set this instead of initiating a schedule()
     
     /**
      * Starts the main editor panel as the right-hand side
@@ -362,6 +363,7 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
         if (cyclicP) {
             // Found cyclic structure: Delete the new dependency again
             me.ganttSchedulingController.checkCyclicDependenciesDelete(true, fromTaskId, toTaskId);
+            me.ganttSchedulingController.checkCyclicDependencies(true);	     		// Fix internal vars
             alert('onCreateDependency: You are not allowed to create a cyclic dependency');    
         }
 
@@ -420,6 +422,18 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
         });
 
         if (me.debug) console.log('PO.class.GanttDrawComponent.redraw: Finished');
+    },
+
+
+
+    /**
+     * Delete bar from surface
+     */
+    undrawProjectBar: function(project) {
+        var me = this;
+
+	var surface = me.surface;
+
     },
 
     /**
@@ -786,6 +800,7 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
             }
         };
 
+	spriteBar.mode = project;
 
         // if (me.debug) { if (me.debug) console.log('PO.view.gantt.GanttBarPanel.drawProjectBar: Finished'); }
     },
