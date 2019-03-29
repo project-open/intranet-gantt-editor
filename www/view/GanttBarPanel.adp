@@ -676,9 +676,9 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
                     if (assigneeId == userId) {
                         var startDate = absence.get('start_date').substring(0,10);
                         var endDate = absence.get('end_date').substring(0,10);
-                        var startX = me.date2x(new Date(startDate));
-                        var endX = me.date2x(new Date(endDate));
-                        
+                        var startX = me.date2x(new Date(startDate)); if (!startX) return;
+                        var endX = me.date2x(new Date(endDate)); if (!endX) return;
+
                         // Skip if not overlapping with Gantt bar
                         if (startX > x + w) return;				// starts after the end of the Gantt bar
                         if (endX < x) return;				// ends before the start of the Gantt bar
