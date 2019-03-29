@@ -744,6 +744,7 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
                     var prefix = invoice.cost_type.substring(0,1).toLowerCase();
                     var effectiveDate = new Date(invoice.effective_date);
                     var invoiceX = me.date2x(effectiveDate);
+		    if (!invoiceX) return;
 
                     // Make sure multiple invoices appear beside each other
                     var pos = Math.round(invoiceX / imageWidth);
