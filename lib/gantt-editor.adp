@@ -408,7 +408,10 @@ Ext.onReady(function() {
 	format: 'json',
 	main_project_id: @project_id@
     };
-    absenceAssignmentStore.load({callback: function(r, op, success) { if (!success) PO.Utilities.reportStoreError("AbsenceAssignmentStore", op); }});
+    absenceAssignmentStore.load({callback: function(r, op, success) { 
+        if (!success) 
+	    PO.Utilities.reportStoreError("AbsenceAssignmentStore", op); }
+    });
 
 
     // Get the list of users assigned to the main project
