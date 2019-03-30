@@ -192,6 +192,7 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
         var previousStartDate = PO.Utilities.pgToDate(model.get('start_date')); if (!previousStartDate) { return false; }
         previousStartDate.setHours(0,0,0,0);
         var previousEndDate = PO.Utilities.pgToDate(model.get('end_date')); if (!previousEndDate) { return false; }
+	var previousEndTime = previousEndDate.getTime();
         var assignees = model.get('assignees');
         var plannedUnits = model.get('planned_units');
         if (0 == plannedUnits) { return false; }					// No units - no duration...
@@ -667,6 +668,7 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
         var previousStartDate = PO.Utilities.pgToDate(model.get('start_date')); if (!previousStartDate) { return []; }
         previousStartDate.setHours(0,0,0,0);
         var previousEndDate = PO.Utilities.pgToDate(model.get('end_date')); if (!previousEndDate) { return []; }
+	var previousEndTime = previousEndDate.getTime();
         var assignees = model.get('assignees');
         var plannedUnits = model.get('planned_units');
         if (0 == plannedUnits) { return []; }					// No units - no duration...
