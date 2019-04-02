@@ -244,8 +244,8 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
         var diffTime = xDiff * (me.axisEndDate.getTime() - me.axisStartDate.getTime()) / (me.axisEndX - me.axisStartX);
         var diffDays = Math.round(diffTime / 24.0 / 3600.0 / 1000.0);
 
-        var startDate = PO.Utilities.pgToDate(projectModel.get('start_date'));
-        var endDate = PO.Utilities.pgToDate(projectModel.get('end_date'));
+        var startDate = PO.Utilities.pgToDate(projectModel.get('start_date')); 	if (!startDate) startDate = new Date();
+        var endDate = PO.Utilities.pgToDate(projectModel.get('end_date')); if (!endDate) endDate = new Date();
         var startTime = startDate.getTime();
         var endTime = endDate.getTime();
 
