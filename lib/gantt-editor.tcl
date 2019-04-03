@@ -21,7 +21,7 @@ set main_project_parent_id [db_string mppi "select parent_id from im_projects wh
 if {"" ne $main_project_parent_id} { set main_project_id "" }
 
 # Create a debug JSON object that controls logging verbosity
-set debug_default "default 0 ganttTreePanel 1 ganttSchedulingController 1"
+set debug_default "default 0"
 set debug_list [parameter::get_from_package_key -package_key "intranet-gantt-editor" -parameter DebugHash -default $debug_default]
 array set debug_hash $debug_list
 set debug_json_list {}
