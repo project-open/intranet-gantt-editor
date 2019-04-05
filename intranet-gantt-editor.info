@@ -30,6 +30,7 @@
         <parameters>
             <parameter scope="instance" datatype="number"  min_n_values="1" max_n_values="1" name="MaxProjectYears" default="" description="Maximum duration of a project in years. Otherwise there may be performance issues in the GanttEditor. Default is 20."/>
             <parameter scope="instance" datatype="string"  min_n_values="1" max_n_values="1" name="DebugHash" default="default 0" description="Defines debugging output from GanttEditor in TCL list format, using the IDs of the GanttEditor objects. Example: 'default 0 ganttSchedulingController 1' will disable debugging in general, but show debugging output for the GanttSchedulingController. Default is 'default 0' for production systems without debugging."/>
+            <parameter scope="instance" datatype="string"  min_n_values="1" max_n_values="1" name="DefaultEnabledColumns" default="planned_units logged_hours percent_completed assignees" description="Which GanttEditor columns should we show to users by default? This is a TCL list with database column names, including: assignees, cost_center_id, description, effort_driven_p, effort_driven_type_id, end_date, logged_hours, material_id, percent_completed, planned_units, predecessors, priority, project_id, project_name, project_nr, project_status_id, project_wbs, start_date and any DynField column name. Default is 'planned_units logged_hours percent_completed assignees' for showing work (=planned hours), logged lours and resource assigments."/>
         </parameters>
 
     </version>
