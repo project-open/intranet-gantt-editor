@@ -70,6 +70,10 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
                     me.onPlannedUnitsChanged(treeStore, model, operation, event);
                     dirty = true;
                     break;
+                case "billable_units":
+                    me.onBillableUnitsChanged(treeStore, model, operation, event);
+                    dirty = true;
+                    break;
                 case "parent_id":
                     // Task has new parent - indentation or un-indentation
                     dirty = true;
@@ -100,9 +104,10 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
      * We now need to re-calculate the planned units towards the
      * root of the tree.
      */
-    onPlannedUnitsChanged: function(treeStore, model, operation, event) {
+    onPlannedUnitsChanged: function(treeStore, model) {
         var me = this;
         if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.onPlannedUnitsChanged: Starting');
+
         var parent = model.parentNode;
         if (!parent) return;
 
@@ -121,9 +126,49 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
         // Check if we have to update the parent
         if (parseFloat(parent.get('planned_units')) != plannedUnits) {
             if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.onPlannedUnitsChanged: Setting parent.planned_units='+plannedUnits);
-            parent.set('planned_units', ""+plannedUnits);	                    // This will call this event recursively
+            parent.set('planned_units', ""+plannedUnits);
+
+	    // We now need to call onPlannedUnitsChanged recursively
+	    // because we have disabled the events on the tree store
+	    me.onPlannedUnitsChanged(treeStore, parent);
+
         }
         if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.onPlannedUnitsChanged: Finished');
+    },
+
+
+    /**
+     * The user changed the billable units of an task.
+     * We now need to re-calculate the billable units towards the
+     * root of the tree.
+     */
+    onBillableUnitsChanged: function(treeStore, model) {
+        var me = this;
+        if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.onBillableUnitsChanged: Starting');
+
+        var parent = model.parentNode;
+        if (!parent) return;
+
+        // Calculate the sum of billable units of all nodes below parent
+        var billableUnits = 0.0;
+        parent.eachChild(function(sibling) {
+            var siblingBillableUnits = parseFloat(sibling.get('billable_units'));
+            if (!isNaN(siblingBillableUnits)) {
+                billableUnits = billableUnits + siblingBillableUnits;
+            }
+        });
+
+        // Check if we have to update the parent
+        if (parseFloat(parent.get('billable_units')) != billableUnits) {
+            if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.onBillableUnitsChanged: Setting parent.billable_units='+billableUnits);
+            parent.set('billable_units', ""+billableUnits);
+
+	    // We now need to call onBillableUnitsChanged recursively
+	    // because we have disabled the events on the tree store
+	    me.onBillableUnitsChanged(treeStore, parent);
+
+        }
+        if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.onBillableUnitsChanged: Finished');
     },
 
 

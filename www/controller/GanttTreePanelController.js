@@ -267,6 +267,7 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
         r.set('parent_id', ""+parent_id);
         r.set('percent_completed', ""+0);
         r.set('planned_units', ""+0);
+        r.set('billable_units', ""+0);
         r.set('material_id', ""+default_material_id);
         r.set('uom_id', ""+default_uom_id);
         r.set('project_name', 'New Task');

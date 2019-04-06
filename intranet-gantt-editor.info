@@ -10,7 +10,7 @@
     <inherit-templates-p>f</inherit-templates-p>
     <auto-mount>intranet-gantt-editor</auto-mount>
 
-    <version name="5.0.2.4.0" url="http://www.project-open.net/download/apm/intranet-gantt-editor-5.0.2.4.0.apm">
+    <version name="5.0.2.4.1" url="http://www.project-open.net/download/apm/intranet-gantt-editor-5.0.2.4.1.apm">
         <owner url="mailto:frank.bergmann@project-open.com">Frank Bergmann</owner>
         <summary>Gantt editor</summary>
         <release-date>2016-11-15</release-date>
@@ -19,7 +19,7 @@
         <description format="text/plain">Sencha implementation of a Gantt editor similar to ProjectLibre and MS-Project.</description>
         <maturity>0</maturity>
 
-        <provides url="intranet-gantt-editor" version="0.1d"/>
+        <provides url="intranet-gantt-editor" version="5.0.2.0.0"/>
         <requires url="intranet-ganttproject" version="4.1.0.0.0"/>
         <requires url="intranet-core" version="4.1.0.0.0"/>
         <requires url="sencha-core" version="4.1.0.0.0"/>
