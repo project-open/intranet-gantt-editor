@@ -137,7 +137,7 @@ function launchGanttEditor(debug){
             id: 'config_menu_show_cross_project_overassignments',
             key: 'show_project_cross_project_overassignments', 
             text: 'Show Cross-Project Overassignments', 
-            checked: true
+            checked: @default_cross_project_overassignments@
         }, {
             id: 'config_menu_show_project_dependencies',
             key: 'show_project_dependencies', 

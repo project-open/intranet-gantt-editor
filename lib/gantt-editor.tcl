@@ -28,6 +28,10 @@ set debug_json_list {}
 foreach id [array names debug_hash] { lappend debug_json_list "'$id': $debug_hash($id)" }
 set debug_json "{\n\t[join $debug_json_list ",\n\t"]\n}"
 
+# Default value for cross-project overassignments.
+# Showing this data can be very slow in certain organizations (same people assigned to all projects...)
+set default_cross_project_overassignments [parameter::get_from_package_key -package_key "intranet-gantt-editor" -parameter "DefaultCrossProjectOverassignmentsVisibility" -default "true"]
+
 
 # Determine the permission of the user
 im_project_permissions $current_user_id $main_project_id view_p read_p write_p admin_p
