@@ -458,6 +458,8 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
                 for (var i = 0, len = predecessors.length; i < len; i++) {
                     var dependencyModel = predecessors[i];
 
+                    var dependencyTypeId = dependencyModel.type_id;		// an integer!
+
                     var predId = ''+dependencyModel.pred_id;		// a string!
                     var predModel = me.findNodeBy(rootNode, function() {return (''+this.get('id') === predId);}, null);
                     if (!predModel) { 
@@ -829,15 +831,15 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
     /**
      * Fix constraints in the schedule
      *
-     * - Tasks with work and assignees set need to have matching
-     *   duration and assignments.
+     * - Tasks with work and assignees need to have matching duration.
      * - Parents start and end with their first and last task respectively
-     * - Tasks with a predecessors start after the end of the predecessor
+     * - Tasks with a predecessors start after the end of the predecessor,
+     *   if the dependency is end-to-start. Otherwise we ignore the dependency.
      *
      * Constraints:
      * Instead of "scheduling", we really just check that no constraints
      * are broken and adjust the network:
-     * - Finish-End relationships between tasks of various levels
+     * - Finish-to-End relationships between tasks of various levels
      * - Summary vs. sub-task. 
      * - what about dependency from sub-task to summary=?
      *

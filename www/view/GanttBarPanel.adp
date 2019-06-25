@@ -350,7 +350,7 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
         var dependency = {
             pred_id: parseInt(fromTaskId),
             succ_id: parseInt(toTaskId),
-            type_id: 9650,							// "Depend", please see im_categories.category_id
+            type_id: 9662,							// "End-to-Start", please see im_categories.category_id
             diff: 0.0
         };
         var dependencies = toTaskModel.get('predecessors');
@@ -854,7 +854,9 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
     },
 
     /**
-     * Draws a dependency line from one bar to the next one
+     * Draws a dependency line from one bar to the next one.
+     * 
+     * ToDo: Also draw start-end-start and other dependency types apart from end-to-start
      */
     drawDependencyMsp: function(dependencyModel, tooltipHtml) {
         var me = this;
