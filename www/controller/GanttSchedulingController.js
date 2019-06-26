@@ -128,9 +128,9 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
             if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.onPlannedUnitsChanged: Setting parent.planned_units='+plannedUnits);
             parent.set('planned_units', ""+plannedUnits);
 
-	    // We now need to call onPlannedUnitsChanged recursively
-	    // because we have disabled the events on the tree store
-	    me.onPlannedUnitsChanged(treeStore, parent);
+            // We now need to call onPlannedUnitsChanged recursively
+            // because we have disabled the events on the tree store
+            me.onPlannedUnitsChanged(treeStore, parent);
 
         }
         if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.onPlannedUnitsChanged: Finished');
@@ -163,9 +163,9 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
             if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.onBillableUnitsChanged: Setting parent.billable_units='+billableUnits);
             parent.set('billable_units', ""+billableUnits);
 
-	    // We now need to call onBillableUnitsChanged recursively
-	    // because we have disabled the events on the tree store
-	    me.onBillableUnitsChanged(treeStore, parent);
+            // We now need to call onBillableUnitsChanged recursively
+            // because we have disabled the events on the tree store
+            me.onBillableUnitsChanged(treeStore, parent);
 
         }
         if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.onBillableUnitsChanged: Finished');
@@ -237,7 +237,7 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
         var previousStartDate = PO.Utilities.pgToDate(model.get('start_date')); if (!previousStartDate) { return false; }
         previousStartDate.setHours(0,0,0,0);
         var previousEndDate = PO.Utilities.pgToDate(model.get('end_date')); if (!previousEndDate) { return false; }
-	var previousEndTime = previousEndDate.getTime();
+        var previousEndTime = previousEndDate.getTime();
         var assignees = model.get('assignees');
         var plannedUnits = model.get('planned_units');
         if (0 == plannedUnits) { return false; }					// No units - no duration...
@@ -472,8 +472,8 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
                         alert("SuccModel not found for: "+succId); 
                     }
 
-                    succModel.directPreds[predId] = predModel;
-                    predModel.directSuccs[succId] = succModel;
+                    succModel.directPreds[predId] = {predModel: predModel, depModel: dependencyModel};
+                    predModel.directSuccs[succId] = {succModel: succModel, depModel: dependencyModel};
                 }
             }
         });
@@ -598,10 +598,12 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
         // Copy the direct preds/succs to the transitive preds/succs data structures
         rootNode.cascadeBy(function(task) {
             task.transPreds = {};
-            for (var pred in task.directPreds) task.transPreds[pred] = task.directPreds[pred];
+            for (var predId in task.directPreds) 
+                task.transPreds[predId] = task.directPreds[predId];
 
             task.transSuccs = {};
-            for (var succ in task.directSuccs) task.transSuccs[succ] = task.directSuccs[succ];
+            for (var succId in task.directSuccs) 
+                task.transSuccs[succId] = task.directSuccs[succId];
         });
 
 
@@ -715,7 +717,7 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
         var previousStartDate = PO.Utilities.pgToDate(model.get('start_date')); if (!previousStartDate) { return []; }
         previousStartDate.setHours(0,0,0,0);
         var previousEndDate = PO.Utilities.pgToDate(model.get('end_date')); if (!previousEndDate) { return []; }
-	var previousEndTime = previousEndDate.getTime();
+        var previousEndTime = previousEndDate.getTime();
         var assignees = model.get('assignees');
         var plannedUnits = model.get('planned_units');
         if (0 == plannedUnits) { return []; }					// No units - no duration...
@@ -760,12 +762,12 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
     },
 
     /**
-     * Check that node is after the pred.
-     * Otherwise set the start_date of node to the end_date of pred.
+     * Check that the dependency constraint "dep" is met with pred and succ.
+     * Otherwise shift the start_date of succ.
      *
      * Returns an array of changed nodes.
      */
-    scheduleTaskToTask: function(treeStore, pred, succ) {
+    scheduleTaskToTask: function(treeStore, pred, succ, dep) {
         var me = this;
         if (me.debug > 1) console.log('PO.controller.gantt_editor.GanttSchedulingController.scheduleTaskToTask: Starting');
 
@@ -774,9 +776,28 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
         var succStartDate = PO.Utilities.pgToDate(succ.get('start_date')); if (!succStartDate) { return false; }
         var succEndDate = PO.Utilities.pgToDate(succ.get('end_date')); if (!succEndDate) { return false; }
 
+        var dependencyTypeId = dep.type_id;			       	  		// 9660=FF, 9662=FS, 9664=SF, 9666=SS 
+
         // If the start of succ is before the end of pred...
         var changedNodes = [];
-        var diff = predEndDate.getTime() - succStartDate.getTime();			// start of succ earlier than end of pred
+
+        switch (dependencyTypeId) {
+        case 9660:	// Finish-to-Finish
+            var diff = predEndDate.getTime() - succEndDate.getTime();
+            break;
+        case 9662:	// Finish-to-Start
+            var diff = predEndDate.getTime() - succStartDate.getTime();
+            break;
+        case 9664:	// Start-to-Finish
+            var diff = predStartDate.getTime() - succEndDate.getTime();
+            break;
+        case 9666:	// Start-to-Start
+            var diff = predStartDate.getTime() - succStartDate.getTime();
+            break;
+        default:
+            alert('scheduleTaskToTask: found dependencyTypeId='+dependencyTypeId+': undefined dependency type');
+            return;
+        }
 
         if (diff > 0) {
             // Round the diff to the next hour and check if the difference is max. 1 minute
@@ -808,7 +829,7 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
      *
      * Returns an array of changed nodes.
      */
-    scheduleXToY: function(treeStore, pred, succ) {
+    scheduleXToY: function(treeStore, pred, succ, dep) {
         var me = this;
         if (me.debug > 1) console.log('PO.controller.gantt_editor.GanttSchedulingController.scheduleAfter: Starting');
 
@@ -817,8 +838,7 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
             if (predChild.hasChildNodes()) return;				// only relation between leaf tasks
             succ.cascadeBy(function(succChild) {
                 if (succChild.hasChildNodes()) return;				// only relation between leaf tasks
-
-                var nodes = me.scheduleTaskToTask(treeStore, predChild, succChild);
+                var nodes = me.scheduleTaskToTask(treeStore, predChild, succChild, dep);
                 for (var i = 0; i < nodes.length; i++) changedNodes.push(nodes[i]);
 
             });
@@ -873,8 +893,9 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
             // Loop through all direct successors
             var directSuccs = changedNode.directSuccs;
             for (var succId in directSuccs) {
-                var succModel = directSuccs[succId];
-                nodes = me.scheduleXToY(treeStore, changedNode, succModel);
+                var succModel = directSuccs[succId].succModel;
+                var depModel = directSuccs[succId].depModel;
+                nodes = me.scheduleXToY(treeStore, changedNode, succModel, depModel);
                 for (var i = 0; i < nodes.length; i++) changedNodes.push(nodes[i]);
             }
         }
