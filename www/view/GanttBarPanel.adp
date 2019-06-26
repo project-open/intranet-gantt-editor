@@ -830,6 +830,7 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
         var me = this;
         // if (me.debug) console.log('GanttEditor.view.GanttBarPanel.drawTaskDependency: Starting');
 
+	var depTypeId = dependencyModel.type_id;
         var fromId = dependencyModel.pred_id;
         var fromModel = me.taskModelHash[fromId]
         var toId = dependencyModel.succ_id;
@@ -843,8 +844,19 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
             return; 
         }
 
+	var depName = 'Task dependency';
+	switch (depTypeId) {
+        case 9660: depName = '@finish_to_finish_l10n@'; break;
+        case 9662: depName = '@finish_to_start_l10n@'; break;
+        case 9664: depName = '@start_to_finish_l10n@'; break;
+        case 9666: depName = '@start_to_start_l10n@'; break;
+        default:
+            alert('drawDependency: found undefined dependencyTypeId='+dependencyTypeId);
+            return;
+        }
+
         // Text for dependency tool tip
-        var html = "<b>Task dependency</b>:<br>" +
+        var html = "<b>"+depName+"</b>:<br>" +
             "From <a href='/intranet/projects/view?project_id=" + fromId + "' target='_blank'>" + fromModel.get('project_name') + "</a> " +
             "to <a href='/intranet/projects/view?project_id=" + toId + "' target='_blank'>" + toModel.get('project_name') + "</a>";
 
@@ -861,14 +873,14 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
     drawDependencyMsp: function(dependencyModel, tooltipHtml) {
         var me = this;
         var s, color, startX, startY, endX, endY;
-        var objectPanelView = me.objectPanel.getView();                         // The "view" for the GridPanel with HTML elements            
+        var objectPanelView = me.objectPanel.getView();			 // The "view" for the GridPanel with HTML elements
 
         var fromId = dependencyModel.pred_id;
         var fromBBox = me.taskBBoxHash[fromId];					// We start drawing with the end of the first bar...
         var fromModel = me.taskModelHash[fromId]
 
         var toId = dependencyModel.succ_id;
-        var toBBox = me.taskBBoxHash[toId];			                // .. and draw towards the start of the 2nd bar.
+        var toBBox = me.taskBBoxHash[toId];					// .. and draw towards the start of the 2nd bar.
         var toModel = me.taskModelHash[toId]
         if (!fromBBox || !toBBox) { return; }
         
@@ -878,15 +890,10 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
         var toNode = objectPanelView.getNode(toModel);
         if (!fromNode || !toNode) { return; }
 
-
         s = me.arrowheadSize;
-        startY = fromBBox.y + fromBBox.height/2;
 
-        if (toModel.isMilestone()) {
-            endX = toBBox.x;                                                    // Point directly to the start of the milestone
-        } else {
-            endX = toBBox.x + s;                                                // Point slightly behind the start of the task
-        }
+
+        startY = fromBBox.y + fromBBox.height/2;
 
         // Horizontal: left to right or inverse
         if (toBBox.x  >= fromBBox.x + fromBBox.width) { 
@@ -898,6 +905,14 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
             color = 'red'; 
             startX = fromBBox.x;						// Inverse dep starts at the left side of the fromBBox
         }
+
+
+
+        endX = toBBox.x + s;						// Point slightly behind the start of the task
+        if (toModel.isMilestone()) {
+            endX = toBBox.x;						    // Point directly to the start of the milestone
+        }
+
 
         // Vertical: Top to down, or inverse
         if (toBBox.y >= fromBBox.y + fromBBox.height) {
