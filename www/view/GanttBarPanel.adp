@@ -205,7 +205,7 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
                         var newStartDate = new Date();
                         var timeDiff = Math.abs(oldStartDate.getTime() - newStartDate.getTime());
                         var newEndDate = new Date(oldEndDate.getTime() - timeDiff);
-                        
+
                         // set the new dates
                         succModel.set('start_date', PO.Utilities.dateToPg(newStartDate));
                         succModel.set('end_date', PO.Utilities.dateToPg(newEndDate));
@@ -383,7 +383,7 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
 
         if (!me.needsRedraw) { return; }					// Lazy redraw: set only if a redraw is really necessary
         if (undefined === me.surface) { return; }				// Don't redraw when still initializing
-        
+
         var sched = me.ganttSchedulingController;
         if (!!sched) {
             sched.onRedraw(me);							// Cleanup cyclic dependencies
@@ -413,7 +413,7 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
             if (viewNode == null) { return; }					// Hidden nodes have no viewNode -> no bar
             me.drawProjectBar(model);
         });
-        
+
         // Iterate through all children and draw dependencies
         rootNode.cascadeBy(function(model) {
             var viewNode = ganttTreeView.getNode(model);
@@ -432,7 +432,7 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
     undrawProjectBar: function(project) {
         var me = this;
 
-	var surface = me.surface;
+        var surface = me.surface;
 
     },
 
@@ -636,7 +636,7 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
         }
         if (!drawn) { alert('GanttBarPanel.drawProjectBar: not drawn for some reason'); }
 
-        
+
         // ---------------------------------------------------------------
         // Draw assignee initials behind the Gantt bar.
         var drawAssignees = me.preferenceStore.getPreferenceBoolean('show_project_assigned_resources', true);
@@ -654,12 +654,12 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
                         text = text + '['+assignee.percent+'%]';
                     }
                 });
-                
+
                 var xOffset = w + 4;						// Default: Start directly behind the bar
                 switch (drawn) {
                 case 'milestone': xOffset = 8;					// Milestone: Ignore bar width, but add some extra space
                 }
-                
+
                 var axisText = surface.add({type:'text', text:text, x:x+xOffset, y:y+d, fill:'#000', font:"10px Arial"}).show(true);
             }
         }
@@ -728,7 +728,7 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
                             hideDelay: 2000 
                         });
                     }
-                });            
+                });    
             });
 }
 
@@ -744,7 +744,7 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
                     var prefix = invoice.cost_type.substring(0,1).toLowerCase();
                     var effectiveDate = new Date(invoice.effective_date);
                     var invoiceX = me.date2x(effectiveDate);
-		    if (!invoiceX) return;
+        	    if (!invoiceX) return;
 
                     // Make sure multiple invoices appear beside each other
                     var pos = Math.round(invoiceX / imageWidth);
@@ -801,7 +801,7 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
             }
         };
 
-	spriteBar.mode = project;
+        spriteBar.mode = project;
 
         // if (me.debug) { if (me.debug) console.log('PO.view.gantt.GanttBarPanel.drawProjectBar: Finished'); }
     },
@@ -830,7 +830,7 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
         var me = this;
         // if (me.debug) console.log('GanttEditor.view.GanttBarPanel.drawTaskDependency: Starting');
 
-	var depTypeId = dependencyModel.type_id;
+        var depTypeId = dependencyModel.type_id;
         var fromId = dependencyModel.pred_id;
         var fromModel = me.taskModelHash[fromId]
         var toId = dependencyModel.succ_id;
@@ -844,14 +844,14 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
             return; 
         }
 
-	var depName = 'Task dependency';
-	switch (depTypeId) {
+        var depName = 'Task dependency';
+        switch (depTypeId) {
         case 9660: depName = '@finish_to_finish_l10n@'; break;
         case 9662: depName = '@finish_to_start_l10n@'; break;
         case 9664: depName = '@start_to_finish_l10n@'; break;
         case 9666: depName = '@start_to_start_l10n@'; break;
         default:
-            alert('drawDependency: found undefined dependencyTypeId='+dependencyTypeId);
+            alert('drawDependency: found undefined dependencyTypeId='+depTypeId);
             return;
         }
 
@@ -883,7 +883,7 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
         var toBBox = me.taskBBoxHash[toId];					// .. and draw towards the start of the 2nd bar.
         var toModel = me.taskModelHash[toId]
         if (!fromBBox || !toBBox) { return; }
-        
+
         // Double check for nodes that are in the cache, but that have just been hidden
         // ToDo: Delete nodes from the cache when hiding branches in the tree
         var fromNode = objectPanelView.getNode(fromModel);
@@ -893,65 +893,186 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
         s = me.arrowheadSize;
 
 
-        startY = fromBBox.y + fromBBox.height/2;
+        var depTypeId = dependencyModel.type_id;
+        startY = fromBBox.y + fromBBox.height/2;				// vertical start point is always the middle of the bar
 
-        // Horizontal: left to right or inverse
-        if (toBBox.x  >= fromBBox.x + fromBBox.width) { 
-            // "normal" dependencies from left to right
-            color = '#222';
+        switch (depTypeId) {
+        case 9660: 
+            // finish_to_finish - draw from pred right center to the right, down to succ and left back to the right side of the bar.
+
+            startX = fromBBox.x + fromBBox.width;				// Right side of the fromBBox
+            endX = toBBox.x + toBBox.width;					// right of the toBBox
+            endY = toBBox.y + toBBox.height/2;			    	     	// End at the center of the toBBox
+            color = '#222';		  		  			// dark grey color
+
+            // Go from startX to the left, then down and then back to the right to endX
+	    var rightMaxX = Math.max(startX, endX) + fromBBox.height;
+            var arrowLine = me.surface.add({
+		type: 'path',
+		stroke: color,
+		'shape-rendering': 'crispy-edges',
+		'stroke-width': 0.5,
+		zIndex: -100,							// -100
+		path: 'M '+ (startX)    + ', ' + (startY)
+                    + 'L '+ (rightMaxX) + ', ' + (startY)
+                    + 'L '+ (rightMaxX) + ', ' + (endY)
+                    + 'L '+ (endX)      + ', ' + (endY)
+            }).show(true);
+            arrowLine.dependencyModel = dependencyModel;
+            Ext.create("Ext.tip.ToolTip", { target: arrowLine.el, width: 250, html: tooltipHtml, hideDelay: 2000 });
+
+            // Draw the arrow head (filled)
+            var arrowHead = me.surface.add({
+		type: 'path',
+		stroke: color,
+		fill: color,
+		'stroke-width': 0.5,
+		zIndex: -100,							// -100
+		path: 'M '+ (endX)   + ', ' + (endY)				// Point of arrow head
+                    + 'L '+ (endX+s) + ', ' + (endY-s)
+                    + 'L '+ (endX+s) + ', ' + (endY+s)
+                    + 'L '+ (endX)   + ', ' + (endY)
+            }).show(true);
+            arrowHead.dependencyModel = dependencyModel;
+            Ext.create("Ext.tip.ToolTip", { target: arrowHead.el, width: 250, html: tooltipHtml, hideDelay: 2000 });
+
+            break;
+        case 9662: 
+            // finish_to_start - start off at the center right of the task and point down on the top of the successor
+
             startX = fromBBox.x + fromBBox.width;				// End-to-start dep starts at the right side of the fromBBox
-        } else {
-            // "inverse" dependency drawn in red
-            color = 'red'; 
-            startX = fromBBox.x;						// Inverse dep starts at the left side of the fromBBox
+            color = '#222';		  		  			// dark grey color
+            if (toBBox.x < fromBBox.x + fromBBox.width) {			// Inverse dep starts at the left side of the fromBBox
+        	color = 'red'; 
+        	startX = fromBBox.x;						
+            }
+
+            endX = toBBox.x + s;						// Slightly to the right of the start of the task
+            if (toModel.isMilestone()) { endX = toBBox.x; }			// Point directly to the start of the milestone
+
+            if (toBBox.y >= fromBBox.y + fromBBox.height) {			// "normal" dependency from a task higher up to a task further down
+        	endY = toBBox.y;
+            } else {								// "inverse" dependency from a lower task to a task higher up
+        	endY = toBBox.y + toBBox.height;
+        	s = -s;								// Draw the dependency arrow from bottom to top
+            }
+
+            // Draw the main connection line between start and end.
+            var arrowLine = me.surface.add({
+		type: 'path',
+		stroke: color,
+		'shape-rendering': 'crispy-edges',
+		'stroke-width': 0.5,
+		zIndex: -100,							// -100
+		path: 'M '+ (startX)    + ', ' + (startY)
+                    + 'L '+ (endX)      + ', ' + (startY)
+                    + 'L '+ (endX)      + ', ' + (endY)
+            }).show(true);
+            arrowLine.dependencyModel = dependencyModel;
+            Ext.create("Ext.tip.ToolTip", { target: arrowLine.el, width: 250, html: tooltipHtml, hideDelay: 2000 });
+
+            // Draw the arrow head (filled)
+            var arrowHead = me.surface.add({
+		type: 'path',
+		stroke: color,
+		fill: color,
+		'stroke-width': 0.5,
+		zIndex: -100,							// -100
+		path: 'M '+ (endX)   + ', ' + (endY)				// Point of arrow head
+                    + 'L '+ (endX-s) + ', ' + (endY-s)
+                    + 'L '+ (endX+s) + ', ' + (endY-s)
+                    + 'L '+ (endX)   + ', ' + (endY)
+            }).show(true);
+            arrowHead.dependencyModel = dependencyModel;
+            Ext.create("Ext.tip.ToolTip", { target: arrowHead.el, width: 250, html: tooltipHtml, hideDelay: 2000 });
+
+
+            break;
+        case 9664: 
+            // start_to_finish
+
+            startX = fromBBox.x;						// Right side of the fromBBox
+            endX = toBBox.x + toBBox.width;					// right of the toBBox
+            endY = toBBox.y + toBBox.height/2;			    	     	// End at the center of the toBBox
+            color = '#222';		  		  			// dark grey color
+
+            // Go from startX to the left, then down and then back to the right to endX
+            var arrowLine = me.surface.add({
+		type: 'path',
+		stroke: color,
+		'shape-rendering': 'crispy-edges',
+		'stroke-width': 0.5,
+		zIndex: -100,							// -100
+		path: 'M '+ (startX)                 + ', ' + (startY)
+                    + 'L '+ (startX - toBBox.height) + ', ' + (startY)
+                    + 'L '+ (startX - toBBox.height) + ', ' + ((startY+endY)/2)
+                    + 'L '+ (endX + toBBox.height)   + ', ' + ((startY+endY)/2)
+                    + 'L '+ (endX + toBBox.height)   + ', ' + (endY)
+                    + 'L '+ (endX)                   + ', ' + (endY)
+            }).show(true);
+            arrowLine.dependencyModel = dependencyModel;
+            Ext.create("Ext.tip.ToolTip", { target: arrowLine.el, width: 250, html: tooltipHtml, hideDelay: 2000 });
+
+            // Draw the arrow head (filled)
+            var arrowHead = me.surface.add({
+		type: 'path',
+		stroke: color,
+		fill: color,
+		'stroke-width': 0.5,
+		zIndex: -100,							// -100
+		path: 'M '+ (endX)   + ', ' + (endY)				// Point of arrow head
+                    + 'L '+ (endX+s) + ', ' + (endY-s)
+                    + 'L '+ (endX+s) + ', ' + (endY+s)
+                    + 'L '+ (endX)   + ', ' + (endY)
+            }).show(true);
+            arrowHead.dependencyModel = dependencyModel;
+            Ext.create("Ext.tip.ToolTip", { target: arrowHead.el, width: 250, html: tooltipHtml, hideDelay: 2000 });
+
+            break;
+        case 9666: 
+            // start_to_start - from left center of the pred bar to the left center of the succ
+
+            startX = fromBBox.x;				    	     	// start at the left side of the fromBBox
+            endX = toBBox.x;							// left of the toBBox
+            endY = toBBox.y + toBBox.height/2;			    	     	// start at the left side of the fromBBox
+            color = '#222';		  		  			// dark grey color
+
+            // Go from startX to the left, then down and then back to the right to endX
+	    var leftMinX = Math.min(startX, endX) - fromBBox.height;
+            var arrowLine = me.surface.add({
+		type: 'path',
+		stroke: color,
+		'shape-rendering': 'crispy-edges',
+		'stroke-width': 0.5,
+		zIndex: -100,							// -100
+		path: 'M '+ (startX)    + ', ' + (startY)
+                    + 'L '+ (leftMinX)  + ', ' + (startY)
+                    + 'L '+ (leftMinX)  + ', ' + (endY)
+                    + 'L '+ (endX)      + ', ' + (endY)
+            }).show(true);
+            arrowLine.dependencyModel = dependencyModel;
+            Ext.create("Ext.tip.ToolTip", { target: arrowLine.el, width: 250, html: tooltipHtml, hideDelay: 2000 });
+
+            // Draw the arrow head (filled)
+            var arrowHead = me.surface.add({
+		type: 'path',
+		stroke: color,
+		fill: color,
+		'stroke-width': 0.5,
+		zIndex: -100,							// -100
+		path: 'M '+ (endX)   + ', ' + (endY)				// Point of arrow head
+                    + 'L '+ (endX-s) + ', ' + (endY-s)
+                    + 'L '+ (endX-s) + ', ' + (endY+s)
+                    + 'L '+ (endX)   + ', ' + (endY)
+            }).show(true);
+            arrowHead.dependencyModel = dependencyModel;
+            Ext.create("Ext.tip.ToolTip", { target: arrowHead.el, width: 250, html: tooltipHtml, hideDelay: 2000 });
+
+            break;
+        default:
+            alert('drawDependencyMsp: found undefined dependencyTypeId='+depTypeId);
+            return;
         }
-
-
-
-        endX = toBBox.x + s;						// Point slightly behind the start of the task
-        if (toModel.isMilestone()) {
-            endX = toBBox.x;						    // Point directly to the start of the milestone
-        }
-
-
-        // Vertical: Top to down, or inverse
-        if (toBBox.y >= fromBBox.y + fromBBox.height) {
-            // "normal" dependency from a task higher up to a task further down
-            endY = toBBox.y;
-        } else {
-            // "inverse" dependency from a lower task to a task higher up
-            endY = toBBox.y + toBBox.height;
-            s = -s;								// Draw the dependency arrow from bottom to top
-        }
-
-        // Draw the main connection line between start and end.
-        var arrowLine = me.surface.add({
-            type: 'path',
-            stroke: color,
-            'shape-rendering': 'crispy-edges',
-            'stroke-width': 0.5,
-            zIndex: -100,							// -100
-            path: 'M '+ (startX)    + ', ' + (startY)
-                + 'L '+ (endX)      + ', ' + (startY)
-                + 'L '+ (endX)      + ', ' + (endY)
-        }).show(true);
-        arrowLine.dependencyModel = dependencyModel;
-        Ext.create("Ext.tip.ToolTip", { target: arrowLine.el, width: 250, html: tooltipHtml, hideDelay: 2000 });
-
-        // Draw the arrow head (filled)
-        var arrowHead = me.surface.add({
-            type: 'path',
-            stroke: color,
-            fill: color,
-            'stroke-width': 0.5,
-            zIndex: -100,							// -100
-            path: 'M '+ (endX)   + ', ' + (endY)				// Point of arrow head
-                + 'L '+ (endX-s) + ', ' + (endY-s)
-                + 'L '+ (endX+s) + ', ' + (endY-s)
-                + 'L '+ (endX)   + ', ' + (endY)
-        }).show(true);
-        arrowHead.dependencyModel = dependencyModel;
-        Ext.create("Ext.tip.ToolTip", { target: arrowHead.el, width: 250, html: tooltipHtml, hideDelay: 2000 });
 
 
         if (me.debug) console.log('GanttEditor.view.GanttBarPanel.drawTaskDependency: Finished');
