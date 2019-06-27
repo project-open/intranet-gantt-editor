@@ -32,6 +32,7 @@ Ext.require([
     'GanttEditor.controller.GanttZoomController',
     'GanttEditor.controller.GanttSchedulingController',
     'GanttEditor.view.GanttBarPanel',
+    'GanttEditor.view.GanttDependencyPropertyPanel',
     'GanttEditor.store.AbsenceAssignmentStore',
     'PO.Utilities',
     'PO.class.PreferenceStateProvider',
@@ -309,6 +310,17 @@ function launchGanttEditor(debug){
     });
     taskPropertyPanel.hide();
 
+    // Create the panel showing properties of a dependency, but don't show it yet.
+    var dependencyPropertyPanel = Ext.create('GanttEditor.view.GanttDependencyPropertyPanel', {
+        debug: getDebug('dependencyPropertyPanel'),
+        ganttBarPanel: ganttBarPanel,
+        senchaPreferenceStore: senchaPreferenceStore,
+        ganttTreePanelController: ganttTreePanelController,
+        ganttSchedulingController: null                         // set further below
+    });
+    dependencyPropertyPanel.hide();
+
+
     // Deal with changes of Gantt data and perform scheduling
     var ganttSchedulingController = Ext.create('GanttEditor.controller.GanttSchedulingController', {
         debug: getDebug('ganttSchedulingController'),
@@ -318,6 +330,7 @@ function launchGanttEditor(debug){
     });
     ganttBarPanel.ganttSchedulingController = ganttSchedulingController;
     ganttSchedulingController.init(this).onLaunch(this);
+    dependencyPropertyPanel.ganttSchedulingController = ganttSchedulingController;
     
     // Create a warning if there are no tasks in the project
     var numTasks = 0;

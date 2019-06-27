@@ -182,8 +182,9 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
                     handler: function() {
                         if (me.debug) console.log('dependencyContextMenu.editDependency: ');
 
+                        var dependencyModel = this.ownerCt.dependencyModel;
                         var dependencyPropertyPanel = Ext.getCmp('ganttDependencyPropertyPanel');
-                        dependencyPropertyPanel.setValue(record);
+                        dependencyPropertyPanel.setValue(dependencyModel);
                         dependencyPropertyPanel.setActiveTab('dependencyPropertyFormGeneral');
                         dependencyPropertyPanel.show();
 
