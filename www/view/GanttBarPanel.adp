@@ -178,7 +178,18 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
                 style: {overflow: 'visible'},					// For the Combo popup
                 dependencyModel: sprite.dependencyModel,
                 items: [{
-                    text: 'Delete Dependency',
+                    text: '@edit_dependency_l10n@',
+                    handler: function() {
+                        if (me.debug) console.log('dependencyContextMenu.editDependency: ');
+
+                        var dependencyPropertyPanel = Ext.getCmp('ganttDependencyPropertyPanel');
+                        dependencyPropertyPanel.setValue(record);
+                        dependencyPropertyPanel.setActiveTab('dependencyPropertyFormGeneral');
+                        dependencyPropertyPanel.show();
+
+                    }
+                }, {
+                    text: '@delete_dependency_l10n@',
                     handler: function() {
                         if (me.debug) console.log('dependencyContextMenu.deleteDependency: ');
                         var dependencyModel = this.ownerCt.dependencyModel;
@@ -209,9 +220,8 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
                         // set the new dates
                         succModel.set('start_date', PO.Utilities.dateToPg(newStartDate));
                         succModel.set('end_date', PO.Utilities.dateToPg(newEndDate));
-
                     }
-                }]
+		}]
             });
         }
         me.dependencyContextMenu.dependencyModel = sprite.dependencyModel;      // context menu may be executed more than once with different deps
