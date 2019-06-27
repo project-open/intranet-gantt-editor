@@ -6,3 +6,5 @@ set start_to_finish_l10n [lang::message::lookup "" intranet-gantt-editor.Start_t
 set start_to_start_l10n [lang::message::lookup "" intranet-gantt-editor.Start_to_Start "Start-to-Start"]
 
 
+set edit_dependency_l10n [lang::message::lookup "" intranet-gantt-editor.Edit_Dependency "Edit Dependency"]
+set delete_dependency_l10n [lang::message::lookup "" intranet-gantt-editor.Delete_Dependency "Delete Dependency"]
