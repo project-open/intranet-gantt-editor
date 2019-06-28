@@ -183,8 +183,12 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
                         if (me.debug) console.log('dependencyContextMenu.editDependency: ');
 
                         var dependencyModel = this.ownerCt.dependencyModel;
+                        var succId = dependencyModel.succ_id;
+                        var succModel = me.taskModelHash[succId];		// Dependencies are stored as succModel.predecessors
                         var dependencyPropertyPanel = Ext.getCmp('ganttDependencyPropertyPanel');
-                        dependencyPropertyPanel.setValue(dependencyModel);
+
+                        dependencyPropertyPanel.setValue(dependencyModel, succModel);
+
                         dependencyPropertyPanel.setActiveTab('dependencyPropertyFormGeneral');
                         dependencyPropertyPanel.show();
 
