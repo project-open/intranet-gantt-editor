@@ -64,6 +64,7 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
                     dirty = true;
                     break;
                 case "end_date":
+                    me.onDurationChanged(treeStore, model, operation, event);
                     dirty = true;
                     break;
                 case "planned_units":
@@ -202,6 +203,41 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
         }
 
         if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.onAssigneesChanged: Finished');
+        return result;
+    },
+
+
+
+    /**
+     * The duration of a task has changed.
+     * Check if the work or assignees of the task are still valid.
+     *
+     * Returns true if we changed the model, false otherwise
+     */
+    onDurationChanged: function(treeStore, model) {
+        var me = this;
+        if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.onDurationChanged: Starting');
+        var result = false;
+
+        var effortDrivenType = parseInt(model.get('effort_driven_type_id'));
+        if (isNaN(effortDrivenType)) {
+            effortDrivenType = parseInt(default_effort_driven_type_id);    // Default is "Fixed Work" = 9722
+        }
+        if (isNaN(effortDrivenType)) effortDrivenType = 9722;    // Default is "Fixed Work" = 9722
+
+        switch (effortDrivenType) {
+        case 9720:     // Fixed Units
+            result = me.checkAssignedResources(treeStore, model);                 // adjust the percentage of the assigned resources
+            break;
+        case 9721:     // Fixed Duration
+            result = me.checkAssignedResources(treeStore, model);                 // adjust the percentage of the assigned resources
+            break;
+        case 9722:     // Fixed Work
+            result = me.checkAssignedResources(treeStore, model);                 // adjust the percentage of the assigned resources
+            break;
+        }
+
+        if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.onDurationChanged: Finished');
         return result;
     },
 
