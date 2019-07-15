@@ -80,7 +80,7 @@ function launchGanttEditor(debug){
 
     // Deal with state
     var stateProvider = Ext.create('PO.class.PreferenceStateProvider', {
-	debug: getDebug('stateProvider'),
+        debug: getDebug('stateProvider'),
         url: window.location.pathname + window.location.search
     });
     Ext.state.Manager.setProvider(stateProvider);
@@ -134,7 +134,7 @@ function launchGanttEditor(debug){
             checked: false
         }, 
 */
-	{
+        {
             id: 'config_menu_show_cross_project_overassignments',
             key: 'show_project_cross_project_overassignments', 
             text: 'Show Cross-Project Overassignments', 
@@ -287,9 +287,9 @@ function launchGanttEditor(debug){
     // Controller for handling configuration options
     var ganttConfigController = Ext.create('GanttEditor.controller.GanttConfigController', {
         debug: getDebug('ganttConfigController'),
-	configMenu: configMenu,
+        configMenu: configMenu,
         senchaPreferenceStore: senchaPreferenceStore,
-	ganttBarPanel: ganttBarPanel
+        ganttBarPanel: ganttBarPanel
     });
     ganttConfigController.init(this);
 
@@ -417,13 +417,13 @@ Ext.onReady(function() {
 
     // Load a store with user absences and assignments to other projects
     absenceAssignmentStore.getProxy().extraParams = { 
-	report_code: 'rest_project_member_assignments_absences',
-	format: 'json',
-	main_project_id: @project_id@
+        report_code: 'rest_project_member_assignments_absences',
+        format: 'json',
+        main_project_id: @project_id@
     };
     absenceAssignmentStore.load({callback: function(r, op, success) { 
         if (!success) 
-	    PO.Utilities.reportStoreError("AbsenceAssignmentStore", op); }
+            PO.Utilities.reportStoreError("AbsenceAssignmentStore", op); }
     });
 
 
@@ -450,14 +450,14 @@ Ext.onReady(function() {
             var me = this;
             if (debug) console.log('PO.store.timesheet.TaskTreeStore: loaded');
 
-	    if (!success) {
-		PO.Utilities.reportStoreError("TaskTreeStore", operation);
-		return;
-	    }
+            if (!success) {
+                PO.Utilities.reportStoreError("TaskTreeStore", operation);
+                return;
+            }
 
-	    var mainProjectNode = records[0];
-	    mainProjectNode.set('sort_order','0');
-	    me.setRootNode(mainProjectNode);
+            var mainProjectNode = records[0];
+            mainProjectNode.set('sort_order','0');
+            me.setRootNode(mainProjectNode);
         }
     });
 
