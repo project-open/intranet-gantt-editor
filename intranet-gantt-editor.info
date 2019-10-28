@@ -10,7 +10,7 @@
     <inherit-templates-p>f</inherit-templates-p>
     <auto-mount>intranet-gantt-editor</auto-mount>
 
-    <version name="5.0.2.4.2" url="http://www.project-open.net/download/apm/intranet-gantt-editor-5.0.2.4.2.apm">
+    <version name="5.0.2.4.3" url="http://www.project-open.net/download/apm/intranet-gantt-editor-5.0.2.4.3.apm">
         <owner url="mailto:frank.bergmann@project-open.com">Frank Bergmann</owner>
         <summary>Gantt editor</summary>
         <release-date>2016-11-15</release-date>
@@ -19,7 +19,7 @@
         <description format="text/plain">Sencha implementation of a Gantt editor similar to ProjectLibre and MS-Project.</description>
         <maturity>0</maturity>
 
-        <provides url="intranet-gantt-editor" version="5.0.2.0.0"/>
+        <provides url="intranet-gantt-editor" version="5.0.2.4.3"/>
         <requires url="intranet-ganttproject" version="4.1.0.0.0"/>
         <requires url="intranet-core" version="4.1.0.0.0"/>
         <requires url="sencha-core" version="4.1.0.0.0"/>
@@ -32,6 +32,7 @@
             <parameter scope="instance" datatype="string"  min_n_values="1" max_n_values="1" name="DebugHash" default="default 0" description="Defines debugging output from GanttEditor in TCL list format, using the IDs of the GanttEditor objects. Example: 'default 0 ganttSchedulingController 1' will disable debugging in general, but show debugging output for the GanttSchedulingController. Default is 'default 0' for production systems without debugging."/>
             <parameter scope="instance" datatype="string"  min_n_values="1" max_n_values="1" name="DefaultEnabledColumns" default="planned_units logged_hours percent_completed assignees" description="Which GanttEditor columns should we show to users by default? This is a TCL list with database column names, including: assignees, cost_center_id, description, effort_driven_p, effort_driven_type_id, end_date, logged_hours, material_id, percent_completed, planned_units, predecessors, priority, project_id, project_name, project_nr, project_status_id, project_wbs, start_date and any DynField column name. Default is 'planned_units logged_hours percent_completed assignees' for showing work (=planned hours), logged lours and resource assigments."/>
             <parameter scope="instance" datatype="string"  min_n_values="1" max_n_values="1" name="DefaultCrossProjectOverassignmentsVisibility" default="true" description="Default value for the 'Show Cross-Project Overassignments' configuration option. This option is nice functionality, but performance can go down in certain cases (many projects with always the same resources). Default is 'true'. Set this to 'false' in order to turn the feature off by default, but to allow individual users to turn it on per project. Set this to 'never' in order to disable the feature completely (not implemented yet...)"/>
+            <parameter scope="instance" datatype="string"  min_n_values="1" max_n_values="1" name="ProjectVisibleAsRoot" default="false" description="Should the GanttEditor show a bar representing the main project itself? Default is 'false'. Set to 'true' to show the additional line."/>
         </parameters>
 
     </version>
