@@ -813,10 +813,10 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
         var succEndDate = PO.Utilities.pgToDate(succ.get('end_date')); if (!succEndDate) { return false; }
 
         var dependencyTypeId = dep.type_id;			       	  		// 9660=FF, 9662=FS, 9664=SF, 9666=SS 
+	if (dependencyTypeId = 9650) dependencyTypeId = 9660;					// compatibility
 
         // If the start of succ is before the end of pred...
         var changedNodes = [];
-
         switch (dependencyTypeId) {
         case 9660:	// Finish-to-Finish
             var diff = predEndDate.getTime() - succEndDate.getTime();

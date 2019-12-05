@@ -846,6 +846,8 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
         // if (me.debug) console.log('GanttEditor.view.GanttBarPanel.drawTaskDependency: Starting');
 
         var depTypeId = dependencyModel.type_id;
+	if (depTypeId = 9650) depTypeId = 9660;					// compatibility
+
         var fromId = dependencyModel.pred_id;
         var fromModel = me.taskModelHash[fromId]
         var toId = dependencyModel.succ_id;
@@ -858,6 +860,7 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
             if (me.debug) console.log('GanttEditor.view.GanttBarPanel.drawTaskDependency: Dependency from other project: Skipping');
             return; 
         }
+
 
         var depName = 'Task dependency';
         switch (depTypeId) {
@@ -909,6 +912,8 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
 
 
         var depTypeId = dependencyModel.type_id;
+	if (depTypeId = 9650) depTypeId = 9660;					// compatibility
+
         startY = fromBBox.y + fromBBox.height/2;				// vertical start point is always the middle of the bar
 
         switch (depTypeId) {
