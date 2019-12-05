@@ -321,29 +321,47 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
         var me = this;
         if (me.debug) console.log('PO.view.gantt.GanttTreePanelController.onButtonDelete: ');
 
-        // Check if read-only and abort in this case
-        // var readOnly = me.senchaPreferenceStore.getPreferenceBoolean('read_only',true);
-        // if (readOnly) { me.readOnlyWarning(); return; }
-
+        // Get all the necessary objects around
         var ganttTreePanel = me.getGanttTreePanel();
         var rowEditing = ganttTreePanel.plugins[0];
         var taskTreeStore = ganttTreePanel.getStore();
         var selectionModel = ganttTreePanel.getSelectionModel();
+        var rootNode = taskTreeStore.getRootNode();					// Get the absolute root
         var lastSelected = selectionModel.getLastSelected();
         var lastSelectedParent = lastSelected.parentNode;
         var lastSelectedIndex = lastSelectedParent.indexOf(lastSelected);
+        var lastSelectedId = lastSelected.get('id');
+
+
+        // ----------------------------------------------------------
+        // Check for dependencies and delete
+
+        // Iterate through all children of the root node and check if they are visible
+        if (me.debug) console.log('PO.view.gantt.GanttTreePanelController.onButtonDelete: about to delete taskId='+lastSelectedId+' from tree');
+        rootNode.cascadeBy(function(model) {
+            var predecessors = model.get('predecessors');
+            for (var i = 0; i < predecessors.length; i++) {
+                var pred = predecessors[i];
+                var predId = pred.id;
+                var predPredId = pred.pred_id;
+                if (predPredId == lastSelectedId) {
+                    predecessors.splice(i,1);
+                    if (me.debug) console.log('PO.view.gantt.GanttTreePanelController.onButtonDelete: deleted: '+
+                        'lastSelectedId='+lastSelectedId+', predId='+predId+', predPredId='+predPredId);
+                }
+            };
+        });
+
+        // ----------------------------------------------------------
+        // Work with selection in the task tree
+
         me.treeRenumberStoreOldValues();     						// Remember the current values of WBS field
+        rowEditing.cancelEdit();							// Just in case the editor was active...
+        lastSelected.remove();								// Remove the selected element
 
-        rowEditing.cancelEdit();
-
-        // Remove the selected element
-        lastSelected.remove();
-
-        // Check if we deleted the last task of a parent.
-        // This parent then becomes a normal task again.
-        var numChildren = lastSelectedParent.childNodes.length;
-        if (0 == numChildren) {
-            lastSelectedParent.set('leaf', true);					// Parent is not a leaf anymore	    
+        var numChildren = lastSelectedParent.childNodes.length;				// Check if we deleted the last task of a parent.
+        if (0 == numChildren) {								// This parent then becomes a normal task again.
+            lastSelectedParent.set('leaf', true);					// Parent is not a leaf anymore
         }
 
         // Select the next node
@@ -354,8 +372,8 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
             newNode = lastSelectedParent.getChildAt(lastSelectedIndex);
         }
 
+        // lastSelected was the last child of it's parent, so select the parent.
         if (typeof(newNode) == "undefined") {
-            // lastSelected was the last child of it's parent, so select the parent.
             selectionModel.select(lastSelectedParent);
         } else {
             newNode = lastSelectedParent.getChildAt(lastSelectedIndex);
@@ -364,9 +382,14 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
 
         // Redraw, renumber and enable save button
         me.treeRenumber();								// Update the tree's task numbering
+
+
+        // ----------------------------------------------------------
+        // Finish off
+
         me.getGanttBarPanel().needsRedraw = true;					// Force delayed redraw
         var buttonSave = Ext.getCmp('buttonSave');
-        buttonSave.setDisabled(false);						// Enable "Save" button
+        buttonSave.setDisabled(false);							// Enable "Save" button
 
     },
 
@@ -434,7 +457,7 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
      */
     treeRenumberStoreOldValues: function() {
         var me = this;
-        if (me.debug) console.log('PO.controller.GanttTreePanelController.treeRenumberStoreOldValues: Starting');
+        // if (me.debug) console.log('PO.controller.GanttTreePanelController.treeRenumberStoreOldValues: Starting');
 
         var ganttTreePanel = me.getGanttTreePanel();
         var taskTreeStore = ganttTreePanel.getStore();
@@ -480,7 +503,7 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
         });
 
 
-        if (me.debug) console.log('PO.controller.GanttTreePanelController.treeRenumberStoreOldValues: Finished');
+        // if (me.debug) console.log('PO.controller.GanttTreePanelController.treeRenumberStoreOldValues: Finished');
     },
 
     /**
@@ -496,7 +519,7 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
      */
     treeRenumber: function() {
         var me = this;
-        if (me.debug) console.log('PO.controller.GanttTreePanelController.treeRenumber: Starting');
+        // if (me.debug) console.log('PO.controller.GanttTreePanelController.treeRenumber: Starting');
 
         var ganttTreePanel = me.getGanttTreePanel();
         var taskTreeStore = ganttTreePanel.getStore();
@@ -580,6 +603,6 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
         });
 
 
-        if (me.debug) console.log('PO.controller.GanttTreePanelController.treeRenumber: Finished');
+        // if (me.debug) console.log('PO.controller.GanttTreePanelController.treeRenumber: Finished');
     }
 });
