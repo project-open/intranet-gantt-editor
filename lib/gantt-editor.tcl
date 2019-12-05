@@ -86,20 +86,22 @@ foreach task_id $tasks_with_bad_start_end {
     db_1row sub_info "
 	select	parent_id,
 		start_date,
-		end_date
+		least(:report_start_date::date, coalesce(start_date, :report_start_date), coalesce(end_date, :report_end_date)) as least_date,
+		end_date,
+		greatest(:report_end_date, coalesce(start_date, :report_end_date), coalesce(end_date, :report_end_date)) as greatest_date
 	from	im_projects
 	where	project_id = :task_id
     "
 
     if {"" eq $start_date} {
-        db_dml update_start "update im_projects set start_date = :report_start_date where project_id = :task_id"
+        db_dml update_start "update im_projects set start_date = :least_date where project_id = :task_id"
 
 	# Write Audit Trail
 	im_audit -object_id $task_id -comment "Fixed empty start_date with default start in Gantt Editor"
     }
 
     if {"" eq $end_date} {
-        db_dml update_end "update im_projects set end_date = :report_end_date where project_id = :task_id"
+        db_dml update_end "update im_projects set end_date = :greatest_date where project_id = :task_id"
 
 	# Write Audit Trail
 	im_audit -object_id $task_id -comment "Fixed empty end_date with default end in Gantt Editor"
