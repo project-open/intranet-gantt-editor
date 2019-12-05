@@ -845,9 +845,6 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
         var me = this;
         // if (me.debug) console.log('GanttEditor.view.GanttBarPanel.drawTaskDependency: Starting');
 
-        var depTypeId = dependencyModel.type_id;
-	if (depTypeId = 9650) depTypeId = 9660;					// compatibility
-
         var fromId = dependencyModel.pred_id;
         var fromModel = me.taskModelHash[fromId]
         var toId = dependencyModel.succ_id;
@@ -861,8 +858,9 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
             return; 
         }
 
-
         var depName = 'Task dependency';
+        var depTypeId = dependencyModel.type_id;
+	if (depTypeId == 9650) depTypeId = 9660;					// compatibility
         switch (depTypeId) {
         case 9660: depName = '@finish_to_finish_l10n@'; break;
         case 9662: depName = '@finish_to_start_l10n@'; break;
@@ -909,13 +907,10 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
         if (!fromNode || !toNode) { return; }
 
         s = me.arrowheadSize;
-
-
-        var depTypeId = dependencyModel.type_id;
-	if (depTypeId = 9650) depTypeId = 9660;					// compatibility
-
         startY = fromBBox.y + fromBBox.height/2;				// vertical start point is always the middle of the bar
 
+        var depTypeId = dependencyModel.type_id;
+	if (depTypeId == 9650) depTypeId = 9662;				// compatibility: Depends -> Finish-to-Start
         switch (depTypeId) {
         case 9660: 
             // finish_to_finish - draw from pred right center to the right, down to succ and left back to the right side of the bar.
