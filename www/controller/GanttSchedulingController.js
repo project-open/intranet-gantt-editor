@@ -498,14 +498,16 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
 
                     var predId = ''+dependencyModel.pred_id;		// a string!
                     var predModel = me.findNodeBy(rootNode, function() {return (''+this.get('id') === predId);}, null);
-                    if (!predModel) { 
-                        alert("PredModel not found for: "+predId); 
+                    if (!predModel) {
+                        console.error("checkCyclicDependenciesInit: PredModel not found for: "+predId);
+                        continue;
                     }
 
                     var succId = ''+dependencyModel.succ_id;		// a string!
                     var succModel = me.findNodeBy(rootNode, function() { return (''+this.get('id') === succId);}, null);
                     if (!succModel) { 
-                        alert("SuccModel not found for: "+succId); 
+                        console.error("checkCyclicDependenciesInit: SuccModel not found for: "+succId);
+                        continue;
                     }
 
                     succModel.directPreds[predId] = {predModel: predModel, depModel: dependencyModel};
@@ -595,8 +597,8 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
         // --------------------------------------------------------------------------------
         // Delete from direct and trans preds and succs
         var predModel = me.findNodeBy(rootNode, function() {return (''+this.get('id') === ''+predId);}, null);
-        if (!predModel) { 
-            alert("PredModel not found for: "+predId); 
+        if (!predModel) {
+            alert("checkCyclicDependenciesDelete: PredModel not found for: "+predId); 
             return;
         }
         
@@ -813,7 +815,7 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
         var succEndDate = PO.Utilities.pgToDate(succ.get('end_date')); if (!succEndDate) { return false; }
 
         var dependencyTypeId = dep.type_id;			       	  		// 9660=FF, 9662=FS, 9664=SF, 9666=SS 
-	if (dependencyTypeId = 9650) dependencyTypeId = 9660;					// compatibility
+	if (dependencyTypeId == 9650) dependencyTypeId = 9660;				// compatibility
 
         // If the start of succ is before the end of pred...
         var changedNodes = [];
