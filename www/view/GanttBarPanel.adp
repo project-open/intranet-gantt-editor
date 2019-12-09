@@ -218,9 +218,12 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
                         succModel.setDirty();				// set(...) may not set dirty 
                         var oldStartDate = PO.Utilities.pgToDate(succModel.get('start_date'));
                         var oldEndDate =   PO.Utilities.pgToDate(succModel.get('end_date'));
+                        var oldDateDiff = Math.abs(oldEndDate.getTime() - oldStartDate.getTime());
+
                         var newStartDate = new Date();
-                        var timeDiff = Math.abs(oldStartDate.getTime() - newStartDate.getTime());
-                        var newEndDate = new Date(oldEndDate.getTime() - timeDiff);
+                        var newEndDate = new Date(newStartDate.getTime() + oldDateDiff);
+
+                        me.needsRedraw = true;
 
                         // set the new dates
                         succModel.set('start_date', PO.Utilities.dateToPg(newStartDate));
