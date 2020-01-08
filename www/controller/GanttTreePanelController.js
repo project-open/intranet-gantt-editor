@@ -241,10 +241,10 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
         var parent_id = lastSelected.get('parent_id');
         if ("" == parent_id) { parent_id = lastSelected.get('id'); }
         var r = Ext.create('PO.model.timesheet.TimesheetTask', {
-            parent_id: parent_id,
+            parent_id: ""+parent_id,
             company_id: lastSelected.get('company_id'),
-            project_status_id: 76,							// Status: Open
-            project_type_id: 100,							// Type: Gantt Task
+            project_status_id: "76",							// Status: Open - status store uses strings!
+            project_type_id: "100",							// Type: Gantt Task
             iconCls: 'icon-task',
             assignees: []
         });
@@ -264,14 +264,14 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
             lastSelectedParent.insertChild(index+1,rNode);
         }
 
-        r.set('parent_id', ""+parent_id);
+        r.set('parent_id', ""+parent_id);						// model uses strings!!
         r.set('percent_completed', ""+0);
         r.set('planned_units', ""+0);
         r.set('billable_units', ""+0);
         r.set('material_id', ""+default_material_id);
         r.set('uom_id', ""+default_uom_id);
         r.set('project_name', 'New Task');
-        r.set('work', ""+8);
+        r.set('work', ""+8);								// 8 hours by default
         r.set('start_date', new Date().toISOString().substring(0,10)+" 00:00:00");	// Indicates start of the day at 00:00:00
         r.set('end_date', new Date().toISOString().substring(0,10)+" 23:59:59");	// Same as start_date, but indicates 23:59:59
         r.set('effort_driven_type_id', ""+default_effort_driven_type_id);
