@@ -345,6 +345,13 @@ function launchGanttEditor(debug){
             modal: false
         });
     };
+
+
+    // Work around Chrome bug showing a 15px white space between GanttBarPanel DIV and SVG:
+    setTimeout(function() {
+        var svgStyle = document.getElementById("ganttBarPanel").firstChild.style;
+	svgStyle.minHeight = "0px";
+    }, 1);
 };
 
 
