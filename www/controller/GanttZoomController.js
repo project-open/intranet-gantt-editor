@@ -312,11 +312,18 @@ Ext.define('GanttEditor.controller.GanttZoomController', {
         // Is a task selected? Otherwise center around the entire project
         var selectionModel = ganttTreePanel.getSelectionModel();
         var lastSelected = selectionModel.getLastSelected();
+
+
+	// fraber 2020-03-05: ZoomOnSelectedTask doesn't work well, now just zooming on project
+        me.zoomOnEntireProject();
+
+/*
         if (lastSelected) {
             me.zoomOnSelectedTask(lastSelected);
         } else {
             me.zoomOnEntireProject();
         }
+*/
 
         if (me.debug) console.log('GanttEditor.controller.GanttZoomController.onButtonZoomCenter: Finished');
     },
