@@ -40,7 +40,7 @@ Ext.require([
     'PO.controller.StoreLoadCoordinator',
     'PO.model.timesheet.TimesheetTask',
     'PO.model.timesheet.Material',
-    'PO.model.timesheet.CostCenter',
+    'PO.model.finance.CostCenter',
     'PO.model.user.SenchaPreference',
     'PO.model.user.User',
     'PO.store.CategoryStore',
