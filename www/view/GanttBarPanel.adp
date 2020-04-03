@@ -726,7 +726,7 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
                         case "im_project":
                             absenceHtml = '<b>Overassignment</b><br>'+
                                 'User: <a href=/intranet/users/view?user_id='+ user_id + ' target=_blank>' + user_name + '</a><br>' +
-                                'has been already been assigned<br>' +
+                                'has already been assigned<br>' +
                                 'to Task: <a href=/intranet-timesheet2-tasks/new?task_id=' + absence.get('object_id') + ' target=_blank>' + absence.get('name') + '</a><br>' +
                                 'of Project: <a href=/intranet/projects/view?project_id='+ context_id + ' target=_blank>' + context + '</a>';
                             break;
