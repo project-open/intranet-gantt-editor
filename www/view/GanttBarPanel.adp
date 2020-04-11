@@ -686,7 +686,7 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
         // Draw indication of user absence or assignment
 
         var drawOverassignments = me.preferenceStore.getPreferenceBoolean('show_project_cross_project_overassignments', true);
-        if (drawOverassignments && !project.hasChildNodes()) {
+        if (drawOverassignments && !project.isMilestone() && !project.hasChildNodes()) {
             assignees.forEach(function(assigneeModel) {
                 var assigneeId = assigneeModel.user_id;
                 absenceAssignmentStore.each(function(absence) {
