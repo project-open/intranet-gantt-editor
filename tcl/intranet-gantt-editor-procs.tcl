@@ -22,7 +22,7 @@ ad_proc -public gantt_editor_portlet {
 
 	# Check if this is run from a tab in a non-Gantt project
 	# In this case we need to show an error message instead of a blank screen.
-	set plugin_id [im_opt_val plugin_id]
+	set plugin_id [im_opt_val -limit_to integer plugin_id]
 	if {"" ne $plugin_id} {
 	    return "<p>This project is not a Gantt project, but of type '[im_category_from_id $project_type_id]'. 
             <br>Such projects don't have Gantt charts.</p>"
@@ -37,7 +37,7 @@ ad_proc -public gantt_editor_portlet {
 
     set params [list \
                     [list project_id $project_id] \
-		    ]
+    ]
 
     set result [ad_parse_template -params $params "/packages/intranet-gantt-editor/lib/gantt-editor"]
     return [string trim $result]
