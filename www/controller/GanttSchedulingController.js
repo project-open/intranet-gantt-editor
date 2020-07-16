@@ -914,13 +914,21 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
 
         // Initialize with the list of all tasks in the tree
         var changedNodes = [];
-        rootNode.cascadeBy(function(task) { changedNodes.push(task); });
+        var changedNodesHash = {};
+        rootNode.cascadeBy(function(task) { 
+            changedNodes.push(task); 
+            var taskId = task.get('id');
+            changedNodesHash[taskId] = task;
+        });
 
         // Iterate through all nodes until we reach the end of successor chains
         var iterationCount = 0;
         while (changedNodes.length > 0) {
             iterationCount++;
             var changedNode = changedNodes.shift();					// Get and remove the first element from stack
+            var taskId = changedNode.get('id');
+            delete changedNodesHash.taskId;
+
             var nodeId = ''+changedNode.get('id');
             if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.schedule: '+
                 'Iteration='+iterationCount+': Checking id='+nodeId+', name='+changedNode.get('project_name'));
@@ -934,7 +942,12 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
                 var succModel = directSuccs[succId].succModel;
                 var depModel = directSuccs[succId].depModel;
                 nodes = me.scheduleXToY(treeStore, changedNode, succModel, depModel);
-                for (var i = 0; i < nodes.length; i++) changedNodes.push(nodes[i]);
+                for (var i = 0; i < nodes.length; i++) {
+                    var task = nodes[i];
+                    var taskId = task.get('id');
+                    if (changedNodesHash[taskId]) { continue; }
+                    changedNodes.push(task);
+                }
             }
         }
 
