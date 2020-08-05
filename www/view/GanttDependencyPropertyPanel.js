@@ -172,6 +172,7 @@ Ext.define('GanttEditor.view.GanttDependencyPropertyPanel', {
     dependencyFormatFactor: function(format_id) {
 
         var format_factor = 1.0;
+	if (!format_id) format_id = 0;
 
         // Format the "diff" according to the most frequent formats
         // LagFormat can be: 3=m, 4=em, 5=h, 6=eh, 7=d, 8=ed, 9=w, 10=ew, 
@@ -202,6 +203,7 @@ Ext.define('GanttEditor.view.GanttDependencyPropertyPanel', {
         case 9844: format_factor = 1.0; break;				// e%=
         case 9851: format_factor = 1.0; break;				// e%=
         case 9852: format_factor = 1.0; break;				// e%=
+	case 0: break;		   					// handles undefined case
         default: alert('GanttDependencyPropertyPanel.setValue: Found invalid diff_format_id='+format_id);
         }
 
