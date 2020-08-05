@@ -326,7 +326,8 @@ function launchGanttEditor(debug){
         debug: getDebug('ganttSchedulingController'),
         'taskTreeStore': taskTreeStore,
         'ganttBarPanel': ganttBarPanel,
-        'ganttTreePanel': ganttTreePanel
+        'ganttTreePanel': ganttTreePanel,
+	'dependencyPropertyPanel': dependencyPropertyPanel
     });
     ganttBarPanel.ganttSchedulingController = ganttSchedulingController;
     ganttSchedulingController.init(this).onLaunch(this);
