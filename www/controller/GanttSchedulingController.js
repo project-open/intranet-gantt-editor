@@ -751,6 +751,23 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
 
     ************************************************************************************** */
 
+    /**
+     * Returns the "time" milliseconds of a dependency lag
+     */
+    dependencyLagTime: function(depModel) {
+        var me = this;
+
+        var diff = depModel.diff;
+        if (!diff) diff = 0.0;
+        var diff_factor = me.dependencyPropertyPanel.dependencyFormatFactor(depModel.diff_format_id);
+        var result = 1000.0 * diff * diff_factor;
+
+        if (result != 0.0) {
+            console.log('dependencyLagTime: lag='+result);
+        }
+
+        return result;
+    },
 
     /**
      * Check the planned units vs. assigned resources percentage.
@@ -847,6 +864,10 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
             alert('scheduleTaskToTask: found dependencyTypeId='+dependencyTypeId+': undefined dependency type');
             return;
         }
+
+	// Calculage the time (milliseconds) of the lag time in the dependency
+        var lagTime = me.dependencyLagTime(dep);
+        diff = diff + lagTime;
 
         if (diff > 0) {
             // Round the diff to the next hour and check if the difference is max. 1 minute
