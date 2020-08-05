@@ -82,30 +82,30 @@ Ext.define('GanttEditor.view.GanttDependencyPropertyPanel', {
 		    store: Ext.create('Ext.data.Store', {
 			fields: ['id', 'category'],
 			data : [
-                            {id: 9803, category: 'Month'},
-                            {id: 9804, category: 'e-Month'},
+                            // {id: 9803, category: 'Month'},
+                            // {id: 9804, category: 'e-Month'},
                             {id: 9805, category: 'Hour'},
-                            {id: 9806, category: 'e-Hour'},
+                            // {id: 9806, category: 'e-Hour'},
                             {id: 9807, category: 'Day'},
-                            {id: 9808, category: 'e-Day'},
-                            {id: 9809, category: 'Week'},
-                            {id: 9810, category: 'e-Week'},
-                            {id: 9811, category: 'mo'},
-                            {id: 9812, category: 'emo'},
-                            {id: 9819, category: 'Percent'},
-                            {id: 9820, category: 'e-Percent'},
-                            {id: 9835, category: 'm?'},
-                            {id: 9836, category: 'em?'},
-                            {id: 9837, category: 'h?'},
-                            {id: 9838, category: 'eh?'},
-                            {id: 9839, category: 'd?'},
-                            {id: 9840, category: 'ed?'},
-                            {id: 9841, category: 'w?'},
-                            {id: 9842, category: 'ew?'},
-                            {id: 9843, category: 'mo?'},
-                            {id: 9844, category: 'emo?'},
-                            {id: 9851, category: 'Percent?'},
-                            {id: 9852, category: 'e-Percent?'}
+                            // {id: 9808, category: 'e-Day'},
+                            // {id: 9809, category: 'Week'},
+                            // {id: 9810, category: 'e-Week'},
+                            // {id: 9811, category: 'mo'},
+                            // {id: 9812, category: 'emo'},
+                            // {id: 9819, category: 'Percent'},
+                            // {id: 9820, category: 'e-Percent'},
+                            // {id: 9835, category: 'm?'},
+                            // {id: 9836, category: 'em?'},
+                            // {id: 9837, category: 'h?'},
+                            // {id: 9838, category: 'eh?'},
+                            // {id: 9839, category: 'd?'},
+                            // {id: 9840, category: 'ed?'},
+                            // {id: 9841, category: 'w?'},
+                            // {id: 9842, category: 'ew?'},
+                            // {id: 9843, category: 'mo?'},
+                            // {id: 9844, category: 'emo?'},
+                            // {id: 9851, category: 'Percent?'},
+                            // {id: 9852, category: 'e-Percent?'},
 			]
 		    }),
                     allowBlank: false,
@@ -179,16 +179,16 @@ Ext.define('GanttEditor.view.GanttDependencyPropertyPanel', {
         // 11=mo, 12=emo, 19=%, 20=e%, 35=m?, 36=em?, 37=h?, 38=eh?, 39=d?, 
         // 40=ed?, 41=w?, 42=ew?, 43=mo?, 44=emo?, 51=%? and 52=e%?
         switch (format_id) {
-        case 9803: format_factor = 30.0 * 8.0 * 3600.0; break;		// m=month, has fixed 30 days of 8 hours each at the moment
-        case 9804: format_factor = 30.0 * 8.0 * 3600.0; break;		// em=
+        case 9803: format_factor = 30.0 * 24.0 * 3600.0; break;		// m=month, has fixed 30 days of 8 hours each at the moment
+        case 9804: format_factor = 30.0 * 24.0 * 3600.0; break;		// em=
         case 9805: format_factor = 3600.0; break;			// h=hour
         case 9806: format_factor = 1.0; break;			        // eh=
-        case 9807: format_factor = 8.0 * 3600.0; break;			// d=day
-        case 9808: format_factor = 8.0 * 3600.0; break;			// ed=
-        case 9809: format_factor = 5.0 * 8.0 * 3600.0; break;		// w=week, has 5 days
+        case 9807: format_factor = 24.0 * 3600.0; break;			// d=day
+        case 9808: format_factor = 24.0 * 3600.0; break;			// ed=
+        case 9809: format_factor = 5.0 * 24.0 * 3600.0; break;		// w=week, has 5 days
         case 9810: format_factor = 1.0; break;				// ew=
-        case 9811: format_factor = 30.0 * 8.0 * 3600.0; break;		// mo=month?
-        case 9812: format_factor = 30.0 * 8.0 * 3600.0; break;		// emo
+        case 9811: format_factor = 30.0 * 24.0 * 3600.0; break;		// mo=month?
+        case 9812: format_factor = 30.0 * 24.0 * 3600.0; break;		// emo
         case 9819: format_factor = 1.0; break;				// %=Percent
         case 9820: format_factor = 1.0; break;				// e%=
         case 9835: format_factor = 1.0; break;				// e%=
@@ -222,11 +222,10 @@ Ext.define('GanttEditor.view.GanttDependencyPropertyPanel', {
 
         dep.type_id = fields.type_id;
         dep.diff_format_id = fields.diff_format_id;
+        dep.diff = fields.diff;
 
-        
-        var formatFactor = me.dependencyFormatFactor(fields.diff_format_id);  // 8 hours per day * 3600 seconds per hour...
-        dep.diff = fields.diff * formatFactor;
-
+        // var formatFactor = me.dependencyFormatFactor(fields.diff_format_id);  // 8 hours per day * 3600 seconds per hour...
+        // dep.diff = fields.diff * formatFactor;
 
         // We need to force re-scheduling
         me.ganttSchedulingController.schedule();
@@ -307,9 +306,10 @@ Ext.define('GanttEditor.view.GanttDependencyPropertyPanel', {
         var formatFactor = me.dependencyFormatFactor(diff_format_id);  // 8 hours per day * 3600 seconds per hour...
 
         var diff = dependency.diff;
-        var correctedDiff = Math.round(100.0 * (diff / formatFactor)) / 100.0;
+        // var correctedDiff = Math.round(100.0 * (diff / formatFactor)) / 100.0;
         var diffField = form.findField('diff');
-        diffField.setValue(correctedDiff);
+        // diffField.setValue(correctedDiff);
+        diffField.setValue(diff);
 
         me.dependencyModel = dependency;								// Save the model for reference
         me.succProjectModel = succProjectModel;
