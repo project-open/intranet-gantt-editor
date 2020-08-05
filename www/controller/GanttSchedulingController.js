@@ -53,6 +53,17 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
         treeStore.suspendEvents(false);
         var dirty = false;
         if (null != fieldsChanged) {
+
+            // Check the case that start- and end-date are changed together (move)
+            // A move is different from a change of either start- or end-date.
+            if (fieldsChanged.includes("start_date")) {
+                if (fieldsChanged.includes("end_date")) {
+                    dirty = true;
+                    fieldsChanged.splice(fieldsChanged.indexOf('start_date'), 1);
+                    fieldsChanged.splice(fieldsChanged.indexOf('end_date'), 1);
+                }
+            }
+
             fieldsChanged.forEach(function(fieldName) {
                 if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.onTreeStoreUpdate: Field changed='+fieldName);
                 switch (fieldName) {
