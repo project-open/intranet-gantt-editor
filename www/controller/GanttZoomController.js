@@ -114,10 +114,23 @@ Ext.define('GanttEditor.controller.GanttZoomController', {
         if (me.debug) console.log('GanttEditor.controller.GanttZoomController.zoomEntireProject: Started');
         var ganttBarPanel = me.getGanttBarPanel();
 
+        // calculate min- and max dates of the tasks
+        var reportStartTime = new Date('2099-12-31').getTime();
+        var reportEndTime = new Date('2000-01-01').getTime();
+
+        var rootNode = ganttBarPanel.objectStore.getRootNode();
+        rootNode.cascadeBy(function(model) {
+            var start_date = model.get('start_date');
+            var end_date = model.get('end_date');
+            var startTime = PO.Utilities.pgToDate(start_date);
+            var endTime = PO.Utilities.pgToDate(end_date);
+            if (startTime < reportStartTime) reportStartTime = startTime;
+            if (endTime > reportEndTime) reportEndTime = endTime;
+        });
+
+
         // Default values for axis startDate and endDate
         var oneDayMiliseconds = 24 * 3600 * 1000;
-        var reportStartTime = ganttBarPanel.reportStartDate.getTime();
-        var reportEndTime = ganttBarPanel.reportEndDate.getTime();
         var panelBox = ganttBarPanel.getBox();
         var panelWidth = panelBox.width;
         var panelHeight = panelBox.height;
