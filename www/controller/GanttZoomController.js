@@ -122,8 +122,8 @@ Ext.define('GanttEditor.controller.GanttZoomController', {
         rootNode.cascadeBy(function(model) {
             var start_date = model.get('start_date');
             var end_date = model.get('end_date');
-            var startTime = PO.Utilities.pgToDate(start_date);
-            var endTime = PO.Utilities.pgToDate(end_date);
+            var startTime = PO.Utilities.pgToDate(start_date).getTime();
+            var endTime = PO.Utilities.pgToDate(end_date).getTime();
             if (startTime < reportStartTime) reportStartTime = startTime;
             if (endTime > reportEndTime) reportEndTime = endTime;
         });
@@ -138,6 +138,7 @@ Ext.define('GanttEditor.controller.GanttZoomController', {
         ganttBarPanel.axisStartX = 0;
         ganttBarPanel.axisEndX = panelWidth;
         ganttBarPanel.surface.setSize(panelWidth,panelHeight);
+
         var marginTime = (reportEndTime - reportStartTime) * me.zoomOnEntireProjectMarginFactor;   // space left and right
         var minMarginTime = me.zoomOnEntireProjectMinMarginDays * oneDayMiliseconds;
         if (marginTime < minMarginTime) marginTime = minMarginTime;
