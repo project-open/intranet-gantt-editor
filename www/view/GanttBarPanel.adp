@@ -544,7 +544,7 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
             // Resize-Handle of the Gantt Bar: This is an invisible box at the right end of the bar
             // used to change the cursor and to initiate a specific resizing DnD operation.
             var spriteBarHandle = surface.add({
-                type: 'rect', x: x+w+2, y: y, width: 1, height: h,		// Located at the right edge of spriteBar.
+                type: 'rect', x: x+w+2, y: y, width: 3, height: h,		// Located at the right edge of spriteBar.
                 stroke: 'red',	 	      	     				// For debugging - not visible
                 fill: 'red',							// Need to be filled for cursor display
                 opacity: 0,							// Invisible
