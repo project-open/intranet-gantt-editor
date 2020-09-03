@@ -120,8 +120,8 @@ Ext.define('GanttEditor.controller.GanttZoomController', {
 
         var rootNode = ganttBarPanel.objectStore.getRootNode();
         rootNode.cascadeBy(function(model) {
-            var start_date = model.get('start_date');
-            var end_date = model.get('end_date');
+            var start_date = model.get('start_date'); if (!start_date) return;
+            var end_date = model.get('end_date'); if (!end_date) return;
             var startTime = PO.Utilities.pgToDate(start_date).getTime();
             var endTime = PO.Utilities.pgToDate(end_date).getTime();
             if (startTime < reportStartTime) reportStartTime = startTime;
