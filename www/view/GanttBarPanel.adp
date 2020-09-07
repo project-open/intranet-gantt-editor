@@ -463,7 +463,7 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
 
         var surface = me.surface;
         var taskName = project.get('project_name');
-        var percentCompleted = parseFloat(project.get('percent_completed'));
+        var percentCompleted = parseFloat(project.get('percent_completed')); if (isNaN(percentCompleted)) percentCompleted = 0.0;
         var predecessors = project.get('predecessors');
         var assignees = project.get('assignees');				// Array of {id, percent, name, email, initials}
         var absenceAssignmentStore = Ext.StoreManager.get('absenceAssignmentStore');
