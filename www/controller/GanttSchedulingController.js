@@ -333,9 +333,7 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
 
         // Calculate the percent assigned in total
         var assignedPercent = 0.0
-        assignees.forEach(function(assig) {
-            assignedPercent = assignedPercent + assig.percent
-        });
+        assignees.forEach(function(assig) { assignedPercent = assignedPercent + assig.percent });
 
         // Check what time
         var startDate = new Date(timeMoment);
@@ -428,9 +426,8 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
         if (newEndTime == previousEndTime) return false;					// skip if no change
 
         // Write the newEndDate into model
-        newEndDate = new Date(newEndTime);
+        var newEndDate = new Date(newEndTime);
         var newEndDateString = PO.Utilities.dateToPg(newEndDate);
-        // newEndDateString = newEndDateString.substring(0,10) + ' 23 :59:59';
         newEndDateString = newEndDateString.substring(0,19);
         if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.checkTaskLength: end_date='+newEndDateString);
         model.set('end_date', newEndDateString);
@@ -897,42 +894,25 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
         var previousEndTime = previousEndDate.getTime();
         var assignees = model.get('assignees');
         var plannedUnits = model.get('planned_units');
-        if (0 == plannedUnits) { return []; }					// No units - no duration...
+        if (0 == plannedUnits) { return []; }						// No units - no duration...
         if (!plannedUnits) { return []; }						// No units - no duration...
 
         // Calculate the percent assigned in total
         var assignedPercent = 0.0
-        assignees.forEach(function(assig) {
-            assignedPercent = assignedPercent + assig.percent
-        });
+        assignees.forEach(function(assig) { assignedPercent = assignedPercent + assig.percent });
         if (0 == assignedPercent) { return []; }					// No assignments - "manually scheduled" task
 
-        var durationHours = plannedUnits * 100.0 / assignedPercent;			// Calculate the duration of the task in hours
-        
-        // Adjust the time period, so that the effective hours >= durationHours
-        var startTime = previousStartDate.getTime();
-        var endTime = startTime;
-        var hours = 0.0;								// 
-        while (hours < durationHours) {
-            var day = new Date(endTime);
-            var dayOfWeek = day.getDay();
-            if (dayOfWeek == 6 || dayOfWeek == 0) { 
-                // Weekend - just skip the day
-            } else {
-                hours = hours + 8;							// Weekday - add hours
-            }
-            endTime = endTime + 1000 * 3600 * 24;
-        }
-        endTime = endTime - 1000 * 3600 * 24;						// ]po[ sematics: zero time => 1 day
+	// Calculate the new endDate
+	var newEndTime = me.taskForwardDuration(treeStore, model);
+        if (newEndTime == previousEndTime) return [];					// skip if no change
 
-        if (endTime == previousEndTime) return [];					// skip if no change
+        // Write the newEndDate into model
+        var newEndDate = new Date(newEndTime);
+        var newEndDateString = PO.Utilities.dateToPg(newEndDate);
+        newEndDateString = newEndDateString.substring(0,19);
+        if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.scheduleTaskDuration: end_date='+newEndDateString);
+        model.set('end_date', newEndDateString);
 
-        // Write the new endDate into model
-        endDate = new Date(endTime);
-        endDateString = PO.Utilities.dateToPg(endDate);
-        endDateString = endDateString.substring(0,10) + ' 23:59:59';
-        if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.scheduleTaskDuration: end_date='+endDateString);
-        model.set('end_date', endDateString);
 
         if (me.debug > 1) console.log('PO.controller.gantt_editor.GanttSchedulingController.scheduleTaskDuration: Finished');
         return [model];
