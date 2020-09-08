@@ -41,6 +41,10 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
         return this;
     },
 
+    /* **************************************************************************************
+       Handlers for project tree changes
+    ************************************************************************************** */
+
     /**
      * Some function has changed the TreeStore:
      * Make sure to propagate the changes along dependencies
@@ -268,17 +272,17 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
 
 
     /* **************************************************************************************
-        Scheduling Auxillary Functions
-	Determine the duration of a task
+       Scheduling Auxillary Functions
+       Determine the duration of a task
     ************************************************************************************** */
 
 
     /**
-     * Calculate the first moment in a "work session" when resources 
+     * Calculate the first time in a "work session" after startTime when resources 
      * assignments change. This is the moment to start the next "session".
-     * In the future this will be controlled by resource calendars.
-     * Currently (2020-09-07) we will use a hard coded calendar 
-     * with 8 hours from 9 til 5.
+     * In the future this will be controlled by a resource calendar.
+     * Currently (2020-09-07) we used hardcoded 9 to 17:00.
+     *
      * Returns the time when resource assignments change after startTime.
      */
     taskResourceChangeTime: function(startTime, taskModel, assignees) {
@@ -347,7 +351,6 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
 
 
 
-
     /**
      * Calculate the new task duration based on resource assignments.
      * Returns true the new task endTime
@@ -401,6 +404,10 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
     },
 
 
+    /* **************************************************************************************
+       "Check" procedures
+    ************************************************************************************** */
+
     /**
      * Check the planned units vs. assigned resources percentage.
      * Then follow the ResourceCalendar to calculate the new end_date.
@@ -414,70 +421,19 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
     checkTaskLength: function(treeStore, model) {
         var me = this;
         if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.checkTaskLength: Starting');
-        
-        var previousStartDate = PO.Utilities.pgToDate(model.get('start_date')); if (!previousStartDate) { return false; }
-        previousStartDate.setHours(0,0,0,0);
+
         var previousEndDate = PO.Utilities.pgToDate(model.get('end_date')); if (!previousEndDate) { return false; }
         var previousEndTime = previousEndDate.getTime();
-        var assignees = model.get('assignees');
-        var plannedUnits = model.get('planned_units');
-        if (0 == plannedUnits) { return false; }					// No units - no duration...
-        if (!plannedUnits) { return false; }						// No units - no duration...
+	var newEndTime = me.taskForwardDuration(treeStore, model);
+        if (newEndTime == previousEndTime) return false;					// skip if no change
 
-        // Check for no assignments ("manually scheduled task") and skip
-        var assignedPercent = 0.0
-        assignees.forEach(function(assig) {
-            assignedPercent = assignedPercent + assig.percent
-        });
-        if (0 == assignedPercent) { return false; }					// No assignments - "manually sched" task
-
-
-        // --------------------------------------------------------
-        // Algorithm to determine the end-time of a task given:
-        // - end-time of the predecessor
-        // - the assigned resources
-        // --------------------------------------------------------
-
-        // Get the first moment a resource is available.
-        // This may be the actual moment, or some time later.
-        var workSessionStartTime = previousStartDate.getTime();
-        var workStillToDo = plannedUnits * 3600.0 * 1000.0;				// Work still to do in milli-seconds
-        
-        while (workStillToDo > 0.0) {
-            console.log('checkTaskLength: sessionStart='+new Date(workSessionStartTime));
-            var workSessionEndTime = me.taskResourceChangeTime(workSessionStartTime, model, assignees);	// First moment after workSessionStartTime that resources change
-            console.log('checkTaskLength: sessionEnd='+new Date(workSessionEndTime));
-            var workSessionDuration = workSessionEndTime - workSessionStartTime;	// A period with constant resources
-            var workSessionResourcesWorking = me.taskResourcesWorking(workSessionStartTime, model, assignees); // Number of resources available at that moment
-            console.log('checkTaskLength: working='+workSessionResourcesWorking);
-            var workSessionWorkDone = workSessionDuration * workSessionResourcesWorking;
-
-            // We have to deal with the case of the last session, that may be longer than the time required to finish
-            if (workSessionWorkDone < workStillToDo) {  				// Not finished yet in this session
-                workStillToDo = workStillToDo - workSessionWorkDone;			// Subtract work done in this session
-            } else {
-                workSessionDuration = workStillToDo / workSessionResourcesWorking;
-                workStillToDo = 0.0;	  		 				// Nothing more to do!
-            }
-
-            workSessionStartTime = workSessionStartTime + workSessionDuration;
-        }
-        var endTime = workSessionStartTime;
-
-        // --------------------------------------------------------
-        // End of algorithm
-        // --------------------------------------------------------
-
-
-        if (endTime == previousEndTime) return false;					// skip if no change
-
-        // Write the new endDate into model
-        endDate = new Date(endTime);
-        var endDateString = PO.Utilities.dateToPg(endDate);
-        // endDateString = endDateString.substring(0,10) + ' 23 :59:59';
-        endDateString = endDateString.substring(0,19);
-        if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.checkTaskLength: end_date='+endDateString);
-        model.set('end_date', endDateString);
+        // Write the newEndDate into model
+        newEndDate = new Date(newEndTime);
+        var newEndDateString = PO.Utilities.dateToPg(newEndDate);
+        // newEndDateString = newEndDateString.substring(0,10) + ' 23 :59:59';
+        newEndDateString = newEndDateString.substring(0,19);
+        if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.checkTaskLength: end_date='+newEndDateString);
+        model.set('end_date', newEndDateString);
 
         if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.checkTaskLength: Finished');
         return true;
