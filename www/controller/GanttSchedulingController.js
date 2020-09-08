@@ -341,7 +341,9 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
         var startMidnightTime = timeMoment - startHour;
 
         // 9:00-17:00 - 100%, rest - 0%
-        if (startHour < 9.0*3600.0*1000.0 || startHour >= 17.0*3600.0*1000.0) assignedPercent = 0.0
+        if (startHour < 9.0*3600.0*1000.0 || startHour >= 17.0*3600.0*1000.0) assignedPercent = 0.0;
+        var dayOfWeek = startDate.getDay();
+        if (0 == dayOfWeek || 6 == dayOfWeek) assignedPercent = 0.0;
 
         if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.taskResourcesWorking: Finished: resources='+assignedPercent / 100.0);
         return assignedPercent / 100.0;
@@ -372,7 +374,7 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
         assignees.forEach(function(assig) { assignedPercent = assignedPercent + assig.percent });
         if (0 == assignedPercent) { return previousEndTime; }				// No assignments - "manually scheduled" task
 
-	// -------------------------------------------------------
+        // -------------------------------------------------------
         // Get the first moment a resource is available.
         // This may be the actual moment, or some time later.
         var workStillToDo = plannedUnits * 3600.0 * 1000.0;				// Work still to do in milli-seconds
@@ -422,7 +424,7 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
 
         var previousEndDate = PO.Utilities.pgToDate(model.get('end_date')); if (!previousEndDate) { return false; }
         var previousEndTime = previousEndDate.getTime();
-	var newEndTime = me.taskForwardDuration(treeStore, model);
+        var newEndTime = me.taskForwardDuration(treeStore, model);
         if (newEndTime == previousEndTime) return false;					// skip if no change
 
         // Write the newEndDate into model
