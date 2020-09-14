@@ -425,6 +425,10 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
             delete me.scrollX;							// Remove the attribute - scroll only once...
         }
 
+	// Calculate the per-user hash of assignments of a user to other tasks
+	me.setupOverassignments();
+
+
         // Iterate through all children of the root node and check if they are visible
         rootNode.cascadeBy(function(model) {
             var viewNode = ganttTreeView.getNode(model);
@@ -440,6 +444,93 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
         });
 
         if (me.debug) console.log('PO.class.GanttDrawComponent.redraw: Finished');
+    },
+
+    /**
+     * Compile overassignment information in a hash of hashes
+     * in order to speed-up lookup during redraw per task
+     */
+    setupOverassignments() {
+        var me = this;
+        var drawOverassignments = me.preferenceStore.getPreferenceBoolean('show_project_cross_project_overassignments', true);
+        if (!drawOverassignments) return;
+        if (me.debug) { if (me.debug) console.log('PO.view.gantt.GanttBarPanel.setupOverassignments: Starting'); }
+
+        var absenceAssignmentStore = Ext.StoreManager.get('absenceAssignmentStore');
+        var projectMemberStore = Ext.StoreManager.get('projectMemberStore');
+        var overHash = {};
+
+        absenceAssignmentStore.each(function(absence) {
+            var userId = parseInt(absence.get('user_id'));
+            var objectId = parseInt(absence.get('object_id'));
+            var objectName = parseInt(absence.get('name'));
+            var startDate = absence.get('start_date').substring(0,10);
+            var endDate = absence.get('end_date').substring(0,10);
+            var startX = me.date2x(new Date(startDate)); if (!startX) return;
+            var endX = me.date2x(new Date(endDate)); if (!endX) return;
+            var type = absence.get('object_type');
+            var user_id = absence.get('user_id');
+            var user_name = absence.get('user_name');
+            var context_id = absence.get('context_id');
+            var context = absence.get('context');
+
+            // Write to hash
+            var userHash = overHash[userId];
+            if (!userHash) { 
+                userHash = {};
+                overHash[userId] = userHash;
+            }
+            userHash[objectId] = {startX: startX, endX: endX, name: objectName, type: type, userName: user_name, contextId: context_id, context: context};
+        });
+
+
+        // Iterate through all children of the root node and check if they are visible
+        var rootNode = me.objectStore.getRootNode();
+        rootNode.cascadeBy(function(task) {
+            var task_id = task.get('id');
+            var taskId = parseInt(task_id); if (!taskId) return;
+            var taskName = task.get('project_name');
+            var assignees = task.get('assignees');				// Array of {id, percent, name, email, initials}
+            var startDate, endDate;
+
+            // Get start- and end date (look at parents if necessary...)
+            var p = task;
+            while ("" == (startDate = p.get('start_date')) && !!p.parentNode) { p = p.parentNode;}
+            var p = task;
+            while ("" == (endDate = p.get('end_date')) && !!p.parentNode) { p = p.parentNode; }
+            if ("" == startDate || "" == endDate) { return; }
+
+            var startDate = PO.Utilities.pgToDate(startDate);
+            var endDate = PO.Utilities.pgToDate(endDate);
+            if (!startDate) return; 						// skip if invalid for some reason...
+            if (!endDate) return;
+            var startTime = startDate.getTime();
+            var endTime = endDate.getTime();
+            var startX = me.date2x(startTime);						// X position based on time scale
+            var endX = me.date2x(endTime);						// X position based on time scale
+
+            assignees.forEach(function(assignee) {
+                if (0 == assignee.percent) { return; }				// Don't show empty assignments
+                var userId = assignee.user_id;
+                var userModel = projectMemberStore.getById(""+assignee.user_id);
+                if (!userModel) return;
+                var userName = userModel.get('name');
+
+                // Write to hash
+                var userHash = overHash[userId];
+                if (!userHash) { 
+                    userHash = {};
+                    overHash[userId] = userHash;
+                }
+                userHash[taskId] = {startX: startX, endX: endX, name: taskName, type: 'im_project', userName: userName, contextId: taskId, context: taskName};
+            });
+        });
+
+
+        me.overassignmentHash = overHash;
+
+        if (me.debug) { if (me.debug) console.log('PO.view.gantt.GanttBarPanel.setupOverassignments: Finished'); }
+        console.log(overHash);
     },
 
 
@@ -682,6 +773,7 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
             }
         }
 
+
         // ---------------------------------------------------------------
         // Draw indication of user absence or assignment
 
@@ -689,66 +781,69 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
         if (drawOverassignments && !project.isMilestone() && !project.hasChildNodes()) {
             assignees.forEach(function(assigneeModel) {
                 var assigneeId = assigneeModel.user_id;
-                absenceAssignmentStore.each(function(absence) {
-                    var userId = parseInt(absence.get('user_id'));
-                    if (assigneeId == userId) {
-                        var startDate = absence.get('start_date').substring(0,10);
-                        var endDate = absence.get('end_date').substring(0,10);
-                        var startX = me.date2x(new Date(startDate)); if (!startX) return;
-                        var endX = me.date2x(new Date(endDate)); if (!endX) return;
+                var assigneeHash = me.overassignmentHash[assigneeId];
+                if (!assigneeHash) return;
+                for (var object_id in assigneeHash) {
 
-                        // Skip if not overlapping with Gantt bar
-                        if (startX > x + w) return;				// starts after the end of the Gantt bar
-                        if (endX < x) return;				// ends before the start of the Gantt bar
+                    var objectId = parseInt(object_id);
+                    if (objectId == id) continue;			// Don't show overallocation with the task itself :-)
 
-                        // Limit red bar to the Gantt bar size
-                        if (startX < x) { startX = x; }			// starts before Gantt bar => set to start of Gantt bar
-                        if (endX > x + w) { endX = x + w; }			// ends after Gantt bar end => set end to end of Gantt bar
-                        if (startX < 0) { startX = 1; }
-                        var width = endX - startX;
-                        if (width < 0) { width = 1; }
+                    var absenceHash = assigneeHash[objectId];
+                    
+                    var startX = absenceHash.startX;
+                    var endX = absenceHash.endX;
 
-                        var assigneeBar = surface.add({
-                            type: 'rect', x: startX, y: y-4, width: width, height: h+8, radius: 0,
-                            fill: 'red',
-                            opacity: 0.1,
-                            'stroke-width': 1,
-                            zIndex: -1000						// Neutral zIndex - in the middle
-                        }).show(true);
+                    // Skip if not overlapping with Gantt bar
+                    if (startX > x + w) continue;				// starts after the end of the Gantt bar
+                    if (endX < x) continue				// ends before the start of the Gantt bar
 
-                        var type = absence.get('object_type');
-                        var absenceHtml = "";
-                        var user_id = absence.get('user_id');
-                        var user_name = absence.get('user_name');
-                        var context_id = absence.get('context_id');
-                        var context = absence.get('context');
-                        switch (type) {
-                        case "im_project":
-                            absenceHtml = '<b>Overassignment</b><br>'+
-                                'User: <a href=/intranet/users/view?user_id='+ user_id + ' target=_blank>' + user_name + '</a><br>' +
-                                'has already been assigned<br>' +
-                                'to Task: <a href=/intranet-timesheet2-tasks/new?task_id=' + absence.get('object_id') + ' target=_blank>' + absence.get('name') + '</a><br>' +
-                                'of Project: <a href=/intranet/projects/view?project_id='+ context_id + ' target=_blank>' + context + '</a>';
-                            break;
-                        case "im_user_absence":
-                            absenceHtml = '<b>Assignment during absence</b><br>'+
-                                'User: <a href=/intranet/users/view?user_id='+ user_id + ' target=_blank>' + user_name + '</a><br>' +
-                                'has been assigned while absent due to<br>' +
-                                'Absence: ' + absence.get('name') + '<br>';
-                            break;
-                        default:
-                            alert('GanttBarPanel.drawProjectBar: Found unknown Vacation or Absence type: '+type);
-                        }
-                        Ext.create("Ext.tip.ToolTip", { 
-                            target: assigneeBar.el, 
-                            width: 250, 
-                            html: absenceHtml,
-                            hideDelay: 2000 
-                        });
+                    // Limit red bar to the Gantt bar size
+                    if (startX < x) { startX = x; }			// starts before Gantt bar => set to start of Gantt bar
+                    if (endX > x + w) { endX = x + w; }			// ends after Gantt bar end => set end to end of Gantt bar
+                    if (startX < 0) { startX = 1; }
+                    var width = endX - startX;
+                    if (width < 1) { width = 1; }
+
+                    var assigneeBar = surface.add({
+                        type: 'rect', x: startX, y: y-4, width: width, height: h+8, radius: 0,
+                        fill: 'red',
+                        opacity: 0.1,
+                        'stroke-width': 1,
+                        zIndex: -1000						// Neutral zIndex - in the middle
+                    }).show(true);
+
+                    var type = absenceHash.type;
+                    var name = absenceHash.name;
+                    var absenceHtml = "";
+                    var user_name = absenceHash.userName;
+                    var context_id = absenceHash.contextId;
+                    var context = absenceHash.context;
+                    switch (type) {
+                    case "im_project":
+                        absenceHtml = '<b>Overassignment</b><br>'+
+                            'User: <a href=/intranet/users/view?user_id='+ assigneeId + ' target=_blank>' + user_name + '</a><br>' +
+                            'has already been assigned<br>' +
+                            'to Task: <a href=/intranet-timesheet2-tasks/new?task_id=' + objectId + ' target=_blank>' + name + '</a><br>' +
+                            'of Project: <a href=/intranet/projects/view?project_id='+ context_id + ' target=_blank>' + context + '</a>';
+                        break;
+                    case "im_user_absence":
+                        absenceHtml = '<b>Assignment during absence</b><br>'+
+                            'User: <a href=/intranet/users/view?user_id='+ assigneeId + ' target=_blank>' + user_name + '</a><br>' +
+                            'has been assigned while absent due to<br>' +
+                            'Absence: ' + absence.get('name') + '<br>';
+                        break;
+                    default:
+                        alert('GanttBarPanel.drawProjectBar: Found unknown Vacation or Absence type: '+type);
                     }
-                });    
-            });
-}
+                    Ext.create("Ext.tip.ToolTip", { 
+                        target: assigneeBar.el, 
+                        width: 250, 
+                        html: absenceHtml,
+                        hideDelay: 2000 
+                    });
+                }
+            });    
+        }
 
         // ---------------------------------------------------------------
         // Draw financial documents above Gantt bar
