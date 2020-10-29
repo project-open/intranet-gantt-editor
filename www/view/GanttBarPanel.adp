@@ -830,7 +830,7 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
                         absenceHtml = '<b>Assignment during absence</b><br>'+
                             'User: <a href=/intranet/users/view?user_id='+ assigneeId + ' target=_blank>' + user_name + '</a><br>' +
                             'has been assigned while absent due to<br>' +
-                            'Absence: ' + absence.get('name') + '<br>';
+                            'Absence: ' + name + '<br>';
                         break;
                     default:
                         alert('GanttBarPanel.drawProjectBar: Found unknown Vacation or Absence type: '+type);
