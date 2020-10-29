@@ -430,7 +430,6 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
         // Write the newEndDate into model
         var newEndDate = new Date(newEndTime);
         var newEndDateString = PO.Utilities.dateToPg(newEndDate);
-        newEndDateString = newEndDateString.substring(0,19);
         if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.checkTaskLength: end_date='+newEndDateString);
         model.set('end_date', newEndDateString);
 
@@ -487,32 +486,6 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
         });
 
         if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.checkAssignedResources: Finished');
-    },
-
-    /**
-     * Make sure endDate is after startDate
-     */
-    checkStartEndDateConstraint: function(treeStore, model) {
-        var me = this;
-        if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.checkStartEndDateConstraint: Starting');
-        
-        var startDate = PO.Utilities.pgToDate(model.get('start_date'));
-        var endDate = PO.Utilities.pgToDate(model.get('end_date'));
-
-        if (startDate && endDate) {
-            var startTime = startDate.getTime();
-            var endTime = endDate.getTime();
-            if (startTime > endTime) {
-                // The user has entered inconsistent start/end dates
-                endTime = startTime + 1000 * 3600 * 24;
-                endDate = new Date(endTime);
-                endDateString = endDate.toISOString().substring(0,10);
-                if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.checkStartEndDateConstraint: end_date=' + endDateString + ' - making sure end_date is after startDate');
-                model.set('end_date', endDateString);
-            }
-        }
-
-        if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.checkStartEndDateConstraint: Finished');
     },
 
 
@@ -911,7 +884,6 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
         // Write the newEndDate into model
         var newEndDate = new Date(newEndTime);
         var newEndDateString = PO.Utilities.dateToPg(newEndDate);
-        newEndDateString = newEndDateString.substring(0,19);
         if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.scheduleTaskDuration: end_date='+newEndDateString);
         model.set('end_date', newEndDateString);
 

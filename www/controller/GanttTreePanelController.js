@@ -272,8 +272,12 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
         r.set('uom_id', ""+default_uom_id);
         r.set('project_name', 'New Task');
         r.set('work', ""+8);								// 8 hours by default
-        r.set('start_date', new Date().toISOString().substring(0,10)+" 00:00:00");	// Indicates start of the day at 00:00:00
-        r.set('end_date', new Date().toISOString().substring(0,10)+" 23:59:59");	// Same as start_date, but indicates 23:59:59
+
+	var nowDate = PO.Utilities.dateToPg(new Date()).substring(0,10);
+        r.set('start_date', nowDate+" 00:00:00");	// Indicates start of the day at 00:00:00
+        r.set('end_date', nowDate+" 23:59:59"); 	// Same as start_date, but indicates 23:59:59
+
+
         r.set('effort_driven_type_id', ""+default_effort_driven_type_id);
 
         // Get a server-side object_id for the task
