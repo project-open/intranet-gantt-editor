@@ -463,7 +463,7 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
         absenceAssignmentStore.each(function(absence) {
             var userId = parseInt(absence.get('user_id'));
             var objectId = parseInt(absence.get('object_id'));
-            var objectName = parseInt(absence.get('name'));
+            var objectName = absence.get('name');
             var startDate = absence.get('start_date').substring(0,10);
             var endDate = absence.get('end_date').substring(0,10);
             var startX = me.date2x(new Date(startDate)); if (!startX) return;
@@ -784,12 +784,9 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
                 var assigneeHash = me.overassignmentHash[assigneeId];
                 if (!assigneeHash) return;
                 for (var object_id in assigneeHash) {
-
                     var objectId = parseInt(object_id);
                     if (objectId == id) continue;			// Don't show overallocation with the task itself :-)
-
                     var absenceHash = assigneeHash[objectId];
-                    
                     var startX = absenceHash.startX;
                     var endX = absenceHash.endX;
 
