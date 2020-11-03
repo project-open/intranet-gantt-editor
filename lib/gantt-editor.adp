@@ -13,7 +13,7 @@
     .icon-crm       { background-image: url("/intranet/images/navbar_default/group.png") !important; }
 </style>
 
-<script type='text/javascript'>
+<script type='text/javascript' <if @::__csp_nonce@ not nil>nonce="@::__csp_nonce;literal@"</if>>
 // Ext.Loader.setConfig({enabled: true});
 Ext.Loader.setPath('PO', '/sencha-core');
 Ext.Loader.setPath('GanttEditor', '/intranet-gantt-editor');
