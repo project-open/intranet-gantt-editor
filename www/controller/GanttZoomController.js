@@ -54,7 +54,9 @@ Ext.define('GanttEditor.controller.GanttZoomController', {
         me.control({
             '#buttonZoomIn': { click: me.onButtonZoomIn },
             '#buttonZoomOut': { click: me.onButtonZoomOut },
-            '#buttonZoomCenter': { click: me.onButtonZoomCenter }
+            '#buttonZoomCenter': { click: me.onButtonZoomCenter },
+            '#buttonZoomLeft': { click: me.onButtonZoomLeft },
+            '#buttonZoomRight': { click: me.onButtonZoomRight }
         });
 
         // Catch scroll events
@@ -269,6 +271,62 @@ Ext.define('GanttEditor.controller.GanttZoomController', {
         me.senchaPreferenceStore.setPreference('axisEndX', ganttBarPanel.axisEndX);        // Persist the new zoom parameters
 
         if (me.debug) console.log('GanttEditor.controller.GanttZoomController.onButtonZoomOut: Finished');
+    },
+
+    /**
+     * Zoom Right - The user has pressed the (<) button.
+     */
+    onButtonZoomRight: function() {
+        var me = this;
+        if (me.debug) console.log('GanttEditor.controller.GanttZoomController.onButtonZoomRight: Starting');
+
+        var ganttBarPanel = me.getGanttBarPanel();
+        var panelBox = ganttBarPanel.getBox();
+        var panelWidth = panelBox.width;
+
+        var startTime = ganttBarPanel.axisStartDate.getTime();
+        var endTime = ganttBarPanel.axisEndDate.getTime();
+
+	var diffTime = endTime - startTime;
+	startTime = startTime + (diffTime / 2.0);
+	endTime = endTime + (diffTime / 2.0);
+        ganttBarPanel.axisStartDate = new Date(startTime);
+        ganttBarPanel.axisEndDate = new Date(endTime);
+        me.getGanttBarPanel().needsRedraw = true;
+
+	// Persist changes
+	me.senchaPreferenceStore.setPreference('axisStartTime', startTime);
+	me.senchaPreferenceStore.setPreference('axisEndTime', endTime);
+
+        if (me.debug) console.log('GanttEditor.controller.GanttZoomController.onButtonZoomRight: Finished');
+    },
+
+    /**
+     * Zoom Left - The user has pressed the (<) button.
+     */
+    onButtonZoomLeft: function() {
+        var me = this;
+        if (me.debug) console.log('GanttEditor.controller.GanttZoomController.onButtonZoomLeft: Starting');
+
+        var ganttBarPanel = me.getGanttBarPanel();
+        var panelBox = ganttBarPanel.getBox();
+        var panelWidth = panelBox.width;
+
+        var startTime = ganttBarPanel.axisStartDate.getTime();
+        var endTime = ganttBarPanel.axisEndDate.getTime();
+
+	var diffTime = endTime - startTime;
+	startTime = startTime - (diffTime / 2.0);
+	endTime = endTime - (diffTime / 2.0);
+        ganttBarPanel.axisStartDate = new Date(startTime);
+        ganttBarPanel.axisEndDate = new Date(endTime);
+        me.getGanttBarPanel().needsRedraw = true;
+
+	// Persist changes
+	me.senchaPreferenceStore.setPreference('axisStartTime', startTime);
+	me.senchaPreferenceStore.setPreference('axisEndTime', endTime);
+
+        if (me.debug) console.log('GanttEditor.controller.GanttZoomController.onButtonZoomLeft: Finished');
     },
 
     /**

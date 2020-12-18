@@ -198,9 +198,11 @@ function launchGanttEditor(debug){
             { icon: gifPath+'link_add.png', tooltip: 'Add dependency', id: 'buttonAddDependency', hidden: true}, 
             { icon: gifPath+'link_break.png', tooltip: 'Break dependency', id: 'buttonBreakDependency', hidden: true}, 
             '->', 
+            { icon: gifPath+'resultset_previous.png', tooltip: 'Zoom in time axis', id: 'buttonZoomLeft'}, 
             { icon: gifPath+'zoom_in.png', tooltip: 'Zoom in time axis', id: 'buttonZoomIn'}, 
             { icon: gifPath+'zoom.png', tooltip: 'Center', id: 'buttonZoomCenter'}, 
-            { icon: gifPath+'zoom_out.png', tooltip: 'Zoom out of time axis', id: 'buttonZoomOut'}, 
+            { icon: gifPath+'zoom_out.png', tooltip: 'Zoom out of time axis', id: 'buttonZoomOut'},
+	    { icon: gifPath+'resultset_next.png', tooltip: 'Zoom in time axis', id: 'buttonZoomRight'}, 
             '->', 
             { text: 'Configuration', icon: gifPath+'wrench.png', menu: configMenu}, 
             { text: 'Help', icon: gifPath+'help.png', menu: helpMenu}
