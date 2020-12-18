@@ -955,7 +955,7 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
 
         var depName = 'Task dependency';
         var depTypeId = dependencyModel.type_id;
-	if (depTypeId == 9650) depTypeId = 9660;					// compatibility
+	if (depTypeId == 9650) depTypeId = 9662;					// compatibility
         switch (depTypeId) {
         case 9660: depName = '@finish_to_finish_l10n@'; break;
         case 9662: depName = '@finish_to_start_l10n@'; break;

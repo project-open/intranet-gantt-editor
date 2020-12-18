@@ -223,6 +223,10 @@ Ext.define('GanttEditor.controller.GanttZoomController', {
 
         me.getGanttBarPanel().needsRedraw = true;
 
+        me.senchaPreferenceStore.setPreference('axisEndX', ganttBarPanel.axisEndX);        // Persist the new zoom parameters
+        me.senchaPreferenceStore.setPreference('axisStartTime', ganttBarPanel.axisStartDate.getTime());
+        me.senchaPreferenceStore.setPreference('axisEndTime', ganttBarPanel.axisEndDate.getTime());
+	
         if (me.debug) console.log('GanttEditor.controller.GanttZoomController.onButtonZoomIn: Finished');
     },
 
@@ -269,7 +273,9 @@ Ext.define('GanttEditor.controller.GanttZoomController', {
         ganttBarPanel.axisEndX = endX;
         me.getGanttBarPanel().needsRedraw = true;
         me.senchaPreferenceStore.setPreference('axisEndX', ganttBarPanel.axisEndX);        // Persist the new zoom parameters
-
+        me.senchaPreferenceStore.setPreference('axisStartTime', ganttBarPanel.axisStartDate.getTime());
+        me.senchaPreferenceStore.setPreference('axisEndTime', ganttBarPanel.axisEndDate.getTime());
+	
         if (me.debug) console.log('GanttEditor.controller.GanttZoomController.onButtonZoomOut: Finished');
     },
 
@@ -380,6 +386,7 @@ Ext.define('GanttEditor.controller.GanttZoomController', {
         if (me.debug) console.log('GanttEditor.controller.GanttZoomController.onButtonZoomCenter: Starting');
 
         var ganttTreePanel = me.getGanttTreePanel();
+        var ganttBarPanel = me.getGanttBarPanel();
         
         // Is a task selected? Otherwise center around the entire project
         var selectionModel = ganttTreePanel.getSelectionModel();
@@ -397,6 +404,11 @@ Ext.define('GanttEditor.controller.GanttZoomController', {
         }
 */
 
+        me.senchaPreferenceStore.setPreference('axisEndX', ganttBarPanel.axisEndX);        // Persist the new zoom parameters
+        me.senchaPreferenceStore.setPreference('axisStartTime', ganttBarPanel.axisStartDate.getTime());
+        me.senchaPreferenceStore.setPreference('axisEndTime', ganttBarPanel.axisEndDate.getTime());
+
+	
         if (me.debug) console.log('GanttEditor.controller.GanttZoomController.onButtonZoomCenter: Finished');
     },
 
