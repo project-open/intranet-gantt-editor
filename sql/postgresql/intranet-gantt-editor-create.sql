@@ -201,7 +201,7 @@ update im_reports set
 						sub_p.tree_sortkey between main_p.tree_sortkey and tree_right(main_p.tree_sortkey) and
 						main_p.project_id = %main_project_id%
 				) and p.project_id not in (
-					-- Exclude assignments within main_p (handled in JavaScript)
+					-- Exclude assignments within main_p (handled in JS)
 					select	sub_p.project_id
 					from	im_projects sub_p,
 						im_projects main_p
