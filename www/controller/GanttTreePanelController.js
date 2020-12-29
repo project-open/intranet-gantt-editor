@@ -29,10 +29,10 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
                 'itemcollapse': this.onItemCollapse,
                 'itemexpand': this.onItemExpand
             },
-            '#buttonReduceIndent': { click: this.onButtonReduceIndent},
-            '#buttonIncreaseIndent': { click: this.onButtonIncreaseIndent},
-            '#buttonAdd': { click: this.onButtonAdd},
-            '#buttonDelete': { click: this.onButtonDelete},
+            '#buttonReduceIndentGantt': { click: this.onButtonReduceIndent},
+            '#buttonIncreaseIndentGantt': { click: this.onButtonIncreaseIndent},
+            '#buttonAddGantt': { click: this.onButtonAdd},
+            '#buttonDeleteGantt': { click: this.onButtonDelete},
 
             // Redraw GanttBars after changing the configuration
             '#config_menu_show_project_dependencies': { click: this.redrawGanttBarPanel},
@@ -392,7 +392,7 @@ Ext.define('GanttEditor.controller.GanttTreePanelController', {
         // Finish off
 
         me.getGanttBarPanel().needsRedraw = true;					// Force delayed redraw
-        var buttonSave = Ext.getCmp('buttonSave');
+        var buttonSave = Ext.getCmp('buttonSaveGantt');
         buttonSave.setDisabled(false);							// Enable "Save" button
 
     },

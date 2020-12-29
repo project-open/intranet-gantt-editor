@@ -32,13 +32,13 @@ Ext.define('GanttEditor.controller.GanttButtonController', {
 
         // Listen to button press events
         this.control({
-            '#buttonReload': { click: this.onButtonReload },
-            '#buttonSave': { click: this.onButtonSave },
-            '#buttonMaximize': { click: this.onButtonMaximize },
-            '#buttonMinimize': { click: this.onButtonMinimize },
-            '#buttonAddDependency': { click: this.onButton },
-            '#buttonBreakDependency': { click: this.onButton },
-            '#buttonSettings': { click: this.onButton },
+            '#buttonReloadGantt': { click: this.onButtonReload },
+            '#buttonSaveGantt': { click: this.onButtonSave },
+            '#buttonMaximizeGantt': { click: this.onButtonMaximize },
+            '#buttonMinimizeGantt': { click: this.onButtonMinimize },
+            '#buttonAddDependencyGantt': { click: this.onButton },
+            '#buttonBreakDependencyGantt': { click: this.onButton },
+            '#buttonSettingsGantt': { click: this.onButton },
             scope: me.ganttTreePanel
         });
 
@@ -60,9 +60,9 @@ Ext.define('GanttEditor.controller.GanttButtonController', {
         me.taskTreeStore.on({'update': me.onTaskTreeStoreUpdate, 'scope': this});
 
         // write_project_p is a global variable defined in gantt-editor.adp
-        var buttonSave = Ext.getCmp('buttonSave');
+        var buttonSave = Ext.getCmp('buttonSaveGantt');
         me.buttonSave = buttonSave;
-        var buttonLock = Ext.getCmp('buttonLock');
+        var buttonLock = Ext.getCmp('buttonLockGantt');
         if (1 == write_project_p) {
             buttonSave.show();
             buttonLock.hide();
@@ -98,7 +98,7 @@ Ext.define('GanttEditor.controller.GanttButtonController', {
     onButtonReload: function() {
         var me = this;
         if (me.debug) console.log('GanttButtonController.ButtonReload');
-        // var buttonSave = Ext.getCmp('buttonSave');
+        // var buttonSave = Ext.getCmp('buttonSaveGantt');
         me.buttonSave.setDisabled(true);
     },
 
@@ -160,7 +160,7 @@ Ext.define('GanttEditor.controller.GanttButtonController', {
             }
         });
         // Now block the "Save" button, unless some data are changed.
-	// var buttonSave = Ext.getCmp('buttonSave');
+	// var buttonSave = Ext.getCmp('buttonSaveGantt');
         me.buttonSave.setDisabled(true);
         if (me.debug) console.log('GanttButtonController.ButtonSave: Finished');
     },
@@ -197,7 +197,7 @@ Ext.define('GanttEditor.controller.GanttButtonController', {
 */
 
         // Enable the Save button
-        // var buttonSave = Ext.getCmp('buttonSave');
+        // var buttonSave = Ext.getCmp('buttonSaveGantt');
         me.buttonSave.setDisabled(false);					// Allow to "save" changes
 
         // ToDo: This isn't always the case...
@@ -210,8 +210,8 @@ Ext.define('GanttEditor.controller.GanttButtonController', {
      */
     onButtonMaximize: function() {
         var me = this;
-        var buttonMaximize = Ext.getCmp('buttonMaximize');
-        var buttonMinimize = Ext.getCmp('buttonMinimize');
+        var buttonMaximize = Ext.getCmp('buttonMaximizeGantt');
+        var buttonMinimize = Ext.getCmp('buttonMinimizeGantt');
         buttonMaximize.setVisible(false);
         buttonMinimize.setVisible(true);
         me.resizeController.onSwitchToFullScreen();
@@ -219,8 +219,8 @@ Ext.define('GanttEditor.controller.GanttButtonController', {
 
     onButtonMinimize: function() {
         var me = this;
-        var buttonMaximize = Ext.getCmp('buttonMaximize');
-        var buttonMinimize = Ext.getCmp('buttonMinimize');
+        var buttonMaximize = Ext.getCmp('buttonMaximizeGantt');
+        var buttonMinimize = Ext.getCmp('buttonMinimizeGantt');
         buttonMaximize.setVisible(true);
         buttonMinimize.setVisible(false);
         me.resizeController.onSwitchBackFromFullScreen();
@@ -232,7 +232,7 @@ Ext.define('GanttEditor.controller.GanttButtonController', {
     onTreePanelSelectionChange: function(view, records) {
         var me = this;
         if (me.debug) console.log('GanttButtonController.onTreePanelSelectionChange');
-        var buttonDelete = Ext.getCmp('buttonDelete');
+        var buttonDelete = Ext.getCmp('buttonDeleteGantt');
 
         if (1 == records.length) {						// Exactly one record enabled
             var record = records[0];

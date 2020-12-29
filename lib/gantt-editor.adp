@@ -123,9 +123,9 @@ function launchGanttEditor(debug){
     /* ***********************************************************************
      * Config Menu
      *********************************************************************** */
-    var configMenu = Ext.create('PO.view.menu.ConfigMenu', {
-        debug: getDebug('configMenu'),
-        id: 'configMenu',
+    var configMenuGanttEditor = Ext.create('PO.view.menu.ConfigMenu', {
+        debug: getDebug('configMenuGanttEditor'),
+        id: 'configMenuGanttEditor',
         senchaPreferenceStore: senchaPreferenceStore,
         items: [
 /*	{
@@ -181,30 +181,30 @@ function launchGanttEditor(debug){
             bodyPadding: 0
         },
         tbar: [
-            { icon: gifPath+'lock.png', tooltip: 'Read-only - you can not save changes', id: 'buttonLock', disabled: true}, 
-            { icon: gifPath+'disk.png', tooltip: '<nobr>Save the project to the &#93;po&#91; backend</nobr>', id: 'buttonSave', disabled: true}, 
-            // { icon: gifPath+'arrow_refresh.png', tooltip: 'Reload project data from ]po[ backend, discarding changes', id: 'buttonReload'}, 
-            { icon: gifPath+'arrow_out.png', tooltip: 'Maximize the editor &nbsp;', id: 'buttonMaximize'}, 
-            { icon: gifPath+'arrow_in.png', tooltip: 'Restore default editor size &nbsp;', id: 'buttonMinimize', hidden: true},
+            { icon: gifPath+'lock.png', tooltip: 'Read-only - you can not save changes', id: 'buttonLockGantt', disabled: true}, 
+            { icon: gifPath+'disk.png', tooltip: '<nobr>Save the project to the &#93;po&#91; backend</nobr>', id: 'buttonSaveGantt', disabled: true}, 
+            // { icon: gifPath+'arrow_refresh.png', tooltip: 'Reload project data from ]po[ backend, discarding changes', id: 'buttonReloadGantt'}, 
+            { icon: gifPath+'arrow_out.png', tooltip: 'Maximize the editor &nbsp;', id: 'buttonMaximizeGantt'}, 
+            { icon: gifPath+'arrow_in.png', tooltip: 'Restore default editor size &nbsp;', id: 'buttonMinimizeGantt', hidden: true},
             { xtype: 'tbseparator' }, 
-            { icon: gifPath+'add.png', tooltip: 'Add a new task', id: 'buttonAdd'}, 
-            { icon: gifPath+'delete.png', tooltip: 'Delete a task', id: 'buttonDelete'}, 
+            { icon: gifPath+'add.png', tooltip: 'Add a new task', id: 'buttonAddGantt'}, 
+            { icon: gifPath+'delete.png', tooltip: 'Delete a task', id: 'buttonDeleteGantt'}, 
             { xtype: 'tbseparator' }, 
             // Event captured and handled by GanttTreePanelController 
-            { icon: gifPath+'arrow_left.png', tooltip: 'Reduce Indent', id: 'buttonReduceIndent'}, 
+            { icon: gifPath+'arrow_left.png', tooltip: 'Reduce Indent', id: 'buttonReduceIndentGantt'}, 
             // Event captured and handled by GanttTreePanelController 
-            { icon: gifPath+'arrow_right.png', tooltip: 'Increase Indent', id: 'buttonIncreaseIndent'}, 
+            { icon: gifPath+'arrow_right.png', tooltip: 'Increase Indent', id: 'buttonIncreaseIndentGantt'},
             { xtype: 'tbseparator'}, 
-            { icon: gifPath+'link_add.png', tooltip: 'Add dependency', id: 'buttonAddDependency', hidden: true}, 
-            { icon: gifPath+'link_break.png', tooltip: 'Break dependency', id: 'buttonBreakDependency', hidden: true}, 
+            { icon: gifPath+'link_add.png', tooltip: 'Add dependency', id: 'buttonAddDependencyGantt', hidden: true}, 
+            { icon: gifPath+'link_break.png', tooltip: 'Break dependency', id: 'buttonBreakDependencyGantt', hidden: true}, 
             '->', 
-            { icon: gifPath+'resultset_previous.png', tooltip: 'Zoom in time axis', id: 'buttonZoomLeft'}, 
-            { icon: gifPath+'zoom_in.png', tooltip: 'Zoom in time axis', id: 'buttonZoomIn'}, 
-            { icon: gifPath+'zoom.png', tooltip: 'Center', id: 'buttonZoomCenter'}, 
-            { icon: gifPath+'zoom_out.png', tooltip: 'Zoom out of time axis', id: 'buttonZoomOut'},
-	    { icon: gifPath+'resultset_next.png', tooltip: 'Zoom in time axis', id: 'buttonZoomRight'}, 
+            { icon: gifPath+'resultset_previous.png', tooltip: 'Zoom in time axis', id: 'buttonZoomLeftGantt'},
+            { icon: gifPath+'zoom_in.png', tooltip: 'Zoom in time axis', id: 'buttonZoomInGantt'}, 
+            { icon: gifPath+'zoom.png', tooltip: 'Center', id: 'buttonZoomCenterGantt'},
+            { icon: gifPath+'zoom_out.png', tooltip: 'Zoom out of time axis', id: 'buttonZoomOutGantt'},
+	    { icon: gifPath+'resultset_next.png', tooltip: 'Zoom in time axis', id: 'buttonZoomRightGantt'}, 
             '->', 
-            { text: 'Configuration', icon: gifPath+'wrench.png', menu: configMenu}, 
+            { text: 'Configuration', icon: gifPath+'wrench.png', menu: configMenuGanttEditor}, 
             { text: 'Help', icon: gifPath+'help.png', menu: helpMenu}
             //,{ text: 'This is Beta!', icon: gifPath+'bug.png', menu: alphaMenu}
         ]
@@ -289,7 +289,7 @@ function launchGanttEditor(debug){
     // Controller for handling configuration options
     var ganttConfigController = Ext.create('GanttEditor.controller.GanttConfigController', {
         debug: getDebug('ganttConfigController'),
-        configMenu: configMenu,
+        configMenuGanttEditor: configMenuGanttEditor,
         senchaPreferenceStore: senchaPreferenceStore,
         ganttBarPanel: ganttBarPanel
     });
@@ -334,26 +334,27 @@ function launchGanttEditor(debug){
     ganttBarPanel.ganttSchedulingController = ganttSchedulingController;
     ganttSchedulingController.init(this).onLaunch(this);
     dependencyPropertyPanel.ganttSchedulingController = ganttSchedulingController;
-    
-    // Create a warning if there are no tasks in the project
-    var numTasks = 0;
-    taskTreeStore.tree.root.eachChild(function() { numTasks = numTasks + 1; });
-    if (0 == numTasks) {
-        Ext.Msg.show({
-            title: 'No tasks created yet',
-            msg: 'Please click on the <img src="/intranet/images/navbar_default/add.png"> button above<br>in order to add a first task to your project.',
-            height: 120, width: 400,
-            buttons: Ext.Msg.OK,
-            icon: Ext.Msg.INFO,
-            modal: false
-        });
-    };
 
+    // Create a warning if there are no tasks in the project
+    setTimeout(function() {
+        var numTasks = 0;
+        taskTreeStore.tree.root.eachChild(function() { numTasks = numTasks + 1; });
+        if (0 == numTasks) {
+            Ext.Msg.show({
+                title: 'No tasks created yet',
+                msg: 'Please click on the <img src="/intranet/images/navbar_default/add.png"> button above<br>in order to add a first task to your project.',
+                height: 120, width: 400,
+                buttons: Ext.Msg.OK,
+                icon: Ext.Msg.INFO,
+                modal: false
+            });
+        };
+    }, 2);
 
     // Work around Chrome bug showing a 15px white space between GanttBarPanel DIV and SVG:
     setTimeout(function() {
         var svgStyle = document.getElementById("ganttBarPanel").firstChild.style;
-	svgStyle.minHeight = "0px";
+        svgStyle.minHeight = "0px";
     }, 1);
 };
 
@@ -389,7 +390,6 @@ Ext.onReady(function() {
      *********************************************************************** */
 
     var taskTreeStore = Ext.create('PO.store.timesheet.TaskTreeStore');
-    var senchaPreferenceStore = Ext.create('PO.store.user.SenchaPreferenceStore');
     var taskStatusStore = Ext.create('PO.store.timesheet.TaskStatusStore');
     var taskMaterialStore = Ext.create('PO.store.timesheet.TaskMaterialStore');
     var taskCostCenterStore = Ext.create('PO.store.timesheet.TaskCostCenterStore');
@@ -398,6 +398,13 @@ Ext.onReady(function() {
     var groupStore = Ext.create('PO.store.group.GroupStore', {storeId: 'groupStore'});
     var absenceAssignmentStore = Ext.create('GanttEditor.store.AbsenceAssignmentStore', {storeId: 'absenceAssignmentStore'});
 
+    var senchaPreferenceStore = Ext.StoreManager.get('senchaPreferenceStore');
+    if (!senchaPreferenceStore) {
+        senchaPreferenceStore = Ext.create('PO.store.user.SenchaPreferenceStore');
+    } else {
+	senchaPreferenceStore.loaded = true;
+    }
+    
     // Store Coodinator starts app after all stores have been loaded:
     var coordinator = Ext.create('PO.controller.StoreLoadCoordinator', {
         debug: getDebug('storeLoadCoordinator'),
@@ -472,7 +479,8 @@ Ext.onReady(function() {
     });
 
     // User preferences
-    senchaPreferenceStore.load({callback: function(r, op, success) { if (!success) PO.Utilities.reportStoreError("UserPreferenceStore", op); }});
+    if (!senchaPreferenceStore.loaded)
+        senchaPreferenceStore.load({callback: function(r, op, success) { if (!success) PO.Utilities.reportStoreError("UserPreferenceStore", op); }});
 
 
     // User store - load last, because this can take some while. Load only Employees.

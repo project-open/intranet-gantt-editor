@@ -20,14 +20,14 @@ Ext.define('GanttEditor.controller.GanttConfigController', {
     
     debug: false,
     senchaPreferenceStore: null,			// preferences
-    configMenu: null,
+    configMenuGanttEditor: null,
     ganttBarPanel: null,
 
     init: function() {
         var me = this;
         if (me.debug) console.log('GanttEditor.controller.GanttConfigController.init: Starting');
 
-	me.configMenu.on({
+	me.configMenuGanttEditor.on({
 	    'click': me.onConfigClick,
 	    'scope': this
 	});

@@ -108,7 +108,7 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
         if (dirty) {
             me.ganttBarPanel.needsRedraw = true;					// Force a redraw
 
-            var buttonSave = Ext.getCmp('buttonSave');
+            var buttonSave = Ext.getCmp('buttonSaveGantt');
             buttonSave.setDisabled(false);						// Enable "Save" button
         }
 

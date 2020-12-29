@@ -52,11 +52,11 @@ Ext.define('GanttEditor.controller.GanttZoomController', {
 
         // Catch events from three zoom buttons
         me.control({
-            '#buttonZoomIn': { click: me.onButtonZoomIn },
-            '#buttonZoomOut': { click: me.onButtonZoomOut },
-            '#buttonZoomCenter': { click: me.onButtonZoomCenter },
-            '#buttonZoomLeft': { click: me.onButtonZoomLeft },
-            '#buttonZoomRight': { click: me.onButtonZoomRight }
+            '#buttonZoomInGantt': { click: me.onButtonZoomIn },
+            '#buttonZoomOutGantt': { click: me.onButtonZoomOut },
+            '#buttonZoomCenterGantt': { click: me.onButtonZoomCenter },
+            '#buttonZoomLeftGantt': { click: me.onButtonZoomLeft },
+            '#buttonZoomRightGantt': { click: me.onButtonZoomRight }
         });
 
         // Catch scroll events
