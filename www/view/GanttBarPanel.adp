@@ -483,14 +483,21 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
             userHash[objectId] = {startX: startX, endX: endX, name: objectName, type: type, userName: user_name, contextId: context_id, context: context};
         });
 
-
         // Iterate through all children of the root node and check if they are visible
         var rootNode = me.objectStore.getRootNode();
         rootNode.cascadeBy(function(task) {
+
+	    // Skip summary activities (tasks with children)
+	    var children = task.childNodes;
+	    if (Array.isArray(children)) {
+		var numChildren = children.length;
+		if (numChildren > 0) return;
+	    }
+	    
             var task_id = task.get('id');
             var taskId = parseInt(task_id); if (!taskId) return;
             var taskName = task.get('project_name');
-            var assignees = task.get('assignees');				// Array of {id, percent, name, email, initials}
+            var assignees = task.get('assignees');					// Array of {id, percent, name, email, initials}
             var startDate, endDate;
 
             // Get start- and end date (look at parents if necessary...)
@@ -502,7 +509,7 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
 
             var startDate = PO.Utilities.pgToDate(startDate);
             var endDate = PO.Utilities.pgToDate(endDate);
-            if (!startDate) return; 						// skip if invalid for some reason...
+            if (!startDate) return;							// skip if invalid for some reason...
             if (!endDate) return;
             var startTime = startDate.getTime();
             var endTime = endDate.getTime();
@@ -510,14 +517,12 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
             var endX = me.date2x(endTime);						// X position based on time scale
 
             assignees.forEach(function(assignee) {
-                if (0 == assignee.percent) { return; }				// Don't show empty assignments
+                if (0 == assignee.percent) { return; }					// Don't show empty assignments
                 var userId = assignee.user_id;
                 var userModel = projectMemberStore.getById(""+assignee.user_id);
                 if (!userModel) return;
                 var userName = userModel.get('name');
-
-                // Write to hash
-                var userHash = overHash[userId];
+                var userHash = overHash[userId];					// Write to hash
                 if (!userHash) { 
                     userHash = {};
                     overHash[userId] = userHash;
@@ -525,7 +530,6 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
                 userHash[taskId] = {startX: startX, endX: endX, name: taskName, type: 'im_project', userName: userName, contextId: taskId, context: taskName};
             });
         });
-
 
         me.overassignmentHash = overHash;
 
