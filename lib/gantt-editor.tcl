@@ -1,4 +1,4 @@
-# /packages/intranet-gantt-editor/lib/task-editor.tcl
+# /packages/intranet-gantt-editor/lib/gantt-editor.tcl
 #
 # Copyright (C) 2012 ]project-open[
 #

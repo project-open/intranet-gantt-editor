@@ -153,7 +153,7 @@ function launchGanttEditor(debug){
             id: 'config_menu_show_percent_done_bar',
             key: 'show_percent_done_bar', 
             text: 'Show "Done %" Gantt Bars', 
-            checked: false
+            checked: true
         },  {
             id: 'config_menu_show_logged_hours_bar',
             key: 'show_logged_hours_bar', 
