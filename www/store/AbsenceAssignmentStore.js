@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2014 ]project-open[
  * All rights reserved. Please see
- * http://www.project-open.com/license/sencha/ for details.
+ * https://www.project-open.com/license/sencha/ for details.
  *
  * A store with the list of absences or assignments of the users
  * in the project.
