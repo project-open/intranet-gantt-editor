@@ -534,7 +534,6 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
         me.overassignmentHash = overHash;
 
         if (me.debug) { if (me.debug) console.log('PO.view.gantt.GanttBarPanel.setupOverassignments: Finished'); }
-        console.log(overHash);
     },
 
 
