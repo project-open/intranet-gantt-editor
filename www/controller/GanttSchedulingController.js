@@ -287,7 +287,7 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
      */
     taskResourceChangeTime: function(startTime, taskModel, assignees) {
         var me = this;
-        if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.taskResourceChangeTime: Starting: '+startTime+' - '+new Date(startTime));
+        if (me.debug && me.debug > 1) console.log('PO.controller.gantt_editor.GanttSchedulingController.taskResourceChangeTime: Starting: '+startTime+' - '+new Date(startTime));
 
         var startDate = new Date(startTime);
         var startHour = startDate.getHours() * 3600.0*1000.0 + startDate.getMinutes() * 60.0*1000.0 + startDate.getSeconds()*1000.0 + startDate.getMilliseconds();
@@ -317,7 +317,7 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
             i++;
         }
 
-        if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.taskResourceChangeTime: Finished: '+changeTime+' - '+new Date(changeTime));
+        if (me.debug && me.debug > 1) console.log('PO.controller.gantt_editor.GanttSchedulingController.taskResourceChangeTime: Finished: '+changeTime+' - '+new Date(changeTime));
         return changeTime;
     },
 
@@ -329,7 +329,7 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
      */
     taskResourcesWorking: function(timeMoment, model, assignees) {
         var me = this;
-        if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.taskResourcesWorking: Starting: '+new Date(timeMoment));
+        if (me.debug && me.debug > 1) console.log('PO.controller.gantt_editor.GanttSchedulingController.taskResourcesWorking: Starting: '+new Date(timeMoment));
 
         // Calculate the percent assigned in total
         var assignedPercent = 0.0
@@ -345,7 +345,7 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
         var dayOfWeek = startDate.getDay();
         if (0 == dayOfWeek || 6 == dayOfWeek) assignedPercent = 0.0;
 
-        if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.taskResourcesWorking: Finished: resources='+assignedPercent / 100.0);
+        if (me.debug && me.debug > 1) console.log('PO.controller.gantt_editor.GanttSchedulingController.taskResourcesWorking: Finished: resources='+assignedPercent / 100.0);
         return assignedPercent / 100.0;
     },
 
@@ -357,7 +357,7 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
      */
     taskForwardDuration: function(treeStore, model) {
         var me = this;
-        if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.taskForwardDuration: Starting');
+        if (me.debug && me.debug > 1) console.log('PO.controller.gantt_editor.GanttSchedulingController.taskForwardDuration: Starting');
         
         var previousStartDate = PO.Utilities.pgToDate(model.get('start_date')); if (!previousStartDate) { return false; }
         var previousEndDate = PO.Utilities.pgToDate(model.get('end_date')); if (!previousEndDate) { return false; }
@@ -399,7 +399,7 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
         }
         var endTime = workSessionStartTime;
 
-        if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.taskForwardDuration: Finished');
+        if (me.debug && me.debug > 1) console.log('PO.controller.gantt_editor.GanttSchedulingController.taskForwardDuration: Finished');
         return endTime;
     },
 
@@ -420,7 +420,7 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
      */
     checkTaskLength: function(treeStore, model) {
         var me = this;
-        if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.checkTaskLength: Starting');
+        if (me.debug && me.debug > 1) console.log('PO.controller.gantt_editor.GanttSchedulingController.checkTaskLength: Starting');
 
         var previousEndDate = PO.Utilities.pgToDate(model.get('end_date')); if (!previousEndDate) { return false; }
         var previousEndTime = previousEndDate.getTime();
@@ -433,7 +433,7 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
         if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.checkTaskLength: end_date='+newEndDateString);
         model.set('end_date', newEndDateString);
 
-        if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.checkTaskLength: Finished');
+        if (me.debug && me.debug > 1) console.log('PO.controller.gantt_editor.GanttSchedulingController.checkTaskLength: Finished');
         return true;
     },
 
@@ -444,7 +444,7 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
      */
     checkAssignedResources: function(treeStore, model) {
         var me = this;
-        if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.checkAssignedResources: Starting');
+        if (me.debug && me.debug > 1) console.log('PO.controller.gantt_editor.GanttSchedulingController.checkAssignedResources: Starting');
         
         var startDate = PO.Utilities.pgToDate(model.get('start_date')); if (!startDate) return; // No date - no duration...
         startDate.setHours(0,0,0,0);
@@ -485,7 +485,7 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
             assig.percent = Math.round(10.0 * assig.percent * assignmentFactor) / 10.0;
         });
 
-        if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.checkAssignedResources: Finished');
+        if (me.debug && me.debug > 1) console.log('PO.controller.gantt_editor.GanttSchedulingController.checkAssignedResources: Finished');
     },
 
 
@@ -860,7 +860,7 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
      */
     scheduleTaskDuration: function(treeStore, model) {
         var me = this;
-        if (me.debug > 1) console.log('PO.controller.gantt_editor.GanttSchedulingController.scheduleTaskDuration: Starting');
+        if (me.debug && me.debug > 1) console.log('PO.controller.gantt_editor.GanttSchedulingController.scheduleTaskDuration: Starting');
         if (model.hasChildNodes()) { return []; }
 
         var previousStartDate = PO.Utilities.pgToDate(model.get('start_date')); if (!previousStartDate) { return []; }
@@ -884,11 +884,10 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
         // Write the newEndDate into model
         var newEndDate = new Date(newEndTime);
         var newEndDateString = PO.Utilities.dateToPg(newEndDate);
-        if (me.debug) console.log('PO.controller.gantt_editor.GanttSchedulingController.scheduleTaskDuration: end_date='+newEndDateString);
+        if (me.debug && me.debug > 1) console.log('PO.controller.gantt_editor.GanttSchedulingController.scheduleTaskDuration: end_date='+newEndDateString);
         model.set('end_date', newEndDateString);
 
-
-        if (me.debug > 1) console.log('PO.controller.gantt_editor.GanttSchedulingController.scheduleTaskDuration: Finished');
+        if (me.debug && me.debug > 1) console.log('PO.controller.gantt_editor.GanttSchedulingController.scheduleTaskDuration: Finished');
         return [model];
     },
 
