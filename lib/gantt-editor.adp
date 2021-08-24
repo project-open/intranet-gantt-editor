@@ -124,7 +124,7 @@ function launchGanttEditor(debug){
     });
 
     /* ***********************************************************************
-     * Config Menu !!!
+     * Config Menu
      *********************************************************************** */
 
     var baselineComboBox = null;
@@ -148,11 +148,14 @@ function launchGanttEditor(debug){
         var baselineModel = baselineComboBox.findRecord('baseline_id', baselineId);
         if (baselineModel) {
             baselineComboBox.setValue(baselineModel.get('baseline_name'));
-	}
+        }
         baselineComboBox.on('change', function(combo, value) {
-	    var records = baselineComboBox.findRecord('baseline_name', value);
+            var records = baselineComboBox.findRecord('baseline_name', value);
             if (!records) return;
-            var record = records[0];
+            var record = records;
+            if (records['$className'] != 'PO.model.project.Baseline') {
+                var record = records[0];
+            }
             if (!record) return;
             var id = record.get('id');
             senchaPreferenceStore.setPreference(baselineComboBox.key, id);
@@ -235,7 +238,7 @@ function launchGanttEditor(debug){
             { icon: gifPath+'zoom_in.png', tooltip: 'Zoom in time axis', id: 'buttonZoomInGantt'}, 
             { icon: gifPath+'zoom.png', tooltip: 'Center', id: 'buttonZoomCenterGantt'},
             { icon: gifPath+'zoom_out.png', tooltip: 'Zoom out of time axis', id: 'buttonZoomOutGantt'},
-	    { icon: gifPath+'resultset_next.png', tooltip: 'Zoom in time axis', id: 'buttonZoomRightGantt'}, 
+            { icon: gifPath+'resultset_next.png', tooltip: 'Zoom in time axis', id: 'buttonZoomRightGantt'}, 
             '->', 
             { text: 'Configuration', icon: gifPath+'wrench.png', menu: configMenuGanttEditor}, 
             { text: 'Help', icon: gifPath+'help.png', menu: helpMenu}
