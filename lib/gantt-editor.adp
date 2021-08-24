@@ -45,6 +45,7 @@ Ext.require([
     'PO.model.user.User',
     'PO.store.CategoryStore',
     'PO.store.group.GroupStore',
+    'PO.store.project.BaselineStore',
     'PO.store.timesheet.TaskTreeStore',
     'PO.store.timesheet.TaskStatusStore',
     'PO.store.timesheet.TaskMaterialStore',
@@ -68,6 +69,7 @@ var default_cost_center_id = parseInt('@default_cost_center_id@');		// "The Comp
 var default_uom_id = parseInt('@default_uom_id@');				// "Hour" default Unit of Measure
 var default_effort_driven_type_id = parseInt('@default_effort_driven_type_id@'); // "Fixed Effort" as default
 var write_project_p = parseInt('@write_p@');					// 0 or 1
+var baseline_p = parseInt('@baseline_p@');                                      // is the im_baselines table installed?
 
 
 /**
@@ -87,12 +89,13 @@ function launchGanttEditor(debug){
     // Ext.state.Manager.setProvider(new Ext.state.CookieProvider());
     // Ext.state.Manager.setProvider(new Ext.state.LocalStorageProvider());
 
+    var baselineStore = Ext.StoreManager.get('baselineStore');
     var taskTreeStore = Ext.StoreManager.get('taskTreeStore');
     var senchaPreferenceStore = Ext.StoreManager.get('senchaPreferenceStore');
     var oneDayMiliseconds = 24 * 3600 * 1000;
     var renderDiv = Ext.get("@gantt_editor_id@");
     var gifPath = "/intranet/images/navbar_default/";
-
+    
     /* ***********************************************************************
      * Help Menu
      *********************************************************************** */
@@ -123,17 +126,42 @@ function launchGanttEditor(debug){
     /* ***********************************************************************
      * Config Menu
      *********************************************************************** */
+
+    var baselineComboBox = null;
+    if (baseline_p > 0) {
+	baselineComboBox = new Ext.form.ComboBox({
+	    fieldLabel: 'Baseline',
+	    labelWidth: 50,
+            store: baselineStore,
+            displayField: 'baseline_name',
+	    idField: 'baseline_id',
+            mode: 'local',
+            triggerAction: 'all',
+            emptyText: 'Select a baseline',
+            selectOnFocus: true,
+            // getListParent: function() { return this.el.up('.x-menu'); },
+            id: 'config_menu_show_project_baseline',
+            key: 'show_project_baseline',
+            iconCls: 'no-icon'
+	});
+	var baselineId = senchaPreferenceStore.getPreference(baselineComboBox.key, "");
+	var baselineModel = baselineComboBox.findRecord('baseline_id', baselineId);
+	baselineComboBox.setValue(baselineModel.get('baseline_name'));
+	baselineComboBox.on('select', function(combo, records) {
+            if (!records) return;
+            var record = records[0];
+            if (!record) return;
+            var id = record.get('id');
+            senchaPreferenceStore.setPreference(baselineComboBox.key, id);
+	    ganttBarPanel.needsRedraw = true;
+	});
+    }
+
     var configMenuGanttEditor = Ext.create('PO.view.menu.ConfigMenu', {
         debug: getDebug('configMenuGanttEditor'),
         id: 'configMenuGanttEditor',
         senchaPreferenceStore: senchaPreferenceStore,
         items: [
-/*	{
-            key: 'read_only',
-            text: 'Read Only (Beta version - use with caution!)',
-            checked: false
-        }, 
-*/
         {
             id: 'config_menu_show_cross_project_overassignments',
             key: 'show_project_cross_project_overassignments', 
@@ -159,7 +187,9 @@ function launchGanttEditor(debug){
             key: 'show_logged_hours_bar', 
             text: 'Show "Logged Hours %" on Gantt Bars', 
             checked: true
-        },  {
+        },
+	    baselineComboBox,
+	{
             id: 'config_menu_show_project_findocs',
             key: 'show_project_findocs', 
             text: 'Show Project Financial Documents', 
@@ -396,6 +426,7 @@ Ext.onReady(function() {
     var projectMemberStore = Ext.create('PO.store.user.UserStore', {storeId: 'projectMemberStore'});
     var userStore = Ext.create('PO.store.user.UserStore', {storeId: 'userStore'});
     var groupStore = Ext.create('PO.store.group.GroupStore', {storeId: 'groupStore'});
+    var baselineStore = Ext.create('PO.store.project.BaselineStore', {storeId: 'baselineStore'});
     var absenceAssignmentStore = Ext.create('GanttEditor.store.AbsenceAssignmentStore', {storeId: 'absenceAssignmentStore'});
 
     var senchaPreferenceStore = Ext.StoreManager.get('senchaPreferenceStore');
@@ -460,6 +491,19 @@ Ext.onReady(function() {
     };
     projectMemberStore.load({callback: function(r, op, success) { if (!success) PO.Utilities.reportStoreError("ProjectMemberStore", op); }});
 
+
+    // Baselines is an enterprise feature, so it may not be installed
+    if (@baseline_p@ > 0) {
+	coordinator.stores.push('baselineStore');
+   
+	// Get the list of baselines of the main project
+	baselineStore.getProxy().extraParams = {
+            format: 'json',
+            query: "baseline_project_id = @project_id@"
+	};
+	baselineStore.load({callback: function(r, op, success) { if (!success) PO.Utilities.reportStoreError("BaselineStore", op); }});
+    }
+    
     // Load stores that need parameters
     taskTreeStore.getProxy().extraParams = { project_id: @project_id@ };
     taskTreeStore.load({

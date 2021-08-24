@@ -560,6 +560,7 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
         var percentCompleted = parseFloat(project.get('percent_completed')); if (isNaN(percentCompleted)) percentCompleted = 0.0;
         var predecessors = project.get('predecessors');
         var assignees = project.get('assignees');				// Array of {id, percent, name, email, initials}
+        var baselines = project.get('baselines'); 				// Array of {id, percent, name, email, initials}
         var absenceAssignmentStore = Ext.StoreManager.get('absenceAssignmentStore');
         var plannedHours = parseFloat(project.get('planned_units')); if (isNaN(plannedHours)) plannedHours = 0.0;
         var loggedHours = parseFloat(project.get('reported_hours_cache')); if (isNaN(loggedHours)) loggedHours = 0.0;
@@ -749,6 +750,38 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
         if (!drawn) { alert('GanttBarPanel.drawProjectBar: not drawn for some reason'); }
 
 
+        // ---------------------------------------------------------------
+        // Draw baselines
+        var drawBaseline = me.preferenceStore.getPreference('show_project_baseline', false);
+	console.log('PO.view.gantt.GanttBarPanel.drawProjectBar.baselines: drawBaseline='+drawBaseline);
+
+        if (drawBaseline) {
+            if (baselines && "" != baselines) {
+                var baseline = baselines[drawBaseline];
+                if (baseline && "" != baseline) {
+                    
+                    var baselineStart = baseline.start_date;
+                    var baselineEnd = baseline.end_date;
+                    if (!!baselineStart && !!baselineEnd) {
+                        var baselineStartDate = PO.Utilities.pgToDate(baselineStart);
+                        var baselineEndDate = PO.Utilities.pgToDate(baselineEnd);
+                        var startX = me.date2x(baselineStartDate);				// X position based on time scale
+                        var endX = me.date2x(baselineEndDate);				// X position based on time scale
+                        
+                        // A baseline shadow
+                        var spriteBar = surface.add({
+                            type: 'rect', x: startX, y: y, width: endX - startX, height: h, radius: 3,
+                            stroke: 'red',
+                            'stroke-width': 0.3,
+                            zIndex: -200,							// In the background
+                        }).show(true);
+                        // 2021-08-24 fraber: Tooltips don't show because the stroke is so thin.
+                        // Ext.create("Ext.tip.ToolTip", { target: spriteBar.el, width: 250, html: tooltipHtml, hideDelay: 2000 });
+                    }
+                }
+            }
+        }
+        
         // ---------------------------------------------------------------
         // Draw assignee initials behind the Gantt bar.
         var drawAssignees = me.preferenceStore.getPreferenceBoolean('show_project_assigned_resources', true);

@@ -27,6 +27,7 @@ array set debug_hash $debug_list
 set debug_json_list {}
 foreach id [array names debug_hash] { lappend debug_json_list "'$id': $debug_hash($id)" }
 set debug_json "{\n\t[join $debug_json_list ",\n\t"]\n}"
+set baseline_p [im_table_exists im_baselines]
 
 # Default value for cross-project overassignments.
 # Showing this data can be very slow in certain organizations (same people assigned to all projects...)
