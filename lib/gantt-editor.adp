@@ -124,37 +124,40 @@ function launchGanttEditor(debug){
     });
 
     /* ***********************************************************************
-     * Config Menu
+     * Config Menu !!!
      *********************************************************************** */
 
     var baselineComboBox = null;
     if (baseline_p > 0) {
-	baselineComboBox = new Ext.form.ComboBox({
-	    fieldLabel: 'Baseline',
-	    labelWidth: 50,
+        baselineComboBox = new Ext.form.ComboBox({
+            fieldLabel: 'Baseline',
+            labelWidth: 50,
+            emptyText: 'Select a baseline',
             store: baselineStore,
             displayField: 'baseline_name',
-	    idField: 'baseline_id',
-            mode: 'local',
-            triggerAction: 'all',
-            emptyText: 'Select a baseline',
+            idField: 'baseline_id',
+            queryMode: 'local',
+            // triggerAction: 'all',
             selectOnFocus: true,
             // getListParent: function() { return this.el.up('.x-menu'); },
             id: 'config_menu_show_project_baseline',
             key: 'show_project_baseline',
             iconCls: 'no-icon'
-	});
-	var baselineId = senchaPreferenceStore.getPreference(baselineComboBox.key, "");
-	var baselineModel = baselineComboBox.findRecord('baseline_id', baselineId);
-	baselineComboBox.setValue(baselineModel.get('baseline_name'));
-	baselineComboBox.on('select', function(combo, records) {
+        });
+        var baselineId = senchaPreferenceStore.getPreference(baselineComboBox.key, "");
+        var baselineModel = baselineComboBox.findRecord('baseline_id', baselineId);
+        if (baselineModel) {
+            baselineComboBox.setValue(baselineModel.get('baseline_name'));
+	}
+        baselineComboBox.on('change', function(combo, value) {
+	    var records = baselineComboBox.findRecord('baseline_name', value);
             if (!records) return;
             var record = records[0];
             if (!record) return;
             var id = record.get('id');
             senchaPreferenceStore.setPreference(baselineComboBox.key, id);
-	    ganttBarPanel.needsRedraw = true;
-	});
+            ganttBarPanel.needsRedraw = true;
+        });
     }
 
     var configMenuGanttEditor = Ext.create('PO.view.menu.ConfigMenu', {
@@ -188,8 +191,8 @@ function launchGanttEditor(debug){
             text: 'Show "Logged Hours %" on Gantt Bars', 
             checked: true
         },
-	    baselineComboBox,
-	{
+            baselineComboBox,
+        {
             id: 'config_menu_show_project_findocs',
             key: 'show_project_findocs', 
             text: 'Show Project Financial Documents', 
