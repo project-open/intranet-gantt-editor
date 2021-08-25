@@ -133,6 +133,7 @@ function launchGanttEditor(debug){
             fieldLabel: 'Baseline',
             labelWidth: 50,
             emptyText: 'Select a baseline',
+	    allowBlank: true,
             store: baselineStore,
             displayField: 'baseline_name',
             idField: 'baseline_id',
@@ -507,7 +508,15 @@ Ext.onReady(function() {
             format: 'json',
             query: "baseline_project_id = @project_id@"
 	};
-	baselineStore.load({callback: function(r, op, success) { if (!success) PO.Utilities.reportStoreError("BaselineStore", op); }});
+
+	// add a blank option to store every time it is loaded
+	baselineStore.on('load', function(r, op, success) {
+	    baselineStore.insert(0, [{'baseline_id': '0', 'baseline_name': 'none'}]);
+	});
+			 
+	baselineStore.load({callback: function(r, op, success) {
+	    if (!success) PO.Utilities.reportStoreError("BaselineStore", op);
+	}});
     }
     
     // Load stores that need parameters

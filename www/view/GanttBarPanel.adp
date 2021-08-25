@@ -769,7 +769,7 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
                         var endX = me.date2x(baselineEndDate);				// X position based on time scale
                         
                         // A baseline shadow
-                        var spriteBar = surface.add({
+                        var baselineSpriteBar = surface.add({
                             type: 'rect', x: startX, y: y, width: endX - startX, height: h, radius: 3,
                             stroke: 'red',
                             'stroke-width': 0.3,
