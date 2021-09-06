@@ -444,7 +444,7 @@ Ext.onReady(function() {
     }
     
     // Store Coodinator starts app after all stores have been loaded:
-    var coordinator = Ext.create('PO.controller.StoreLoadCoordinator', {
+    var ganttCoordinator = Ext.create('PO.controller.StoreLoadCoordinator', {
         debug: getDebug('storeLoadCoordinator'),
         stores: [
             'taskTreeStore',
@@ -501,7 +501,7 @@ Ext.onReady(function() {
 
     // Baselines is an enterprise feature, so it may not be installed
     if (@baseline_p@ > 0) {
-	coordinator.stores.push('baselineStore');
+	ganttCoordinator.stores.push('baselineStore');
    
 	// Get the list of baselines of the main project
 	baselineStore.getProxy().extraParams = {
