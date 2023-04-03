@@ -120,6 +120,7 @@ Ext.define('GanttEditor.controller.GanttZoomController', {
         var reportStartTime = new Date('2099-12-31').getTime();
         var reportEndTime = new Date('2000-01-01').getTime();
 
+	// Accept that some tasks may have not been scheduled
         var rootNode = ganttBarPanel.objectStore.getRootNode();
         rootNode.cascadeBy(function(model) {
             var start_date = model.get('start_date'); if (!start_date) return;

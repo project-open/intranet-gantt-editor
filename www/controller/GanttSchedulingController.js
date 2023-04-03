@@ -1041,7 +1041,7 @@ Ext.define('GanttEditor.controller.GanttSchedulingController', {
                 for (var i = 0; i < nodes.length; i++) {
                     var task = nodes[i];
                     var taskId = task.get('id');
-                    if (changedNodesHash[taskId]) { continue; }
+                    if (changedNodesHash[taskId]) { continue; }		// avoid pushing the same node twice!
                     changedNodes.push(task);
                 }
             }

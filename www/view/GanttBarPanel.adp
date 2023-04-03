@@ -428,7 +428,6 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
 	// Calculate the per-user hash of assignments of a user to other tasks
 	me.setupOverassignments();
 
-
         // Iterate through all children of the root node and check if they are visible
         rootNode.cascadeBy(function(model) {
             var viewNode = ganttTreeView.getNode(model);
