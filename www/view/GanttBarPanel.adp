@@ -561,10 +561,10 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
         var assignees = project.get('assignees');				// Array of {id, percent, name, email, initials}
         var baselines = project.get('baselines'); 				// Array of {id, percent, name, email, initials}
         var absenceAssignmentStore = Ext.StoreManager.get('absenceAssignmentStore');
-        var plannedHours = parseFloat(project.get('planned_units')); if (isNaN(plannedHours)) plannedHours = 0.0;
-        var loggedHours = parseFloat(project.get('reported_hours_cache')); if (isNaN(loggedHours)) loggedHours = 0.0;
-        var percentLogged = 0; if (plannedHours > 0) percentLogged = 100.0 * loggedHours / plannedHours;
-        var workDone = plannedHours * percentCompleted / 100.0;
+        var plannedHours = parseFloat(project.get('planned_units')).toFixed(1); if (isNaN(plannedHours)) plannedHours = 0.0;
+        var loggedHours = parseFloat(project.get('reported_hours_cache')).toFixed(1); if (isNaN(loggedHours)) loggedHours = 0.0;
+        var percentLogged = 0; if (plannedHours > 0) percentLogged = (100.0 * loggedHours / plannedHours).toFixed(1);
+        var workDone = (plannedHours * percentCompleted / 100.0).toFixed(1);
 
         var startDate, endDate;
 
@@ -665,12 +665,10 @@ Ext.define('GanttEditor.view.GanttBarPanel', {
 
             var tooltipBaseHtml = ""+
                 "<table cellspacing=0 cellpadding=1>"+
-                "<tr><td>work planned:</td><td colspan=2>"+plannedHours+" hours</td></tr>"+
-                "<tr><td>work done:</td><td>"+workDone+" hours</td><td>= "+percentCompleted+"%</td></tr>"+
-                "<tr><td>hours logged:</td><td>"+loggedHours+" hours</td><td>= "+percentLogged+"%</td></tr>"+
+                "<tr><td>Work planned:</td><td colspan=2>"+plannedHours.toLocaleString('en-US')+" hours</td></tr>"+
+                "<tr><td>Work done:</td><td>"+workDone.toLocaleString('en-US')+" hours</td><td>= "+percentCompleted.toLocaleString('en-US')+"%</td></tr>"+
+                "<tr><td>Hours logged:</td><td>"+loggedHours.toLocaleString('en-US')+" hours</td><td>= "+percentLogged.toLocaleString('en-US')+"%</td></tr>"+
                 "</table>";
-
-
 
             // Percent_complete bar on top of the Gantt bar:
             // Allows for special DnD affecting only %done.
